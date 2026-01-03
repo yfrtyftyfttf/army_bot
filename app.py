@@ -4,7 +4,7 @@ import os
 import threading
 
 # --- إعدادات أساسية ---
-BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
+BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE"
 ADMIN_ID = 6695916631  # آيدي حسابك
 
 bot = telebot.TeleBot(BOT_TOKEN)

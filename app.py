@@ -1,15 +1,16 @@
 import telebot, requests, os, random, time, threading
 from flask import Flask, render_template_string, jsonify
 
-# --- [1] إعدادات الهوية ---
+# --- [ إعدادات الهوية ] ---
+# ملاحظة: هذا الكود هو النسخة النهائية المستقرة لعام 2026
 BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE"
-ID = "6695916631"
+bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
 stats = {"checked": 0, "found": 0, "errors": 0, "logs": []}
 hunting_active = False
 
-# --- [2] واجهة نظام كاييل 911 (بدون موسيقى) ---
+# --- [ واجهة نظام KAIL.911 الفخمة ] ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -29,18 +30,17 @@ HTML_TEMPLATE = """
         .overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.75); border-radius: 8px; }
         .gate { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .gate input { background: transparent; border: 1px solid #00f2ff; color: #00f2ff; padding: 15px; text-align: center; border-radius: 5px; outline: none; font-size: 20px; width: 300px; }
-        .top-tools { position: absolute; top: 25px; left: 25px; display: flex; gap: 15px; z-index: 20; }
-        .tool-btn { background: rgba(0, 242, 255, 0.1); border: 1px solid #00f2ff; color: #00f2ff; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 12px; transition: 0.3s; text-decoration: none; }
+        .top-tools { position: absolute; top: 25px; left: 25px; z-index: 20; }
+        .tool-btn { background: rgba(0, 242, 255, 0.1); border: 1px solid #00f2ff; color: #00f2ff; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 12px; transition: 0.3s; }
         .tool-btn:hover { background: #00f2ff; color: #000; }
-        #imageInput { display: none; }
         .user-panel { position: absolute; top: 25px; right: 25px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 10; }
-        .insta-link { background: rgba(225, 48, 108, 0.2); border: 1px solid #e1306c; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 50px; font-size: 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px #e1306c; }
+        .insta-link { background: rgba(225, 48, 108, 0.2); border: 1px solid #e1306c; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 50px; font-size: 14px; box-shadow: 0 0 15px #e1306c; }
         .stats-display { position: absolute; top: 130px; width: 100%; display: flex; justify-content: center; gap: 30px; z-index: 10; }
         .stat-card { background: rgba(0, 0, 0, 0.85); border: 1px solid #00f2ff; padding: 20px; border-radius: 10px; text-align: center; min-width: 160px; }
         .stat-card b { font-size: 35px; color: #ff4500; font-family: monospace; display: block; }
         .attack-console { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 85%; height: 200px; background: rgba(0, 0, 0, 0.9); border: 1px solid #00f2ff; padding: 15px; overflow-y: auto; color: #00ffaa; font-family: monospace; font-size: 14px; direction: ltr; z-index: 10; }
         .action-bar { position: absolute; bottom: 270px; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 10; }
-        .btn-style { background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff; color: #00f2ff; padding: 12px 45px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; font-family: 'Segoe UI'; }
+        .btn-style { background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff; color: #00f2ff; padding: 12px 45px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; }
         .btn-style:hover { background: #00f2ff; color: #000; }
     </style>
 </head>
@@ -49,12 +49,13 @@ HTML_TEMPLATE = """
     <h1 style="color:#00f2ff">نظام كاييل للعمليات</h1>
     <input type="password" id="pass" placeholder="كلمة المرور">
     <br>
-    <button class="btn-style" onclick="enter()">دخول</button>
+    <button class="btn-style" onclick="enter()">دخول للنظام</button>
 </div>
 <div class="main-container" id="mainPanel">
-<div class="top-tools">
-        <label for="imageInput" class="tool-btn"><i class="fas fa-upload"></i> رفع خلفية</label>
-        <input type="file" id="imageInput" accept="image/*">
+    <div class="overlay"></div>
+    <div class="top-tools">
+    <label for="imageInput" class="tool-btn"><i class="fas fa-upload"></i> تغيير صورة الخلفية</label>
+        <input type="file" id="imageInput" style="display:none" accept="image/*">
     </div>
     <div class="user-panel">
         <span style="color: #00f2ff; font-weight: bold; font-size: 18px;">المطور: kail.911</span>
@@ -76,23 +77,16 @@ HTML_TEMPLATE = """
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = function(event) {
-                document.getElementById('mainPanel').style.backgroundImage = url('${event.target.result}');
-            };
+            reader.onload = function(ev) { document.getElementById('mainPanel').style.backgroundImage = url('${ev.target.result}'); };
             reader.readAsDataURL(file);
         }
     });
-    function enter() { 
-        if(document.getElementById('pass').value === 'hx888') {
-            $('#gate').fadeOut(500);
-            $('#mainPanel').fadeIn(1000);
-        } else { alert('خطأ في الرمز!'); } 
-    }
+    function enter() { if(document.getElementById('pass').value === 'hx888') { $('#gate').fadeOut(400); $('#mainPanel').fadeIn(800); } else { alert('خطأ!'); } }
     function run(c) { $.getJSON('/cmd/'+c); }
     setInterval(() => {
         $.getJSON('/api/stats', (d) => {
             $('#c').text(d.checked); $('#f').text(d.found); $('#e').text(d.errors);
-            let h = ""; d.logs.forEach(l => h += "<div>[نظام]> "+l+"</div>");
+            let h = ""; d.logs.forEach(l => h += "<div>[SYSTEM]> "+l+"</div>");
             $('#log-box').html(h);
             document.getElementById("log-box").scrollTop = 9999;
         });
@@ -122,10 +116,9 @@ def hunt():
     while hunting_active:
         user = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz1234567890') for _ in range(5))
         stats['checked'] += 1
-        stats['logs'].append(f"يتم فحص: @{user}")
+        stats['logs'].append(f"يتم فحص اليوزر: @{user}")
         if len(stats['logs']) > 25: stats['logs'].pop(0)
         time.sleep(0.4)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
-    <div class="overlay"></div>

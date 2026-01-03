@@ -3,11 +3,11 @@ import threading, time, random
 
 app = Flask(__name__)
 
-# إعدادات النظام
-PASSWORD_ACCESS = "hx5"
+# إعدادات العرض
 ADMIN_NAME = "Mohamed Security"
 USER_TAG = "kail.911"
 
+# نظام الفحص الداخلي
 is_running = False
 results_list = []
 
@@ -16,8 +16,8 @@ def hacking_engine():
     while is_running:
         new_entry = {
             "time": time.strftime("%H:%M:%S"),
-            "target": "ID_" + str(random.randint(1000, 9999)),
-            "status": "RUNNING 📡"
+            "target": "SCAN_" + str(random.randint(1000, 9999)),
+            "status": "ACTIVE ✅"
         }
         results_list.insert(0, new_entry)
         if len(results_list) > 15: results_list.pop()
@@ -34,33 +34,36 @@ HTML_TEMPLATE = """
         :root { --main: #00ff41; }
         body { background: #000; color: var(--main); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
         canvas { position: absolute; top: 0; left: 0; z-index: -1; }
-        .box { background: rgba(0, 10, 0, 0.9); border: 1px solid var(--main); padding: 40px; border-radius: 15px; box-shadow: 0 0 25px var(--main); text-align: center; width: 90%; max-width: 500px; z-index: 10; }
-        input { background: transparent; border: 1px solid var(--main); color: #fff; padding: 15px; width: 80%; margin: 20px 0; text-align: center; font-size: 1.2em; border-radius: 5px; outline: none; }
-        button { background: var(--main); color: #000; border: none; padding: 12px 30px; cursor: pointer; font-weight: bold; border-radius: 5px; text-transform: uppercase; margin: 10px; }
-        .hidden { display: none !important; }
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        .box { background: rgba(0, 15, 0, 0.9); border: 1px solid var(--main); padding: 30px; border-radius: 15px; box-shadow: 0 0 25px var(--main); text-align: center; width: 90%; max-width: 600px; z-index: 10; }
+        button { background: var(--main); color: #000; border: none; padding: 12px 30px; cursor: pointer; font-weight: bold; border-radius: 5px; text-transform: uppercase; margin: 10px; transition: 0.3s; }
+        button:hover { background: #fff; box-shadow: 0 0 15px #fff; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: rgba(0,0,0,0.5); }
         th, td { border: 1px solid var(--main); padding: 10px; font-size: 0.8em; }
-        .tag { color: #fff; background: rgba(0,255,65,0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.9em; }
+        .tag { color: #fff; background: rgba(0,255,65,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.9em; display: inline-block; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
 
-    <div id="login_ui" class="box">
-        <h1 style="text-shadow: 0 0 10px var(--main);">{{ name }}</h1>
-        <span class="tag">@{{ tag }}</span>
-        <input type="password" id="key" placeholder="ACCESS CODE">
-        <br>
-        <button onclick="access()">BOOT SYSTEM</button>
-    </div>
+    <div class="box">
+        <h1 style="text-shadow: 0 0 10px var(--main); margin-bottom: 5px;">{{ name }}</h1>
+        <div class="tag">@{{ tag }}</div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="start()">START ENGINE</button>
+            <button onclick="location.reload()" style="background: #ff4444; color: white;">RESET</button>
+        </div>
 
-    <div id="dash_ui" class="box hidden">
-        <h1 style="font-size: 1.5em;">DASHBOARD ACTIVE</h1>
-        <button onclick="start()" style="background: #28a745; color: white;">START ENGINE</button>
-        <button onclick="location.reload()" style="background: #ff4444; color: white;">TERMINATE</button>
         <table>
-            <thead><tr><th>TIME</th><th>MISSION</th><th>STATUS</th></tr></thead>
-            <tbody id="logs"></tbody>
+            <thead>
+                <tr>
+                    <th>TIME</th>
+                    <th>MISSION ID</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody id="logs">
+                </tbody>
         </table>
     </div>
 
@@ -81,28 +84,23 @@ HTML_TEMPLATE = """
         }
         setInterval(draw, 33);
 
-        // Access Logic
-        function access() {
-            const inputKey = document.getElementById('key').value;
-            if(inputKey === "{{ pw }}") {
-                document.getElementById('login_ui').classList.add('hidden');
-                document.getElementById('dash_ui').classList.remove('hidden');
-                setInterval(updateLogs, 2000);
-            } else {
-                alert("INVALID KEY!");
-            }
+        // System Control
+        function start() {
+            fetch('/api/start').then(() => {
+                alert("Engine Started!");
+            });
         }
 
-        function start() { fetch('/api/start'); }
-       function updateLogs() {
+        function updateLogs() {
             fetch('/api/logs').then(r => r.json()).then(data => {
                 let rows = '';
                 data.forEach(item => {
-                    rows += <tr><td>${item.time}</td><td>${item.target}</td><td>${item.status}</td></tr>;
+                    rows += <tr><td>${item.time}</td><td>${item.target}</td><td style="color:#fff">${item.status}</td></tr>;
                 });
                 document.getElementById('logs').innerHTML = rows;
             });
         }
+        setInterval(updateLogs, 2000);
     </script>
 </body>
 </html>
@@ -110,7 +108,7 @@ HTML_TEMPLATE = """
 
 @app.route('/')
 def home():
-    return render_template_string(HTML_TEMPLATE, name=ADMIN_NAME, tag=USER_TAG, pw=PASSWORD_ACCESS)
+   return render_template_string(HTML_TEMPLATE, name=ADMIN_NAME, tag=USER_TAG)
 
 @app.route('/api/start')
 def start_engine():

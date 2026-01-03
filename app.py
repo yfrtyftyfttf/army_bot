@@ -14,8 +14,8 @@ is_running = False
 
 # وظيفة قراءة البروكسيات من ملف m2.txt
 def get_proxies_from_file():
-    if os.path.exists('m.txt'):
-        with open('m.txt', 'r') as f:
+    if os.path.exists('m2.txt'):
+        with open('m2.txt', 'r') as f:
             return [line.strip() for line in f.readlines() if line.strip()]
     return []
 

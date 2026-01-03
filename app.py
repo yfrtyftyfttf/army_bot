@@ -188,5 +188,5 @@ def api_stop():
     active_units = 0
     return jsonify(units=0)
 
-if name == '__main__':
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)

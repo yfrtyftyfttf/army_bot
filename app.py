@@ -47,7 +47,7 @@ HTML_TEMPLATE = """
 <body>
 <div id="gate" class="gate">
     <h1 style="color:#00f2ff">نظام كاييل للعمليات</h1>
-    <input type="password" id="pass" placeholder="كلمة المرور">
+    <input type="password" id="pass" hx5911="كلمة المرور">
     <br>
     <button class="btn-style" onclick="enter()">دخول للنظام</button>
 </div>

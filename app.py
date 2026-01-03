@@ -130,7 +130,8 @@ HTML_TEMPLATE = """
                 const text = letters[Math.floor(Math.random() * letters.length)];
                 ctx.fillText(text, i * fontSize, y * fontSize);
                 if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
-                drops[i]++;});
+                drops[i]++;
+                });
         }
         setInterval(drawMatrix, 50);
 

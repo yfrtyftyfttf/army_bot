@@ -13,157 +13,127 @@ ADMIN_ID = 6695916631
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# بيانات السيرفر الحية
-stats = {
-    "checked": 0, 
-    "found": 0, 
-    "errors": 0, 
-    "last_user": "None",
-    "status": "🔴 متوقف",
-    "logs": []
-}
+stats = {"checked": 0, "found": 0, "errors": 0, "status": "🔴 متوقف", "logs": []}
 hunting_active = False
 
-# --- [2] تصميم واجهة الموقع (التصميم الذي أرسلته) ---
+# --- [2] واجهة الموقع HUD المدمجة بالأيقونة والتصميم ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>A7MED HUNTER PANEL</title>
+    <title>KAIL.911 | HUD SYSTEM</title>
+    
+    <link rel="icon" href="https://img.icons8.com/neon/96/hacker.png" type="image/png">
+    
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { background: #010b14; color: #00f2ff; font-family: 'Courier New', monospace; text-align: center; margin: 0; overflow-x: hidden; }
-        .overlay { position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .panel { border: 2px solid #00f2ff; padding: 20px; display: inline-block; background: rgba(0, 20, 40, 0.8); box-shadow: 0 0 20px #00f2ff; border-radius: 10px; margin-top: 50px; width: 80%; max-width: 800px; }
-        .header { font-size: 24px; border-bottom: 1px solid #00f2ff; margin-bottom: 20px; padding-bottom: 10px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .stat-card { border: 1px solid #006677; padding: 15px; border-radius: 5px; background: rgba(0, 255, 255, 0.05); }
-        .btn-group { display: flex; justify-content: space-around; margin-top: 20px; }
-        button { background: transparent; border: 1px solid #00f2ff; color: #00f2ff; padding: 10px 20px; cursor: pointer; transition: 0.3s; font-weight: bold; }
-        button:hover { background: #00f2ff; color: #000; }
-        .console { background: #000; border: 1px solid #006677; height: 150px; overflow-y: auto; text-align: left; padding: 10px; font-size: 12px; color: #0f0; margin-top: 20px; }
-        .logo { width: 100px; margin-bottom: 10px; filter: drop-shadow(0 0 5px #00f2ff); }
+        body { background: #000; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        /* تصميم الخلفية باستخدام الصورة التي اخترتها */
+        .hud-wrapper {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            background: url('https://r.jina.ai/i/e0a0250630b9437b98547214e2162f4e') no-repeat center;
+            background-size: contain;
+        }
+
+        /* توزيع الأرقام فوق الأيقونات في الصورة */
+        .stat-value {
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #ff4500; /* لون برتقالي مثل الصورة */
+            font-size: 28px;
+        }
+
+        #checked { top: 275px; left: 365px; } 
+        #found { top: 275px; left: 510px; } 
+        #errors { top: 435px; left: 440px; color: #00f2ff; }
+        #status { top: 275px; left: 140px; font-size: 16px; color: #00f2ff; }
+
+        /* منطقة غرفة العمليات */
+        .console-box {
+            position: absolute;
+            bottom: 110px;
+            left: 95px;
+            width: 615px;
+            height: 140px;
+            background: transparent;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 12px;
+            color: #00f2ff;
+            text-align: left;
+        }
+
+        .log-line { margin-bottom: 3px; border-left: 1px solid #00f2ff; padding-left: 5px; }
+
+        /* أزرار شفافة فوق أزرار الصورة لتعمل عند اللمس */
+        .hidden-btn {
+            position: absolute;
+            background: rgba(0,242,255,0.05);
+            border: 1px solid rgba(0,242,255,0.2);
+            color: #00f2ff;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.2s;
+        }
+        .hidden-btn:hover { background: rgba(0,242,255,0.2); }
+
+        #btn-start { bottom: 335px; left: 120px; width: 185px; height: 40px; }
+        #btn-stop { bottom: 335px; left: 350px; width: 185px; height: 40px; }
+        #btn-logs { bottom: 335px; left: 580px; width: 185px; height: 40px; }
+
+        /* شاشة الترحيب */
+        .overlay {
+            position: fixed; inset: 0; background: #000; z-index: 100;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
     </style>
 </head>
 <body>
 
 <div id="welcome" class="overlay">
-    <h1>أهلاً بك معك الرد التلقائي من المبرمج محمد kail.911</h1>
-    <button onclick="enterPanel()">دخول غرفة العمليات</button>
+    <h2 style="color: #00f2ff; font-family: 'Arial'; text-shadow: 0 0 10px #00f2ff;">اهلا بك معك الرد التلقائي من المبرمج محمد kail.911</h2>
+    <button class="hidden-btn" style="position:relative; width: 220px; height: 50px;" onclick="hideWelcome()">📡 دخول غرفة العمليات</button>
 </div>
 
-<div class="panel">
-    <div class="header">A7MED HUNTER PANEL - kail.911</div>
-    
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div>🔍 المجموع المفحوص</div>
-            <h2 id="checked">0</h2>
-        </div>
-        <div class="stat-card">
-            <div>🎯 الصيد الثمين</div>
-            <h2 id="found" style="color: #0f0;">0</h2>
-        </div>
-        <div class="stat-card">
-            <div>⚠️ أخطاء</div>
-            <h2 id="errors" style="color: #f00;">0</h2>
-        </div>
-        <div class="stat-card">
-            <div>📡 الحالة</div>
-            <h2 id="status">🔴 متوقف</h2>
-        </div>
+<div class="hud-wrapper">
+    <div id="status" class="stat-value">🔴</div>
+    <div id="checked" class="stat-value">0</div>
+    <div id="found" class="stat-value">0</div>
+    <div id="errors" class="stat-value">0</div>
+
+    <div class="console-box" id="console">
+        <div class="log-line">SYSTEM STATUS: READY [kail.911]</div>
     </div>
 
-    <div class="btn-group">
-        <button onclick="sendCommand('start')">1️⃣ صيد</button>
-        <button onclick="sendCommand('stop')">2️⃣ توقف</button>
-        <button onclick="toggleConsole()">3️⃣ غرفة العمليات</button>
-    </div>
-
-    <div id="console_box" class="console" style="display: none;">
-        <div>--- نظام الصيد التلقائي جاهز ---</div>
-        <div id="logs"></div>
-    </div>
+    <button id="btn-start" class="hidden-btn" onclick="sendCmd('start')">1️⃣ صيد</button>
+    <button id="btn-stop" class="hidden-btn" onclick="sendCmd('stop')">2️⃣ توقف</button>
+    <button id="btn-logs" class="hidden-btn" onclick="toggleConsole()">3️⃣ غرفة العمليات</button>
 </div>
-
 <script>
-    function enterPanel() { document.getElementById('welcome').style.display = 'none'; }
-    function toggleConsole() { $('#console_box').toggle(); }
+    function hideWelcome() { document.getElementById('welcome').style.opacity = '0'; setTimeout(()=> {document.getElementById('welcome').style.display='none'}, 500); }
+    function toggleConsole() { $('#console').fadeToggle(); }
+    function sendCmd(c) { $.getJSON('/cmd/' + c); }
 
-    function sendCommand(cmd) {
-        $.getJSON('/command/' + cmd, function(data) { alert(data.msg); });
-    }
-
-    function updateStats() {
+    function update() {
         $.getJSON('/api/stats', function(data) {
             $('#checked').text(data.checked);
             $('#found').text(data.found);
             $('#errors').text(data.errors);
-            $('#status').text(data.status);
+            $('#status').text(data.status == "🟢 يعمل" ? "🟢" : "🔴");
             
-            let logHtml = "";
-            data.logs.
-            forEach(l => logHtml += "<div>" + l + "</div>");
-            $('#logs').html(logHtml);
-            
-            // التمرير لأسفل الكونسول تلقائياً
-            var objDiv = document.getElementById("console_box");
-            objDiv.scrollTop = objDiv.scrollHeight;
+            let html = "";
+            data.logs.forEach(l => html += "<div class='log-line'>[PROCESS]: " + l + "</div>");
+            $('#console').html(html);
+            var d = document.getElementById("console");
+            d.scrollTop = d.scrollHeight;
         });
     }
-    setInterval(updateStats, 1000);
+    setInterval(update, 1000);
 </script>
 </body>
 </html>
-"""
-
-# --- [3] منطق البوت والصيد ---
-def add_log(msg):
-    stats['logs'].append(f"[{time.strftime('%H:%M:%S')}] {msg}")
-    if len(stats['logs']) > 20: stats['logs'].pop(0)
-
-def hunting_loop():
-    global hunting_active
-    while hunting_active:
-        user = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz1234567890._') for i in range(random.randint(4,8)))
-        stats['checked'] += 1
-        add_log(f"فحص: @{user}...")
-        
-        # محاكاة الفحص (ضع هنا كود requests الفعلي مع البروكسي)
-        try:
-            # مثال: ريكويست بسيط
-            time.sleep(0.5) 
-        except: stats['errors'] += 1
-        
-        if not hunting_active: break
-
-# --- [4] مسارات الموقع (Web Routes) ---
-@app.route('/')
-def index():
-    return render_template_string(HTML_TEMPLATE)
-
-@app.route('/api/stats')
-def get_stats():
-    return jsonify(stats)
-
-@app.route('/command/<cmd>')
-def run_command(cmd):
-    global hunting_active
-    if cmd == 'start':
-        if not hunting_active:
-            hunting_active = True
-            stats['status'] = "🟢 يعمل"
-            threading.Thread(target=hunting_loop).start()
-            return jsonify({"msg": "تم بدء الصيد أستاذ محمد"})
-    elif cmd == 'stop':
-        hunting_active = False
-        stats['status'] = "🔴 متوقف"
-        return jsonify({"msg": "تم إيقاف النظام"})
-    return jsonify({"msg": "أمر غير معروف"})
-
-# --- [5] تشغيل كل شيء ---
-if __name__ == "__main__":
-    threading.Thread(target=lambda: bot.infinity_polling()).start()
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)

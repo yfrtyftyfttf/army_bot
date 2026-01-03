@@ -1,161 +1,137 @@
-import telebot
-import requests
-import os
-import random
-import time
-import threading
+import telebot, requests, os, random, time, threading
 from flask import Flask, render_template_string, jsonify
 
 # --- [1] إعدادات الهوية ---
 BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE"
-ADMIN_ID = 6695916631 
-
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-stats = {"checked": 0, "found": 0, "errors": 0, "status": "🔴 متوقف", "logs": []}
+stats = {"checked": 0, "found": 0, "errors": 0, "logs": []}
 hunting_active = False
 
-# --- [2] واجهة الموقع HUD الاحترافية ---
+# --- [2] واجهة نظام كاييل المطورة مع ميزة تغيير الخلفية ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>KAIL.911 | HACKER SYSTEM</title>
-    <link rel="icon" href="https://img.icons8.com/neon/96/hacker.png" type="image/png">
+    <title>نظام كاييل 911 | تحكم كامل</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { background: #000; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        body { background: #000; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        .login-screen { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .login-box { border: 2px solid #00f2ff; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 0 20px #00f2ff; background: rgba(0, 0, 0, 0.9); }
-        input { background: #000; border: 1px solid #00f2ff; color: #00f2ff; padding: 12px; text-align: center; font-size: 20px; margin-bottom: 20px; outline: none; border-radius: 5px; width: 250px; }
-        
-        .hud-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            background: url('https://i.ibb.co/3YYv0Xm/hacker-bg.jpg') no-repeat center;
-            background-size: cover;
-            display: none;
+        /* الحاوية الرئيسية مع ميزة تغيير الخلفية برمجياً */
+        .main-container {
+            position: relative; width: 950px; height: 650px;
+            background: url('https://w0.peakpx.com/wallpaper/599/471/wallpaper-anonymous-hacker-dark-background-mask-neon-light.jpg') no-repeat center;
+            background-size: cover; border: 2px solid #00f2ff; box-shadow: 0 0 30px #00f2ff66; border-radius: 10px; display: none;
+            transition: background 0.5s ease-in-out;
         }
 
-        .overlay-glass { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); }
+        .overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.75); border-radius: 8px; }
 
-        /* أيقونة الانستقرام ورابط الحساب */
-        .insta-link {
-            position: absolute; top: 25px; right: 25px;
-            display: flex; align-items: center; gap: 10px;
-            background: rgba(0, 0, 0, 0.8); border: 2px solid #e1306c;
-            padding: 10px 20px; border-radius: 50px;
-            color: #fff; text-decoration: none; font-weight: bold;
-            box-shadow: 0 0 15px #e1306c; transition: 0.3s; z-index: 100;
-        }
-        .insta-link:hover { transform: scale(1.05); background: #e1306c; }
+        /* شاشة الدخول */
+        .gate { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .gate input { background: transparent; border: 1px solid #00f2ff; color: #00f2ff; padding: 15px; text-align: center; border-radius: 5px; outline: none; font-size: 20px; width: 300px; }
 
-        .stats-hud { position: absolute; top: 10%; width: 100%; display: flex; justify-content: center; gap: 20px; }
-        .stat-item { background: rgba(0, 0, 0, 0.8); border: 1px solid #00f2ff; padding: 15px 30px; border-radius: 10px; text-align: center; min-width: 120px; }
-        .stat-item span { color: #00f2ff; font-size: 12px; display: block; }
-        .stat-item b { font-size: 30px; color: #ff4500; font-family: monospace; }
+        /* مركز التحكم بالخلفية */
+        .bg-control { position: absolute; top: 25px; left: 25px; z-index: 20; }
+        .upload-btn { background: rgba(0, 242, 255, 0.1); border: 1px solid #00f2ff; color: #00f2ff; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 12px; transition: 0.3s; }
+        .upload-btn:hover { background: #00f2ff; color: #000; }
+        #imageInput { display: none; }
 
-        .console-box {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 90%; height: 200px; background: rgba(0,0,0,0.85);
-            border: 1px solid #00f2ff; border-radius: 5px; padding: 15px;
-            overflow-y: auto; color: #00ffaa; font-family: monospace; font-size: 13px;
-        }
+        /* معلومات المطور */
+        .user-panel { position: absolute; top: 25px; right: 25px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 10; }
+        .insta-link { background: rgba(225, 48, 108, 0.2); border: 1px solid #e1306c; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 50px; font-size: 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px #e1306c; }
 
-        .controls-hud { position: absolute; bottom: 250px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; }
-        .btn-action {
-            background: rgba(0,0,0,0.7); border: 1px solid #00f2ff; color: #00f2ff;
-            padding: 12px 30px; cursor: pointer; border-radius: 4px; font-weight: bold;
-            display: flex; align-items: center; gap: 8px; transition: 0.3s;
-        }
-        .btn-action:hover { background: #00f2ff; color: #000; box-shadow: 0 0 20px #00f2ff; }
+        /* العدادات وشاشة الهجوم */
+        .stats-display { position: absolute; top: 130px; width: 100%; display: flex; justify-content: center; gap: 30px; z-index: 10; }
+        .stat-card { background: rgba(0, 0, 0, 0.85); border: 1px solid #00f2ff; padding: 20px; border-radius: 10px; text-align: center; min-width: 160px; }
+        .stat-card b { font-size: 35px; color: #ff4500; font-family: monospace; }
+
+        .attack-console { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 85%; height: 200px; background: rgba(0, 0, 0, 0.9); border: 1px solid #00f2ff; padding: 15px; overflow-y: auto; color: #00ffaa; font-family: monospace; font-size: 14px; direction: ltr; z-index: 10; }
+
+        .action-bar { position: absolute; bottom: 270px; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 10; }
+        .btn-style { background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff; color: #00f2ff; padding: 12px 45px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .btn-style:hover { background: #00f2ff; color: #000; }
     </style>
 </head>
 <body>
 
-<div id="login" class="login-screen">
-    <div class="login-box">
-        <h2 style="color: #00f2ff;">KAIL.911 SECURITY</h2>
-        <input type="password" id="passInput" placeholder="CODE (hx888)">
-        <br>
-        <button class="btn-action" style="position:relative;" onclick="check()">ACCESS SYSTEM</button>
-    </div>
+<div id="gate" class="gate">
+    <h1 style="color:#00f2ff">نظام KAIL.911</h1>
+    <input type="password" id="pass" placeholder="أدخل كلمة السر">
+    <br>
+    <button class="btn-style" onclick="enter()">دخول</button>
 </div>
 
-<div class="hud-container" id="mainPanel">
-    <div class="overlay-glass"></div>
+<div class="main-container" id="mainPanel">
+    <div class="overlay"></div>
 
-    <a href="https://www.instagram.com/kail.911" target="_blank" class="insta-link">
-        <i class="fab fa-instagram"></i>
-        <span>INSTA: kail.911</span>
-    </a>
-
-    <div class="stats-hud">
-        <div class="stat-item"><span>CHECKED</span><b id="checked">0</b></div>
-        <div class="stat-item"><span>FOUND</span><b id="found" style="color:#0f0">0</b></div>
-        <div class="stat-item"><span>ERRORS</span><b id="errors" style="color:#f00">0</b></div>
+    <div class="bg-control">
+        <label for="imageInput" class="upload-btn">
+            <i class="fas fa-image"></i> تغيير صورة الخلفية
+        </label>
+        <input type="file" id="imageInput" accept="image/*">
     </div>
 
-    <div class="controls-hud">
-        <button class="btn-action" onclick="run('start')"><i class="fas fa-play"></i> START</button>
-        <button class="btn-action" onclick="run('stop')"><i class="fas fa-stop"></i> STOP</button>
+    <audio id="hackerMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="user-panel">
+        <span style="color: #00f2ff; font-weight: bold; font-size: 18px;">القائد: kail.911</span>
+        <a href="https://www.instagram.com/kail.911" target="_blank" class="insta-link">
+            <i class="fab fa-instagram"></i> حسابي الرسمي
+        </a>
     </div>
 
-    <div class="console-box" id="logs">
-        <div>[SYSTEM]: INITIALIZING... OK.</div>
+    <div class="stats-display">
+        <div class="stat-card"><span>المفحوص</span><b id="c">0</b></div>
+        <div class="stat-card"><span>المصيد</span><b id="f" style="color:#0f0">0</b></div>
+        <div class="stat-card"><span>الأخطاء</span><b id="e" style="color:#f00">0</b></div>
     </div>
+
+    <div class="action-bar">
+        <button class="btn-style" onclick="run('start')">بدء الهجوم</button>
+        <button class="btn-style" onclick="run('stop')" style="border-color:#f00; color:#f00;">إيقاف</button>
+    </div>
+
+    <div class="attack-console" id="log-box"></div>
 </div>
 
 <script>
-    function check() {
-        if(document.getElementById('passInput').value === 'hx888') {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('mainPanel').style.display = 'block';
-        } else { alert('WRONG CODE'); }
+    // نظام تغيير الخلفية
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('mainPanel').style.backgroundImage = url('${event.target.result}');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function enter() { 
+        if(document.getElementById('pass').value === 'hx888') {
+            $('#gate').fadeOut(500);
+            $('#mainPanel').fadeIn(1000);
+            document.getElementById('hackerMusic').play();
+        } else { alert('خطأ!'); } 
     }
-    function run(c) { $.getJSON('/cmd/' + c); }
+    
+    function run(c) { $.getJSON('/cmd/'+c); }
+
     setInterval(() => {
         $.getJSON('/api/stats', (d) => {
-            $('#checked').text(d.checked); $('#found').text(d.found); $('#errors').text(d.errors);
-            let h = ""; d.logs.forEach(l => h += "<div>> " + l + "</div>");
-            $('#logs').html(h);
-            document.getElementById("logs").scrollTop = document.getElementById("logs").scrollHeight;
+            $('#c').text(d.checked); $('#f').text(d.found); $('#e').text(d.errors);
+            let h = ""; d.logs.forEach(l => h += "<div>[LOG]> "+l+"</div>");
+            $('#log-box').html(h);
+            document.getElementById("log-box").scrollTop = 9999;
         });
     }, 1000);
 </script>
 </body>
 </html>
-"""
-
-@app.route('/')
-def index(): return render_template_string(HTML_TEMPLATE)
-
-@app.route('/api/stats')
-def get_stats(): return jsonify(stats)
-
-@app.route('/cmd/<c>')
-def run_cmd(c):
-    global hunting_active
-    if c == 'start':
-        if not hunting_active:
-            hunting_active = True
-            threading.Thread(target=hunt).start()
-    elif c == 'stop': hunting_active = False
-    return jsonify({"ok": True})
-
-def hunt():
-    while hunting_active:
-        user = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for _ in range(5))
-        stats['checked'] += 1
-        stats['logs'].append(f"SCANNING: @{user}")
-        if len(stats['logs']) > 30: stats['logs'].pop(0)
-        time.sleep(0.5)
-
-if __name__ == "__main__":
-    threading.Thread(target=lambda: bot.infinity_polling()).start()
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))

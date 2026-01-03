@@ -2,7 +2,7 @@ import telebot
 import os
 
 # --- إعدادات البوت ---
-BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE"
+BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
 ADMIN_ID = 6695916631
 
 bot = telebot.TeleBot(BOT_TOKEN)

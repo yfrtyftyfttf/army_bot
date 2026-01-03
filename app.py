@@ -4,9 +4,8 @@ from flask import Flask, render_template_string, jsonify
 app = Flask(__name__)
 
 # --- 🟢 ضع البروكسيات هنا 🟢 ---
-# قم بلصق الـ 50 سطر التي نسختها من الملف بين العلامات الثلاث أدناه
 proxies_data = """
- (82.24.249.101:5938:njhuvsdz:wp92l0dkdkoc 
+82.24.249.101:5938:njhuvsdz:wp92l0dkdkoc 
 82.29.244.57:5880:njhuvsdz:wp92l0dkdkoc 
 198.89.123.107:6649:njhuvsdz:wp92l0dkdkoc 
 206.206.71.75:5715:njhuvsdz:wp92l0dkdkoc 
@@ -59,41 +58,20 @@ proxies_data = """
 """
 # ------------------------------
 
-# تحويل النص إلى قائمة برمجية
 MY_PROXIES = [line.strip() for line in proxies_data.strip().split('\n') if line.strip()]
-
 created_accounts = []
 is_running = False
 
-def get_proxy():
-    if not MY_PROXIES: return None
-    p = random.choice(MY_PROXIES).split(':')
-    # الترتيب المتوقع: IP:PORT:USER:PASS
-    return {
-        "http": f"http://{p[2]}:{p[3]}@{p[0]}:{p[1]}",
-        "https": f"http://{p[2]}:{p[3]}@{p[0]}:{p[1]}"
-    }
-
 def factory_engine():
     global is_running, created_accounts
+    created_accounts.insert(0, {"time": time.strftime("%H:%M:%S"), "user": "SYSTEM", "proxy": "LOCAL", "status": "STARTING FACTORY... 🚀"})
     while is_running:
-        proxy_dict = get_proxy()
+        p = random.choice(MY_PROXIES).split(':') if MY_PROXIES else ["127.0.0.1", "8080"]
         user_fake = f"mo_{random.randint(100, 999)}_sec"
-        
-        try:
-            # محاكاة عملية الفحص والإنشاء
-            time.sleep(8) 
-            
-            new_log = {
-                "time": time.strftime("%H:%M:%S"),
-                "user": user_fake,
-                "proxy": proxy_dict['http'].split('@')[1] if proxy_dict else "NO PROXY",
-                "status": "RUNNING.. ⚙️"
-            }
-            created_accounts.insert(0, new_log)
-            if len(created_accounts) > 12: created_accounts.pop()
-        except:
-            pass
+        new_log = {"time": time.strftime("%H:%M:%S"), "user": user_fake, "proxy": p[0], "status": "CONNECTING.. ⚙️"}
+        created_accounts.insert(0, new_log)
+        if len(created_accounts) > 10: created_accounts.pop()
+        time.sleep(5)
 
 @app.route('/')
 def home():
@@ -105,7 +83,7 @@ def start():
     if not is_running:
         is_running = True
         threading.Thread(target=factory_engine, daemon=True).start()
-    return "OK"
+    return jsonify({"status": "success"})
 
 @app.route('/update_logs')
 def update_logs():
@@ -116,28 +94,29 @@ HTML_UI = """
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>MOHAMED SECURITY | FACTORY</title>
+    <title>MOHAMED SECURITY FACTORY</title>
+    
+    <link rel="icon" href="https://i.ibb.co/m5YfM5y/image.png" type="image/png">
+    <link rel="shortcut icon" href="https://i.ibb.co/m5YfM5y/image.png" type="image/png">
+
     <style>
-        body { background: #000; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; }
-        .box { border: 2px solid #00ff00; width: 85%; margin: 40px auto; padding: 20px; box-shadow: 0 0 15px #00ff00; border-radius: 15px; }
-        .btn { background: #00ff00; color: #000; padding: 15px 40px; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; font-size: 18px; }
-        .btn:hover { background: #fff; }
+        body { background: #000; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 20px; }
+        .box { border: 2px solid #00ff00; max-width: 850px; margin: auto; padding: 30px; box-shadow: 0 0 25px #00ff00; border-radius: 15px; background: rgba(0,10,0,0.8); }
+        .btn { background: #00ff00; color: #000; padding: 15px 45px; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; font-size: 20px; box-shadow: 0 0 15px #00ff00; transition: 0.3s; }
+        .btn:hover { background: #fff; box-shadow: 0 0 25px #fff; }
         table { width: 100%; margin-top: 30px; border-collapse: collapse; }
-        th { border-bottom: 2px solid #00ff00; padding: 10px; }
+        th { color: #fff; border-bottom: 2px solid #00ff00; padding: 10px; }
         td { padding: 12px; border-bottom: 1px solid #003300; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="box">
         <h1>MOHAMED SECURITY FACTORY</h1>
-        <p>ACTIVE PROXIES: {{ p_count }} ✅</p>
-        <hr style="border: 0.5px solid #003300;">
-        <br>
+        <p style="font-size: 18px;">ACTIVE PROXIES: <span style="color: #fff;">{{ p_count }}</span> ✅</p>
+        <hr style="border: 0; border-top: 1px solid #004400; margin: 20px 0;">
         <button class="btn" onclick="fetch('/start_factory')">RUN PRODUCTION 🚀</button>
         <table>
-            <thead>
-                <tr><th>TIME</th><th>ACCOUNT</th><th>PROXY IP</th><th>STATUS</th></tr>
-            </thead>
+            <thead><tr><th>TIME</th><th>ACCOUNT</th><th>PROXY IP</th><th>STATUS</th></tr></thead>
             <tbody id="log-table"></tbody>
         </table>
     </div>
@@ -145,12 +124,10 @@ HTML_UI = """
         setInterval(() => {
             fetch('/update_logs').then(r => r.json()).then(data => {
                 let rows = '';
-                data.forEach(d => {
-                    rows += <tr><td>${d.time}</td><td>${d.user}</td><td>${d.proxy}</td><td>${d.status}</td></tr>;
-                });
+                data.forEach(d => { rows += <tr><td>${d.time}</td><td>${d.user}</td><td>${d.proxy}</td><td>${d.status}</td></tr>; });
                 document.getElementById('log-table').innerHTML = rows;
             });
-        }, 2500);
+        }, 2000);
     </script>
 </body>
 </html>

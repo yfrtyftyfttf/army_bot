@@ -1,9 +1,14 @@
-import threading, time, random, requests
-from flask import Flask, render_template_string, jsonify
+import telebot
+import threading
+import time
+import random
 
-app = Flask(__name__)
+# --- ⚙️ إعدادات التحكم ---
+BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
+ADMIN_ID =  "6695916631"
+# -----------------------
 
-# --- 🟢 ضع البروكسيات هنا 🟢 ---
+# --- 🟢 قائمة البروكسيات ---
 proxies_data = """
 82.24.249.101:5938:njhuvsdz:wp92l0dkdkoc 
 82.29.244.57:5880:njhuvsdz:wp92l0dkdkoc 
@@ -56,93 +61,53 @@ proxies_data = """
 46.203.154.160:5603:njhuvsdz:wp92l0dkdkoc 
 82.23.204.254:7086:njhuvsdz:wp92l0dkdkoc
 """
-# ------------------------------
+# --------------------------
 
+bot = telebot.TeleBot(BOT_TOKEN)
 MY_PROXIES = [line.strip() for line in proxies_data.strip().split('\n') if line.strip()]
-created_accounts = []
 is_running = False
 
 def factory_engine():
-    global is_running, created_accounts
-    # سطر للتأكد من أن السيرفر استيقظ
-    created_accounts.insert(0, {"time": time.strftime("%H:%M:%S"), "user": "SYSTEM", "proxy": "LOCAL", "status": "CONNECTED & READY ✅"})
+    global is_running
+    bot.send_message(ADMIN_ID, "🚀 تم تشغيل المصنع بنجاح.. جاري بدء الإنتاج!")
     
     while is_running:
-        try:
-            p = random.choice(MY_PROXIES).split(':') if MY_PROXIES else ["127.0.0.1", "8080"]
-            user_fake = f"mo_{random.randint(100, 999)}_sec"
-            new_log = {"time": time.strftime("%H:%M:%S"), "user": user_fake, "proxy": p[0], "status": "RUNNING.. ⚙️"}
-            created_accounts.insert(0, new_log)
-            if len(created_accounts) > 12: created_accounts.pop()
-        except:
-            pass
-        time.sleep(4)
+        # هنا تضع كود إنشاء الحسابات الخاص بك
+        # مثال على إرسال تقرير لكل عملية:
+        p = random.choice(MY_PROXIES).split(':') if MY_PROXIES else ["127.0.0.1"]
+        user_fake = f"mo_{random.randint(100, 999)}_sec"
+        
+        log_msg = f"✅ محاولة جديدة:\n👤 User: {user_fake}\n🌐 Proxy: {p[0]}\n⚙️ Status: Running..."
+        bot.send_message(ADMIN_ID, log_msg)
+        
+        time.sleep(10) # الوقت بين كل عملية
 
-@app.route('/')
-def home():
-    return render_template_string(HTML_UI, p_count=len(MY_PROXIES))
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    if message.from_user.id == ADMIN_ID:
+        markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = telebot.types.KeyboardButton("🚀 تشغيل المصنع")
+        btn2 = telebot.types.KeyboardButton("🛑 إيقاف المصنع")
+        markup.add(btn1, btn2)
+        bot.reply_to(message, "مرحباً بك في لوحة تحكم MOHAMED SECURITY 🛡️", reply_markup=markup)
 
-@app.route('/start_factory')
-def start():
+@bot.message_handler(func=lambda m: True)
+def control_factory(message):
     global is_running
-    if not is_running:
-        is_running = True
-        t = threading.Thread(target=factory_engine, daemon=True)
-        t.start()
-    return jsonify({"status": "success"})
+    if message.from_user.id == ADMIN_ID:
+        if message.text == "🚀 تشغيل المصنع":
+            if not is_running:
+                is_running = True
+                threading.Thread(target=factory_engine, daemon=True).start()
+                bot.send_message(ADMIN_ID, "⚙️ جاري تحضير السيرفر...")
+            else:
+                bot.send_message(ADMIN_ID, "⚠️ المصنع شغال بالفعل!")
+        
+        elif message.text == "🛑 إيقاف المصنع":
+            is_running = False
+            bot.send_message(ADMIN_ID, "🛑 تم إيقاف الإنتاج.")
 
-@app.route('/update_logs')
-def update_logs():
-    return jsonify(created_accounts)
-
-HTML_UI = """
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <title>MOHAMED SECURITY</title>
-    <link rel="icon" href="https://i.ibb.co/m5YfM5y/image.png?v=2" type="image/png">
-    <style>
-        body { background: #000; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 20px; }
-        .box { border: 2px solid #00ff00; max-width: 800px; margin: auto; padding: 25px; box-shadow: 0 0 25px #00ff00; border-radius: 15px; }
-        .btn { background: #00ff00; color: #000; padding: 15px 40px; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; font-size: 18px; box-shadow: 0 0 10px #00ff00; }
-        .btn:active { background: #fff; }
-        table { width: 100%; margin-top: 30px; border-collapse: collapse; }
-        th { border-bottom: 2px solid #00ff00; padding: 10px; color: #fff; }
-        td { padding: 12px; border-bottom: 1px solid #003300; }
-    </style>
-</head>
-<body>
-    <div class="box">
-        <h1>MOHAMED SECURITY FACTORY</h1>
-        <p>ACTIVE PROXIES: {{ p_count }} ✅</p>
-        <button class="btn" id="runBtn" onclick="runFactory()">RUN PRODUCTION 🚀</button>
-        <table>
-            <thead><tr><th>TIME</th><th>ACCOUNT</th><th>PROXY IP</th><th>STATUS</th></tr></thead>
-            <tbody id="log-table"></tbody>
-        </table>
-    </div>
-    <script>
-        function runFactory() {
-            document.getElementById('runBtn').innerText = "FACTORY LIVE 🟢";
-            fetch('/start_factory');
-        }
-
-        setInterval(() => {
-            fetch('/update_logs').then(r => r.json()).then(data => {
-                let rows = '';
-                if(data.length > 0) {
-                    data.forEach(d => {
-                        rows += <tr><td>${d.time}</td><td>${d.user}</td><td>${d.proxy}</td><td>${d.status}</td></tr>;
-                    });
-                    document.getElementById('log-table').innerHTML = rows;
-                }
-            });
-        }, 2000);
-    </script>
-</body>
-</html>
-"""
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+# تشغيل البوت
+if __name__ == "__main__":
+    print("Bot is running...")
+    bot.infinity_polling()

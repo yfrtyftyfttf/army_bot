@@ -145,7 +145,7 @@ HTML_TEMPLATE = """
         });
     }
     setInterval(drawMatrix, 50);
-    function login() { if(document.getElementById("pass").value === "hx888") { $("#gate").hide(); $("#mainApp").show(); } else { alert("ACCESS DENIED"); } }
+    function login() { if(document.getElementById("pass").value === "hx555") { $("#gate").hide(); $("#mainApp").show(); } else { alert("ACCESS DENIED"); } }
     function action(c) { 
         $.getJSON("/cmd/"+c); 
         $("#status-text").text(c === 'start' ? 'RUNNING' : 'OFFLINE').css('color', c === 'start' ? '#0f0' : 'red');

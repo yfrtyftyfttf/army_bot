@@ -2,14 +2,14 @@ import telebot, requests, os, random, time, threading
 from flask import Flask, render_template_string, jsonify
 from datetime import datetime
 
-# --- [ إعدادات البوت والقناة ] ---
+# --- [ إعدادات البوت والتحكم ] ---
 BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE"
-MY_ID = "6695916631"
-PASSWORD_SYSTEM = "KAIL"  # كلمة السر الخاصة بك
+MY_ID = "6190753066"
+PASSWORD_SYSTEM = "hx555"  # كلمة السر للدخول
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# --- [ البروكسيات الـ 50 ] ---
+# --- [ قائمة البروكسيات ] ---
 RAW_PROXIES = """
 82.24.249.101:5938:njhuvsdz:wp92l0dkdkoc
 82.29.244.57:5880:njhuvsdz:wp92l0dkdkoc
@@ -64,6 +64,7 @@ RAW_PROXIES = """
 """
 PROXIES_LIST = [p.strip() for p in RAW_PROXIES.strip().split('\n') if p.strip()]
 
+# --- [ متغيرات الحالة ] ---
 stats = {"checked": 0, "found": 0, "errors": 0, "logs": []}
 found_accounts = [] 
 already_checked = set()
@@ -80,46 +81,49 @@ HTML_TEMPLATE = """
     <style>
         body { margin: 0; background: #000; color: #00f2ff; font-family: 'Courier New', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
         #gate { position: fixed; inset: 0; background: #000; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 4px double #00f2ff; }
-        #mainApp { display: none; width: 950px; height: 650px; border: 2px solid #00f2ff; position: relative; border-radius: 15px; box-shadow: 0 0 30px #00f2ff44; }
-        .stat-box { background: rgba(0, 15, 30, 0.9); border: 1px solid #00f2ff; padding: 15px; border-radius: 10px; width: 140px; text-align: center; position: absolute; }
+        #mainApp { display: none; width: 950px; height: 650px; border: 2px solid #00f2ff; position: relative; border-radius: 15px; box-shadow: 0 0 30px #00f2ff44; background: rgba(0,0,0,0.9); }
+        .stat-box { background: rgba(0, 15, 30, 0.9); border: 1px solid #00f2ff; padding: 15px; border-radius: 10px; width: 140px; text-align: center; }
         .btn { background: rgba(0,242,255,0.1); border: 1px solid #00f2ff; color: #00f2ff; padding: 10px 25px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; }
         .btn:hover { background: #00f2ff; color: #000; box-shadow: 0 0 15px #00f2ff; }
-        .log-screen { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; height: 200px; background: rgba(0,0,0,0.8); border: 1px solid #00f2ff; padding: 10px; overflow-y: auto; font-size: 12px; color: #00ffaa; }
+        .log-screen { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; height: 200px; background: rgba(0,0,0,0.8); border: 1px solid #00f2ff; padding: 10px; overflow-y: auto; font-size: 12px; color: #00ffaa; text-align: left; }
         #hits-panel { display: none; position: absolute; inset: 10px; background: #000; border: 2px solid #0f0; z-index: 100; border-radius: 10px; padding: 20px; }
+        .matrix-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.3; }
     </style>
 </head>
 <body>
 
 <div id="gate">
     <h1 style="letter-spacing: 15px; text-shadow: 0 0 10px #00f2ff;">SYSTEM ENCRYPTION</h1>
-    <input type="password" id="p" placeholder="••••••" style="background:transparent; border:1px solid #00f2ff; color:#00f2ff; padding:15px; text-align:center; font-size:20px; margin:20px;">
+    <input type="password" id="passInput" placeholder="ENTER KEY" style="background:transparent; border:1px solid #00f2ff; color:#00f2ff; padding:15px; text-align:center; font-size:20px; margin:20px; outline:none;">
     <button class="btn" onclick="checkPass()">AUTHORIZE</button>
 </div>
 
 <div id="mainApp">
-    <div style="position: absolute; top: 20px; left: 20px; display: flex; align-items: center; gap: 10px;">
-        <a href="https://instagram.com/kail.911" target="_blank" style="color: #00f2ff; text-decoration: none; font-size: 20px;">
-            <i class="fab fa-instagram"></i> kail.911
-        </a>
+    <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fab fa-instagram" style="font-size: 24px;"></i>
+            <a href="https://instagram.com/kail.911" target="_blank" style="color: #00f2ff; text-decoration: none; font-size: 20px; font-weight: bold;">kail.911</a>
+        </div>
+        <div id="status" style="color: #0f0; font-weight: bold;">STATUS: STANDBY</div>
     </div>
 
-    <div class="stats-row" style="margin-top: 100px; display: flex; justify-content: center; gap: 30px;">
-        <div class="stat-box" style="position:relative;">CHECKED<b id="c" style="display:block; font-size:30px;">0</b></div>
-        <div class="stat-box" style="position:relative; border-color:#0f0;">FOUND<b id="f" style="display:block; font-size:30px; color:#0f0;">0</b></div>
-        <div class="stat-box" style="position:relative; border-color:red;">ERRORS<b id="e" style="display:block; font-size:30px; color:red;">0</b></div>
+    <div style="display: flex; justify-content: center; gap: 30px; margin-top: 50px;">
+        <div class="stat-box">CHECKED<b id="c" style="display:block; font-size:30px;">0</b></div>
+        <div class="stat-box" style="border-color:#0f0;">FOUND<b id="f" style="display:block; font-size:30px; color:#0f0;">0</b></div>
+        <div class="stat-box" style="border-color:red;">ERRORS<b id="e" style="display:block; font-size:30px; color:red;">0</b></div>
     </div>
 
-    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 150px;">
-        <button class="btn" onclick="act('start')">START</button>
-        <button class="btn" onclick="act('stop')" style="border-color:red; color:red;">STOP</button>
-        <button class="btn" onclick="$('#hits-panel').fadeIn()" style="border-color:#0f0; color:#0f0;">HITS</button>
+    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 100px;">
+        <button class="btn" onclick="control('start')">START <i class="fas fa-bolt"></i></button>
+        <button class="btn" onclick="control('stop')" style="border-color:red; color:red;">STOP <i class="fas fa-stop"></i></button>
+        <button class="btn" onclick="$('#hits-panel').fadeIn()" style="border-color:#0f0; color:#0f0;">HITS <i class="fas fa-crosshairs"></i></button>
     </div>
 
     <div class="log-screen" id="logs"></div>
 
     <div id="hits-panel">
         <div style="display:flex; justify-content:space-between; border-bottom:1px solid #0f0; padding-bottom:10px;">
-            <h2 style="color:#0f0; margin:0;">CAPTURED HITS</h2>
+            <h2 style="color:#0f0; margin:0;">DATABASE HITS</h2>
             <button class="btn" onclick="$('#hits-panel').fadeOut()" style="color:red; border-color:red;">CLOSE</button>
         </div>
         <div id="hits-body" style="height:450px; overflow-y:auto; margin-top:10px; color:#0f0;"></div>
@@ -128,17 +132,29 @@ HTML_TEMPLATE = """
 
 <script>
     function checkPass() {
-        if ($("#p").val() === "{{pass}}") { $("#gate").fadeOut(); $("#mainApp").fadeIn(); }
-        else { alert("ACCESS DENIED"); }
+        if ($("#passInput").val() === "{{password}}") {
+            $("#gate").fadeOut();
+            $("#mainApp").fadeIn();
+        } else {
+            alert("ACCESS DENIED: INVALID KEY");
+        }
     }
-    function act(c) { $.getJSON("/cmd/"+c); }
+
+    function control(cmd) {
+        $.getJSON("/cmd/" + cmd);
+        if(cmd === 'start') $("#status").text("STATUS: RUNNING").css("color", "#0f0");
+        else $("#status").text("STATUS: STOPPED").css("color", "red");
+    }
+
     setInterval(() => {
         $.getJSON("/api/stats", (d) => {
-            $("#c").text(d.checked); $("#f").text(d.found); $("#e").text(d.errors);
+            $("#c").text(d.checked);
+            $("#f").text(d.found);
+            $("#e").text(d.errors);
             $("#logs").html(d.logs.map(m => `<div>> ${m}</div>`).join('')).scrollTop(9999);
         });
         $.getJSON("/api/hits", (data) => {
-            $("#hits-body").html(data.map(x => `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #0f02;"><span>@${x.user}</span><span>${x.time}</span></div>`).join(''));
+            $("#hits-body").html(data.map(x => `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #0f02;"><span>@${x.user}</span><span>${x.time}</span></div>`).join(''));
         });
     }, 1000);
 </script>
@@ -147,34 +163,40 @@ HTML_TEMPLATE = """
 """
 
 @app.route("/")
-def index(): return render_template_string(HTML_TEMPLATE, pass=PASSWORD_SYSTEM)
+def index():return render_template_string(HTML_TEMPLATE, password=PASSWORD_SYSTEM)
 
 @app.route("/api/stats")
-def stats_api(): return jsonify(stats)
+def stats_api():
+    return jsonify(stats)
 
 @app.route("/api/hits")
-def hits_api(): return jsonify(found_accounts)
+def hits_api():
+    return jsonify(found_accounts)
 
 @app.route("/cmd/<c>")
 def cmd(c):
     global hunting_active
     if c == "start" and not hunting_active:
         hunting_active = True
-        for _ in range(10): threading.Thread(target=hunt, daemon=True).start()
-    elif c == "stop": hunting_active = False
+        for _ in range(10):
+            threading.Thread(target=hunt, daemon=True).start()
+    elif c == "stop":
+        hunting_active = False
     return jsonify(ok=True)
 
 def hunt():
     while hunting_active:
         user = "".join(random.choice("abcdefghijklmnopqrstuvwxyz1234567890._") for _ in range(5))
         if user in already_checked: continue
-            already_checked.add(user)
+        already_checked.add(user)
+        
         px = {}
         if PROXIES_LIST:
             p = random.choice(PROXIES_LIST).split(':')
             if len(p) == 4:
                 fmt = f"http://{p[2]}:{p[3]}@{p[0]}:{p[1]}"
                 px = {"http": fmt, "https": fmt}
+        
         try:
             res = requests.get(f"https://www.instagram.com/{user}/", timeout=10, proxies=px)
             stats["checked"] += 1
@@ -188,6 +210,8 @@ def hunt():
                 stats["logs"].append(f"Checked: @{user}")
         except:
             stats["errors"] += 1
+        
+        if len(stats["logs"]) > 15: stats["logs"].pop(0)
         time.sleep(0.1)
 
 if __name__ == "__main__":

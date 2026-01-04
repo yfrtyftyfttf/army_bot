@@ -2,12 +2,13 @@ import telebot, requests, os, random, time, threading
 from flask import Flask, render_template_string, jsonify
 from datetime import datetime
 
-# --- [ الإعدادات الأساسية ] ---
-BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE"
+# --- [ إعدادات البوت - ضع معلوماتك هنا ] ---
+BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
+MY_ID = "6695916631"
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# --- [ قسم البروكسيات ] ---
+# --- [ قسم البروكسيات - الصق القائمة هنا ] ---
 RAW_PROXIES = """
 82.24.249.101:5938:njhuvsdz:wp92l0dkdkoc 
 82.29.244.57:5880:njhuvsdz:wp92l0dkdkoc 
@@ -62,13 +63,13 @@ RAW_PROXIES = """
 """
 PROXIES_LIST = [p.strip() for p in RAW_PROXIES.strip().split('\n') if p.strip()]
 
-# --- [ تخزين البيانات ] ---
+# --- [ نظام تخزين البيانات والبلوكشن ] ---
 stats = {"checked": 0, "found": 0, "errors": 0, "logs": []}
 found_accounts = [] 
+already_checked = set() 
 hunting_active = False
 
-# --- [ واجهة النظام - HTML_TEMPLATE ] ---
-# (لقد تركت كود الـ HTML كما هو لأنه سليم برمجياً)
+# --- [ واجهة KAIL.911 الاحترافية ] ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -83,17 +84,15 @@ HTML_TEMPLATE = """
         #matrix { position: absolute; inset: 0; z-index: 1; opacity: 0.3; }
         .ui-element { position: relative; z-index: 3; }
         .header-panel { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-around; align-items: center; }
-        .insta-link { color: #fff; text-decoration: none; background: rgba(225,48,108,0.2); border: 1px solid #e1306c; padding: 8px 15px; border-radius: 20px; font-size: 14px; box-shadow: 0 0 10px #e1306c; }
         .stats-row { position: absolute; top: 120px; width: 100%; display: flex; justify-content: center; gap: 25px; }
         .stat-box { background: rgba(0, 20, 40, 0.8); border: 1px solid #00f2ff; padding: 15px; border-radius: 10px; width: 150px; text-align: center; }
         .stat-box b { font-size: 32px; display: block; margin-top: 5px; }
         .controls { position: absolute; bottom: 260px; width: 100%; display: flex; justify-content: center; gap: 15px; }
-        .btn { background: rgba(0,242,255,0.1); border: 1px solid #00f2ff; color: #00f2ff; padding: 12px 30px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; text-transform: uppercase; }
+        .btn { background: rgba(0,242,255,0.1); border: 1px solid #00f2ff; color: #00f2ff; padding: 12px 30px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; }
         .btn:hover { background: #00f2ff; color: #000; box-shadow: 0 0 20px #00f2ff; }
         .log-screen { position: absolute; bottom: 30px; left: 5%; width: 90%; height: 200px; background: rgba(0,10,20,0.9); border: 1px solid #00f2ff; padding: 10px; overflow-y: auto; font-size: 13px; color: #00ffaa; text-align: left; direction: ltr; }
         #hits-panel { display: none; position: absolute; inset: 30px; background: #000; border: 2px solid #0f0; z-index: 100; border-radius: 15px; padding: 20px; box-shadow: 0 0 40px #0f05; }
-        .hits-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #0f0; padding-bottom: 10px; }
-        .hits-list { margin-top: 15px; height: 450px; overflow-y: auto; }
+        .hits-list { margin-top: 15px; height: 430px; overflow-y: auto; }
         .hit-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px dashed #0f03; color: #0f0; }
         .gate { position: fixed; inset: 0; background: #000; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .gate input { background: transparent; border: 1px solid #00f2ff; color: #00f2ff; padding: 15px; font-size: 20px; text-align: center; border-radius: 8px; outline: none; }
@@ -110,7 +109,7 @@ HTML_TEMPLATE = """
     <canvas id="matrix"></canvas>
     <div class="header-panel ui-element">
         <div style="font-weight: bold;">STATUS: <span id="status-text" style="color:red;">OFFLINE</span></div>
-        <a href="https://www.instagram.com/kail.911" target="_blank" class="insta-link"><i class="fab fa-instagram"></i> kail.911</a>
+        <a href="https://www.instagram.com/kail.911" target="_blank" style="color:#fff; text-decoration:none;">@kail.911</a>
     </div>
     <div class="stats-row ui-element">
         <div class="stat-box">CHECKED<b id="c">0</b></div>
@@ -118,15 +117,15 @@ HTML_TEMPLATE = """
         <div class="stat-box" style="border-color:red;">ERRORS<b id="e" style="color:red;">0</b></div>
     </div>
     <div class="controls ui-element">
-        <button class="btn" onclick="action('start')"><i class="fas fa-bolt"></i> START</button>
-        <button class="btn" onclick="action('stop')" style="color:red; border-color:red;"><i class="fas fa-power-off"></i> STOP</button>
-        <button class="btn" onclick="showHits()" style="color:#0f0; border-color:#0f0;"><i class="fas fa-crosshairs"></i> HITS</button>
+        <button class="btn" onclick="action('start')">START</button>
+        <button class="btn" onclick="action('stop')" style="color:red; border-color:red;">STOP</button>
+        <button class="btn" onclick="showHits()" style="color:#0f0; border-color:#0f0;">HITS</button>
     </div>
     <div class="log-screen ui-element" id="logs"></div>
     <div id="hits-panel">
-        <div class="hits-header">
-            <h2 style="margin:0; color:#0f0;">SUCCESSFUL CAPTURES</h2>
-            <button class="btn" onclick="closeHits()" style="color:red; border-color:red;">CLOSE</button>
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #0f0;">
+            <h2 style="color:#0f0;">CAPTURED ACCOUNTS</h2>
+            <button class="btn" onclick="closeHits()" style="color:red;">CLOSE</button>
         </div>
         <div class="hits-list" id="hits-body"></div>
     </div>
@@ -145,17 +144,16 @@ HTML_TEMPLATE = """
         });
     }
     setInterval(drawMatrix, 50);
-    function login() { if(document.getElementById("pass").value === "hx555") { $("#gate").hide(); $("#mainApp").show(); } else { alert("ACCESS DENIED"); } }
+    function login() { $("#gate").hide(); $("#mainApp").show(); }
     function action(c) { 
         $.getJSON("/cmd/"+c); 
         $("#status-text").text(c === 'start' ? 'RUNNING' : 'OFFLINE').css('color', c === 'start' ? '#0f0' : 'red');
     }
     function showHits() {
         $.getJSON("/api/hits", (data) => {
-            let h = data.length ? "" : "<div style='text-align:center; padding:50px;'>No targets captured yet.</div>";
+            let h = data.length ? "" : "<div style='text-align:center;'>Empty...</div>";
             data.forEach(x => h += `<div class="hit-row"><span>@${x.user}</span><span>${x.time}</span></div>`);
-            $("#hits-body").html(h);
-            $("#hits-panel").fadeIn();
+            $("#hits-body").html(h); $("#hits-panel").fadeIn();
         });
     }
     function closeHits() { $("#hits-panel").fadeOut(); }
@@ -172,40 +170,36 @@ HTML_TEMPLATE = """
 """
 
 @app.route("/")
-def index(): 
-    return render_template_string(HTML_TEMPLATE)
+def index(): return render_template_string(HTML_TEMPLATE)
 
 @app.route("/api/stats")
-def stats_api(): 
-    return jsonify(stats)
+def stats_api(): return jsonify(stats)
 
 @app.route("/api/hits")
-def hits_api(): 
-    return jsonify(found_accounts)
+def hits_api(): return jsonify(found_accounts)
 
 @app.route("/cmd/<c>")
 def cmd(c):
     global hunting_active
     if c == "start" and not hunting_active:
         hunting_active = True
-        threading.Thread(target=hunt, daemon=True).start()
-    elif c == "stop": 
-        hunting_active = False
+        for _ in range(3):
+            threading.Thread(target=hunt, daemon=True).start()
+    elif c == "stop": hunting_active = False
     return jsonify(ok=True)
 
 def hunt():
-    global hunting_active
     while hunting_active:
-        # توليد اسم مستخدم عشوائي
-        user = "".join(random.choice("abcdefghijklmnopqrstuvwxyz1234567890._") for _ in range(4))
-        url = f"https://www.instagram.com/{user}/"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        user = "".join(random.choice("abcdefghijklmnopqrstuvwxyz1234567890._") for _ in range(5))
+        if user in already_checked: continue
+        already_checked.add(user)
         
+        url = f"https://www.instagram.com/{user}/"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         px = {}
         if PROXIES_LIST:
             p = random.choice(PROXIES_LIST)
-            if not p.startswith('http'): 
-                p = 'http://' + p
+            if not p.startswith('http'): p = 'http://' + p
             px = {"http": p, "https": p}
         
         try:
@@ -215,21 +209,20 @@ def hunt():
                 stats["found"] += 1
                 now = datetime.now().strftime("%H:%M:%S")
                 found_accounts.append({"user": user, "time": now})
+                # إرسال التنبيه للبوت
                 try:
-                    bot.send_message("-1002361139454", f"🔥 [HIT] Available: @{user}")
+                    bot.send_message(MY_ID, f"🔥 [HIT] New Instagram Available:\n\nTarget: @{user}\nTime: {now}\n\nKAIL.911 SYSTEM ✅")
                 except:
                     pass
-                stats["logs"].append(f"SUCCESS: @{user} is available!")
+                stats["logs"].append(f"SUCCESS: @{user}")
             else:
-                stats["logs"].append(f"Checked: @{user} (Taken)")
+                stats["logs"].append(f"Taken: @{user}")
         except:
             stats["errors"] += 1
-            stats["logs"].append("Proxy link failed. Rotating...")
+            stats["logs"].append("Proxy rotation...")
         
-        if len(stats["logs"]) > 15: 
-            stats["logs"].pop(0)
-        time.sleep(0.7)
+        if len(stats["logs"]) > 12: stats["logs"].pop(0)
+        time.sleep(0.5)
 
 if __name__ == "__main__":
-    # تم تصحيح name لتصبح __name__
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

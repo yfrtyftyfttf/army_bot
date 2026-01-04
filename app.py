@@ -2,13 +2,13 @@ import telebot, requests, os, random, time, threading
 from flask import Flask, render_template_string, jsonify
 from datetime import datetime
 
-# --- [ إعدادات البوت - ضع معلوماتك هنا ] ---
-BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE" # التوكن الخاص بك
-MY_ID = "6190753066" # الأيدي الخاص بك
+# --- [ إعدادات البوت والقناة ] ---
+BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE"
+MY_ID = "6190753066"
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# --- [ قائمة البروكسيات الخاصة بك (مدمجة وجاهزة) ] ---
+# --- [ البروكسيات الـ 50 الخاصة بك ] ---
 RAW_PROXIES = """
 82.24.249.101:5938:njhuvsdz:wp92l0dkdkoc
 82.29.244.57:5880:njhuvsdz:wp92l0dkdkoc
@@ -63,13 +63,12 @@ RAW_PROXIES = """
 """
 PROXIES_LIST = [p.strip() for p in RAW_PROXIES.strip().split('\n') if p.strip()]
 
-# --- [ البيانات والنظام ] ---
+# --- [ النظام ] ---
 stats = {"checked": 0, "found": 0, "errors": 0, "logs": []}
 found_accounts = [] 
 already_checked = set() 
 hunting_active = False
 
-# --- [ الواجهة ] ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -80,29 +79,22 @@ HTML_TEMPLATE = """
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Courier New', monospace; overflow: hidden; color: #00f2ff; }
-        .main-container { position: relative; width: 950px; height: 650px; border: 2px solid #00f2ff; border-radius: 15px; box-shadow: 0 0 25px #00f2ff55; display: none; background: #000; }
+        .main-container { position: relative; width: 950px; height: 650px; border: 2px solid #00f2ff; border-radius: 15px; box-shadow: 0 0 25px #00f2ff55; display: block; background: #000; }
         #matrix { position: absolute; inset: 0; z-index: 1; opacity: 0.2; }
         .ui-element { position: relative; z-index: 3; }
         .stats-row { position: absolute; top: 100px; width: 100%; display: flex; justify-content: center; gap: 20px; }
         .stat-box { background: rgba(0, 15, 30, 0.9); border: 1px solid #00f2ff; padding: 20px; border-radius: 10px; width: 160px; text-align: center; }
         .stat-box b { font-size: 35px; display: block; }
         .controls { position: absolute; bottom: 250px; width: 100%; display: flex; justify-content: center; gap: 15px; }
-        1); border: 1px solid #00f2ff; color: #00f2ff; padding: 12px 35px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .btn { background: rgba(0,242,255,0.1); border: 1px solid #00f2ff; color: #00f2ff; padding: 12px 35px; cursor: pointer; border-radius: 5px; font-weight: bold; }
         .btn:hover { background: #00f2ff; color: #000; box-shadow: 0 0 15px #00f2ff; }
         .log-screen { position: absolute; bottom: 30px; left: 5%; width: 90%; height: 180px; background: rgba(0,0,0,0.9); border: 1px solid #00f2ff; padding: 10px; overflow-y: auto; font-size: 13px; color: #00ffaa; text-align: left; }
         #hits-panel { display: none; position: absolute; inset: 20px; background: #000; border: 2px solid #0f0; z-index: 100; border-radius: 15px; padding: 20px; }
         .hit-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px dashed #0f03; color: #0f0; }
-        .gate { position: fixed; inset: 0; background: #000; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .gate input { background: transparent; border: 1px solid #00f2ff; color: #00f2ff; padding: 15px; font-size: 20px; text-align: center; }
     </style>
 </head>
 <body>
-<div class="gate" id="gate">
-    <h1 style="letter-spacing: 10px;">KAIL.911</h1>
-    <input type="password" id="pass" placeholder="PASSWORD">
-    <br><button class="btn" onclick="login()">AUTHORIZE</button>
-</div>
-<div class="main-container" id="mainApp">
+<div class="main-container">
     <canvas id="matrix"></canvas>
     <div class="stats-row ui-element">
         <div class="stat-box">CHECKED<b id="c">0</b></div>
@@ -117,20 +109,18 @@ HTML_TEMPLATE = """
     <div class="log-screen ui-element" id="logs"></div>
     <div id="hits-panel">
         <div style="display:flex; justify-content:space-between; border-bottom:1px solid #0f0;">
-            <h2 style="color:#0f0;">HUNTING RESULTS</h2>
+            <h2 style="color:#0f0;">CAPTURED</h2>
             <button class="btn" onclick="closeHits()" style="color:red;">CLOSE</button>
         </div>
-        <div id="hits-body" style="height:450px; overflow-y:auto;"></div>
+        <div id="hits-body" style="height:450px; overflow-y:auto; margin-top:10px;"></div>
     </div>
 </div>
 <script>
-    function login() { $("#gate").hide(); $("#mainApp").show(); }
     function action(c) { $.getJSON("/cmd/"+c); }
     function showHits() {
         $.getJSON("/api/hits", (data) => {
             let h = data.map(x => `<div class="hit-row"><span>@${x.user}</span><span>${x.time}</span></div>`).join('');
-            $("#hits-body").html(h || "<div style='text-align:center;'>No Hits Yet</div>");
-            $("#hits-panel").fadeIn();
+            $("#hits-body").html(h || "No Hits Yet"); $("#hits-panel").fadeIn();
         });
     }
     function closeHits() { $("#hits-panel").fadeOut(); }
@@ -169,7 +159,6 @@ def hunt():
         if user in already_checked: continue
         already_checked.add(user)
         
-        # --- [ إعداد البروكسي باليوزر والباسورد ] ---
         px = {}
         if PROXIES_LIST:
             p = random.choice(PROXIES_LIST).split(':')
@@ -178,7 +167,7 @@ def hunt():
                 px = {"http": formatted, "https": formatted}
 
         try:
-            res = requests.get(f"https://www.instagram.com/{user}/", timeout=8, proxies=px)
+            res = requests.get(f"https://www.instagram.com/{user}/", timeout=10, proxies=px)
             stats["checked"] += 1
             if res.status_code == 404:
                 stats["found"] += 1
@@ -190,11 +179,10 @@ def hunt():
                 stats["logs"].append(f"Checked: @{user}")
         except:
             stats["errors"] += 1
-            stats["logs"].append("Proxy link error...")
+            stats["logs"].append("Proxy Error...")
         
         if len(stats["logs"]) > 10: stats["logs"].pop(0)
         time.sleep(0.3)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-        .btn { background: rgba(0,242,255,0.

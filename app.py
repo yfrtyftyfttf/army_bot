@@ -4,7 +4,7 @@ from flask import Flask, render_template_string, request, jsonify
 # --- [ إعدادات المطور Muhammad ] ---
 BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
 MY_ID = "6695916631"
-ADMIN_PASS = "hx2026"
+ADMIN_PASS = "hxm"
 INSTA_URL = "https://instagram.com/kail.911" # رابط حسابك
 
 bot = telebot.TeleBot(BOT_TOKEN)

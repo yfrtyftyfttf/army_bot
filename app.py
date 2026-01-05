@@ -132,4 +132,4 @@ if __name__ == "__main__":
     # الحصول على المنفذ من البيئة ليعمل على Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-                <input type="text" id="ui" placeholder="اكتب أمرك هنا.
+                <input type="text" id="ui" placeholder="اكتب أمرك هنا"

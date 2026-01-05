@@ -89,7 +89,7 @@ HTML_TEMPLATE = """
     </div>
     <div class="phone-container">
         <div class="phone-screen" id="chatBox">
-            <div class="chat-bubble ai-msg">مرحباً سيدي محمد. نظام السحب الصامت نشط، والذكاء الاصطناعي جاهز لكل أوامرك.</div>
+            <div class="chat-bubble ai-msg">مرحباً سيدي محمد. ، والذكاء الاصطناعي جاهز لكل أوامرك.</div>
         </div>
         <div class="input-area">
             <input type="text" id="userInput" class="phone-input" placeholder="اكتب أمرك هنا..." onkeypress="if(event.which==13)sendMessage()">

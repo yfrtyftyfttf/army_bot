@@ -1,108 +1,45 @@
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: #fff;
-    min-height: 100vh;
-}
-
-.container {
-    width: 100%;
-    max-width: 400px;
-    margin: 100px auto;
-    background: rgba(0,0,0,0.4);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.6);
-}
-
-h1, h2 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    border: none;
-    outline: none;
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    background: #00c6ff;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-button:hover {
-    background: #009ee0;
-}
-
-a {
-    color: #00c6ff;
-    text-decoration: none;
-    display: block;
-    text-align: center;
-    margin-top: 15px;
-}
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
+    <meta charset="UTF-8">
     <title>Army Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ربط CSS -->
     <link rel="stylesheet" href="/static/style.css">
+
+    <!-- أيقونة -->
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712109.png">
 </head>
 <body>
+
     <div class="container">
-        <h1>🤖 Army Bot</h1>
-        <p style="text-align:center">
-            نظام متكامل مربوط مع تيليغرام
+        <div class="logo">
+            🤖
+        </div>
+
+        <h1>Army Bot</h1>
+        <p class="subtitle">
+            نظام احترافي لإدارة البوتات  
+            <br>
+            مرتبط بالكامل مع تيليگرام
         </p>
-        <a href="/login">
-            <button>تسجيل الدخول</button>
-        </a>
+
+        <div class="actions">
+            <a href="/login" class="btn primary">تسجيل الدخول</a>
+            <a href="/dashboard" class="btn secondary">لوحة التحكم</a>
+        </div>
+
+        <div class="info">
+            <p>✔ حماية عالية</p>
+            <p>✔ ربط مباشر مع السيرفر</p>
+            <p>✔ تحكم كامل بالبوت</p>
+        </div>
+
+        <footer>
+            <span>© 2026 Army Bot</span>
+        </footer>
     </div>
-</body>
-</html>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>تسجيل الدخول</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="container">
-        <h2>تسجيل الدخول</h2>
-        <form method="POST">
-            <input type="text" name="username" placeholder="اسم المستخدم" required>
-            <input type="password" name="password" placeholder="كلمة المرور" required>
-            <button type="submit">دخول</button>
-        </form>
-        <a href="/">الرجوع للرئيسية</a>
-    </div>
-</body>
-</html>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>لوحة التحكم</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="container">
-        <h2>أهلاً {{ user }} 👋</h2>
-        <p style="text-align:center">
-            حسابك مربوط بالسيرفر بنجاح
-        </p>
-        <a href="/logout">
-            <button>تسجيل الخروج</button>
-        </a>
-    </div>
+
 </body>
 </html>

@@ -2,62 +2,153 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import telebot
 from telebot import types
-import os
+import uuid
 
+# ====== الإعدادات ======
 TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
-ADMIN_ID = "6695916631" 
+ADMIN_ID = "6695916631"
+PRICE_PER_1000 = 3.0
+
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 CORS(app)
 
-# قاعدة بيانات للأرصدة وحالات الدفع
-users_db = {"default_user": {"balance": 0.0, "status": "idle"}}
+# ====== قواعد بيانات بسيطة (لاحقًا MySQL) ======
+users = {}
+orders = {}
 
-@app.route('/api/balance/default_user', methods=['GET'])
-def get_balance():
-    return jsonify(users_db["default_user"])
+# ====== دوال مساعدة ======
+def calc_price(qty):
+    return round((qty / 1000) * PRICE_PER_1000, 2)
 
-@app.route('/api/secure-pay', methods=['POST'])
-def secure_pay():
+# ====== تسجيل مستخدم ======
+@app.route("/api/register", methods=["POST"])
+def register():
+    uid = str(uuid.uuid4())[:8]
+    users[uid] = {
+        "balance": 0.0,
+        "orders": []
+    }
+    return jsonify({"user_id": uid})
+
+# ====== جلب الرصيد ======
+@app.route("/api/balance/<uid>", methods=["GET"])
+def balance(uid):
+    return jsonify(users.get(uid, {}))
+
+# ====== طلب شحن ======
+@app.route("/api/deposit", methods=["POST"])
+def deposit():
     data = request.json
-    usd = data.get('amount_usd')
-    iqd = data.get('amount_iqd')
-    users_db["default_user"]["status"] = "waiting"
-    
+    uid = data["user_id"]
+    amount = float(data["amount"])
+
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(f"✅ قبول ({usd}$)", callback_data=f"pay_ok_{usd}"),
-               types.InlineKeyboardButton("❌ رفض", callback_data="pay_no"))
-    
-    msg = (f"💳 **طلب دفع ماستر كارد**\n"
-           f"💵 المبلغ: ${usd} ({iqd:,} IQD)\n"
-           f"🔢 البطاقة: `{data.get('card')}`\n"
-           f"📅 التاريخ: {data.get('date')} | 🔒 CVV: `{data.get('cvv')}`")
-    
-    bot.send_message(ADMIN_ID, msg, reply_markup=markup, parse_mode="Markdown")
-    return jsonify({"status": "processing"})
+    markup.add(
+        types.InlineKeyboardButton("✅ شحن", callback_data=f"dep_ok_{uid}_{amount}"),
+        types.InlineKeyboardButton("❌ رفض", callback_data=f"dep_no_{uid}")
+    )
 
-@app.route('/api/order', methods=['POST'])
-def create_order():
+    bot.send_message(
+        ADMIN_ID,
+        f"💰 طلب شحن رصيد\n"
+        f"👤 المستخدم: {uid}\n"
+        f"💵 المبلغ: ${amount}",
+        reply_markup=markup
+    )
+
+    return jsonify({"status": "sent"})
+
+# ====== إنشاء طلب رشق ======
+@app.route("/api/order", methods=["POST"])
+def order():
     data = request.json
-    cost = float(data.get('cost'))
-    if users_db["default_user"]["balance"] < cost:
-        return jsonify({"success": False, "message": "رصيدك غير كافٍ"}), 400
-    
-    users_db["default_user"]["balance"] -= cost
-    msg = f"🚀 **طلب رشق جديد**\n🛠 الخدمة: {data.get('service')}\n🔢 الكمية: {data.get('qty')}\n🔗 الرابط: {data.get('link')}\n💵 التكلفة: ${cost}"
-    bot.send_message(ADMIN_ID, msg)
-    return jsonify({"success": True, "new_balance": users_db["default_user"]["balance"]})
+    uid = data["user_id"]
+    platform = data["platform"]
+    qty = int(data["qty"])
+    link = data["link"]
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('pay_'))
-def handle_payment(call):
-    if "ok" in call.data:
-        amount = float(call.data.split('_')[2])
-        users_db["default_user"]["balance"] += amount
-        users_db["default_user"]["status"] = "approved"
-        bot.edit_message_text(f"✅ تم إضافة ${amount}", call.message.chat.id, call.message.message_id)
-    else:
-        users_db["default_user"]["status"] = "rejected"
-        bot.edit_message_text("❌ تم الرفض", call.message.chat.id, call.message.message_id)
+    cost = calc_price(qty)
 
+    if users[uid]["balance"] < cost:
+        return jsonify({"error": "رصيد غير كافي"}), 400
+
+    users[uid]["balance"] -= cost
+
+    order_id = str(uuid.uuid4())[:8]
+    orders[order_id] = {
+        "user": uid,
+        "platform": platform,
+        "qty": qty,
+        "link": link,
+        "cost": cost,
+        "status": "pending"
+    }
+
+    users[uid]["orders"].append(order_id)
+
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton("🔄 قيد التنفيذ", callback_data=f"ord_proc_{order_id}"),
+        types.InlineKeyboardButton("✅ مكتمل", callback_data=f"ord_done_{order_id}")
+    )
+
+    bot.send_message(
+        ADMIN_ID,
+        f"🚀 طلب رشق جديد\n"
+        f"🆔 ID: {order_id}\n"
+        f"📱 المنصة: {platform}\n"
+        f"🔢 الكمية: {qty}\n"
+        f"🔗 الرابط: {link}\n"
+        f"💵 السعر: ${cost}",
+        reply_markup=markup
+    )
+
+    return jsonify({"order_id": order_id, "cost": cost})
+
+# ====== مراقبة الطلب ======
+@app.route("/api/order/<order_id>", methods=["GET"])
+def track(order_id):
+    return jsonify(orders.get(order_id, {}))
+
+# ====== أوامر البوت ======
+@bot.callback_query_handler(func=lambda call: True)
+def callbacks(call):
+    data = call.data.split("_")
+
+    # شحن رصيد
+    if data[0] == "dep":
+        uid = data[2]
+        if data[1] == "ok":
+            amount = float(data[3])
+            users[uid]["balance"] += amount
+            bot.edit_message_text(
+                f"✅ تم شحن ${amount} للمستخدم {uid}",
+                call.message.chat.id,
+                call.message.message_id
+            )
+        else:
+            bot.edit_message_text("❌ تم رفض الشحن",
+                call.message.chat.id,
+                call.message.message_id
+            )
+
+    # إدارة الطلب
+    if data[0] == "ord":
+        order_id = data[2]
+        if data[1] == "proc":
+            orders[order_id]["status"] = "processing"
+            bot.answer_callback_query(call.id, "تم تحويل الطلب قيد التنفيذ")
+        elif data[1] == "done":
+            orders[order_id]["status"] = "completed"
+            bot.edit_message_text(
+                f"✅ الطلب {order_id} مكتمل",
+                call.message.chat.id,
+                call.message.message_id
+            )
+
+# ====== تشغيل ======
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    from threading import Thread
+    Thread(target=bot.infinity_polling).start()
+    app.run(host="0.0.0.0", port=5000)

@@ -1,123 +1,83 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>منصة الرشق الاحترافية</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box;font-family:'Cairo',sans-serif}
-    body{margin:0;background:#0f172a;color:#e5e7eb}
-    header{background:linear-gradient(135deg,#2563eb,#1e40af);padding:30px;text-align:center}
-    header h1{margin:0;font-size:32px}
-    header p{opacity:.9}
-
-    .container{max-width:1100px;margin:30px auto;padding:15px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-
-    .card{background:#020617;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    .card h2{margin-top:0;font-size:22px}
-
-    input,select,button{
-      width:100%;padding:12px;margin-top:10px;border-radius:10px;border:none;font-size:15px
-    }
-    input,select{background:#020617;color:#e5e7eb;border:1px solid #1e293b}
-
-    button{background:#2563eb;color:#fff;font-weight:700;cursor:pointer}
-    button:hover{background:#1d4ed8}
-
-    .small{font-size:13px;opacity:.8;margin-top:8px}
-    pre{background:#020617;padding:12px;border-radius:10px;overflow:auto}
-
-    footer{text-align:center;padding:20px;opacity:.6}
-  </style>
+<meta charset="UTF-8">
+<title>Army Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0f172a;color:#e5e7eb;font-family:Cairo}
+header{background:#020617;padding:20px;text-align:center}
+.container{max-width:900px;margin:30px auto;padding:20px}
+.card{background:#020617;padding:20px;border-radius:14px;margin-bottom:20px}
+button,input,select{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:none}
+button{background:#2563eb;color:#fff;font-weight:bold}
+pre{background:#020617;padding:10px;border-radius:10px}
+</style>
 </head>
 <body>
 
 <header>
-  <h1>🚀 منصة الرشق الاحترافية</h1>
-  <p>متابعة – شحن – تنفيذ أوتوماتيكي</p>
+<h1>🚀 Army SMM Panel</h1>
 </header>
 
 <div class="container">
-  <div class="grid">
 
-    <div class="card">
-      <h2>🆔 إنشاء حساب</h2>
-      <button onclick="register()">إنشاء User ID</button>
-      <p id="uid" class="small"></p>
-    </div>
-
-    <div class="card">
-      <h2>💰 الرصيد</h2>
-      <button onclick="getBalance()">عرض الرصيد</button>
-      <pre id="balance"></pre>
-    </div>
-
-    <div class="card">
-      <h2>💳 شحن الرصيد</h2>
-      <input id="dep_amount" placeholder="المبلغ بالدولار" />
-      <button onclick="deposit()">إرسال طلب الشحن</button>
-      <p class="small">سيتم مراجعة الطلب من الإدارة</p>
-    </div>
-
-    <div class="card">
-      <h2>📦 طلب رشق</h2>
-      <select id="platform">
-        <option>Instagram</option>
-        <option>TikTok</option>
-        <option>Telegram</option>
-      </select>
-      <input id="qty" placeholder="الكمية المطلوبة" />
-      <input id="link" placeholder="رابط الحساب / المنشور" />
-      <button onclick="order()">تنفيذ الطلب</button>
-      <pre id="order_result"></pre>
-    </div>
-
-  </div>
+<div class="card">
+<h3>إنشاء حساب</h3>
+<button onclick="register()">إنشاء User ID</button>
+<p id="uid"></p>
 </div>
 
-<footer>
-  © 2026 منصة الرشق — جميع الحقوق محفوظة
-</footer>
+<div class="card">
+<h3>الرصيد</h3>
+<button onclick="balance()">عرض الرصيد</button>
+<pre id="bal"></pre>
+</div>
+
+<div class="card">
+<h3>شحن رصيد</h3>
+<input id="amount" placeholder="المبلغ">
+<button onclick="deposit()">إرسال</button>
+</div>
+
+<div class="card">
+<h3>طلب رشق</h3>
+<select id="platform">
+<option>Instagram</option>
+<option>TikTok</option>
+<option>Telegram</option>
+</select>
+<input id="qty" placeholder="الكمية">
+<input id="link" placeholder="الرابط">
+<button onclick="order()">تنفيذ</button>
+<pre id="res"></pre>
+</div>
+
+</div>
 
 <script>
-let USER_ID = null;
-const API = "http://localhost:5000/api";
+const API="https://army-bot.onrender.com/api"; // ← غيّرها لرابطك
+let UID=null;
 
 function register(){
-  fetch(API+"/register",{method:"POST"})
-  .then(r=>r.json())
-  .then(d=>{
-    USER_ID=d.user_id;
-    document.getElementById('uid').innerText="User ID: "+USER_ID;
-  })
+fetch(API+"/register",{method:"POST"})
+.then(r=>r.json())
+.then(d=>{UID=d.user_id;uid.innerText="ID: "+UID})
 }
 
-function getBalance(){
-  if(!USER_ID) return alert('أنشئ حساب أولاً');
-  fetch(API+"/balance/"+USER_ID)
-  .then(r=>r.json())
-  .then(d=>document.getElementById('balance').innerText=JSON.stringify(d,null,2))
+function balance(){
+fetch(API+"/balance/"+UID).then(r=>r.json()).then(d=>bal.innerText=JSON.stringify(d,null,2))
 }
 
 function deposit(){
-  fetch(API+"/deposit",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({user_id:USER_ID,amount:dep_amount.value})
-  })
-  alert('تم إرسال طلب الشحن');
+fetch(API+"/deposit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:UID,amount:amount.value})})
+alert("تم الإرسال")
 }
 
 function order(){
-  fetch(API+"/order",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({user_id:USER_ID,platform:platform.value,qty:qty.value,link:link.value})
-  })
-  .then(r=>r.json())
-  .then(d=>document.getElementById('order_result').innerText=JSON.stringify(d,null,2))
+fetch(API+"/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:UID,platform:platform.value,qty:qty.value,link:link.value})})
+.then(r=>r.json()).then(d=>res.innerText=JSON.stringify(d,null,2))
 }
 </script>
 

@@ -6,14 +6,14 @@ import uuid
 import os
 from threading import Thread
 
-# ====== الإعدادات ======
+print("ENV BOT_TOKEN =", os.environ.get("BOT_TOKEN"))
+print("ENV ADMIN_ID =", os.environ.get("ADMIN_ID"))
+
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = os.environ.get("ADMIN_ID")
-PRICE_PER_1000 = 3.0
 
-if BOT_TOKEN is None or ADMIN_ID is None:
-    print("❌ BOT_TOKEN أو ADMIN_ID غير موجودين في Render Environment")
-    exit(1)
+if not BOT_TOKEN or not ADMIN_ID:
+    raise Exception("ENV VARIABLES NOT FOUND")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 

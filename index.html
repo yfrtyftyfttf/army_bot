@@ -1,121 +1,125 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دارك فولو | خدمات ثابتة</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        :root { --main-bg: #f8f9fe; --primary: #5e72e4; --dark: #32325d; --white: #ffffff; }
-        body { margin: 0; background: var(--main-bg); font-family: 'Segoe UI', sans-serif; color: var(--dark); padding: 15px; }
+  <meta charset="UTF-8" />
+  <title>منصة الرشق الاحترافية</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;font-family:'Cairo',sans-serif}
+    body{margin:0;background:#0f172a;color:#e5e7eb}
+    header{background:linear-gradient(135deg,#2563eb,#1e40af);padding:30px;text-align:center}
+    header h1{margin:0;font-size:32px}
+    header p{opacity:.9}
 
-        /* الكروت العلوية للرصيد */
-        .header-card { background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%); padding: 25px; border-radius: 15px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(94, 114, 228, 0.2); }
-        .balance-value { font-size: 28px; font-weight: bold; margin-top: 5px; }
+    .container{max-width:1100px;margin:30px auto;padding:15px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
 
-        /* حاوية الطلب */
-        .order-container { background: var(--white); padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .form-group { margin-bottom: 18px; }
-        label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #525f7f; }
-        
-        select, input { width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; transition: 0.2s; }
-        select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(94, 114, 228, 0.1); }
+    .card{background:#020617;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .card h2{margin-top:0;font-size:22px}
 
-        /* عرض السعر */
-        .price-box { background: #f6f9fc; padding: 15px; border-radius: 10px; text-align: center; border: 1px dashed var(--primary); margin: 20px 0; }
-        .price-box span { display: block; font-size: 12px; color: #8898aa; }
-        .price-box b { font-size: 20px; color: var(--primary); }
+    input,select,button{
+      width:100%;padding:12px;margin-top:10px;border-radius:10px;border:none;font-size:15px
+    }
+    input,select{background:#020617;color:#e5e7eb;border:1px solid #1e293b}
 
-        .btn-confirm { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(50,50,93,0.11); }
-        .btn-confirm:active { transform: scale(0.98); }
-    </style>
+    button{background:#2563eb;color:#fff;font-weight:700;cursor:pointer}
+    button:hover{background:#1d4ed8}
+
+    .small{font-size:13px;opacity:.8;margin-top:8px}
+    pre{background:#020617;padding:12px;border-radius:10px;overflow:auto}
+
+    footer{text-align:center;padding:20px;opacity:.6}
+  </style>
 </head>
 <body>
 
-    <div class="header-card">
-        <span>رصيدك الحالي</span>
-        <div class="balance-value">$<span id="user-balance">0.00</span></div>
+<header>
+  <h1>🚀 منصة الرشق الاحترافية</h1>
+  <p>متابعة – شحن – تنفيذ أوتوماتيكي</p>
+</header>
+
+<div class="container">
+  <div class="grid">
+
+    <div class="card">
+      <h2>🆔 إنشاء حساب</h2>
+      <button onclick="register()">إنشاء User ID</button>
+      <p id="uid" class="small"></p>
     </div>
 
-    <div class="order-container">
-        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">طلب جديد</h3>
-        
-        <div class="form-group">
-            <label>الفئة (المنصة)</label>
-            <select id="cat" onchange="updateServicesList()">
-                <option value="insta">انستقرام | Instagram</option>
-                <option value="tiktok">تيك توك | TikTok</option>
-                <option value="tele">تليجرام | Telegram</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>الخدمة المطلوبة</label>
-            <select id="srv" onchange="calculateNow()">"متابعين انستقرام | جودة عالية (1k = 3$)"</select>
-        </div>
-
-        <div class="form-group">
-            <label>الرابط (اليوزر أو لينك المنشور)</label>
-            <input type="text" id="link" placeholder="أدخل الرابط هنا...">
-        </div>
-
-        <div class="form-group">
-            <label>الكمية</label>
-            <input type="number" id="qty" placeholder="مثال: 1000" oninput="calculateNow()">
-        </div>
-
-        <div class="price-box">
-            <span>إجمالي التكلفة</span>
-            <b>$<span id="total-cost">0.00</span></b>
-        </div>
-
-        <button class="btn-confirm" onclick="sendOrder()>تأكيد وإرسال الطلب</button>
+    <div class="card">
+      <h2>💰 الرصيد</h2>
+      <button onclick="getBalance()">عرض الرصيد</button>
+      <pre id="balance"></pre>
     </div>
 
-    <script>
-      // تأكد من تحديث الرابط ليتوافق مع Render الخاص بك
-const API_URL = "https://army-bot-3y9o.onrender.com";
+    <div class="card">
+      <h2>💳 شحن الرصيد</h2>
+      <input id="dep_amount" placeholder="المبلغ بالدولار" />
+      <button onclick="deposit()">إرسال طلب الشحن</button>
+      <p class="small">سيتم مراجعة الطلب من الإدارة</p>
+    </div>
 
-const services = {
-    insta: """
-        { name: "متابعين انستقرام | جودة عالية (1k = 3$)", price: 3.0 },
-        { name: "لايكات انستقرام | سريعة (1k = 1$)", price: 1.0 }
-    """
-    tiktok: [
-        { name: "متابعين تيك توك | ثابت (1k = 3$)", price: 3.0 },
-        { name: "مشاهدات تيك توك | مليونية (1k = 0.1$)", price: 0.1 }
-    ],
-    tele: [
-        { name: "أعضاء قنوات تليجرام (1k = 2.5$)", price: 2.5 }
-    ]
-};
+    <div class="card">
+      <h2>📦 طلب رشق</h2>
+      <select id="platform">
+        <option>Instagram</option>
+        <option>TikTok</option>
+        <option>Telegram</option>
+      </select>
+      <input id="qty" placeholder="الكمية المطلوبة" />
+      <input id="link" placeholder="رابط الحساب / المنشور" />
+      <button onclick="order()">تنفيذ الطلب</button>
+      <pre id="order_result"></pre>
+    </div>
 
-// دالة تحديث قائمة الخدمات (يجب استدعاؤها عند تغيير الفئة)
-function updateServicesList() {
-    const category = document.getElementById('cat').value;
-    const srvSelect = document.getElementById('srv');
-    
-    srvSelect.innerHTML = services[category].map(s => 
-        <option value="${s.price}">${s.name}</option>
-    ).join('');
-    // ضروري: استدعاء الحساب فور تحديث القائمة لكي لا تظهر 0.00
-    calculateNow(); 
+  </div>
+</div>
+
+<footer>
+  © 2026 منصة الرشق — جميع الحقوق محفوظة
+</footer>
+
+<script>
+let USER_ID = null;
+const API = "http://localhost:5000/api";
+
+function register(){
+  fetch(API+"/register",{method:"POST"})
+  .then(r=>r.json())
+  .then(d=>{
+    USER_ID=d.user_id;
+    document.getElementById('uid').innerText="User ID: "+USER_ID;
+  })
 }
-calculateNow();
-function calculateNow() {
-    const srvElement = document.getElementById('srv');
-    const pricePer1k = srvElement.value;
-    const quantity = document.getElementById('qty').value || 0;
-    const total = (quantity / 1000) * pricePer1k;
-    document.getElementById('total-cost').innerText = total.toFixed(2);
+
+function getBalance(){
+  if(!USER_ID) return alert('أنشئ حساب أولاً');
+  fetch(API+"/balance/"+USER_ID)
+  .then(r=>r.json())
+  .then(d=>document.getElementById('balance').innerText=JSON.stringify(d,null,2))
 }
 
-// استدعاء الدوال عند تحميل الصفحة لضمان ظهور البيانات فوراً
-window.onload = function() {
-    updateServicesList();
-    fetchBalance(); // دالة جلب الرصيد من السيرفر
-}; 
-    </script>
+function deposit(){
+  fetch(API+"/deposit",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({user_id:USER_ID,amount:dep_amount.value})
+  })
+  alert('تم إرسال طلب الشحن');
+}
+
+function order(){
+  fetch(API+"/order",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({user_id:USER_ID,platform:platform.value,qty:qty.value,link:link.value})
+  })
+  .then(r=>r.json())
+  .then(d=>document.getElementById('order_result').innerText=JSON.stringify(d,null,2))
+}
+</script>
+
 </body>
 </html>
-            ],

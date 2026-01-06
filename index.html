@@ -51,7 +51,7 @@
 
         <div class="form-group">
             <label>الخدمة المطلوبة</label>
-            <select id="srv" onchange="calculateNow()"></select>
+            <select id="srv" onchange="calculateNow()">"متابعين انستقرام | جودة عالية (1k = 3$)"</select>
         </div>
 
         <div class="form-group">
@@ -69,7 +69,7 @@
             <b>$<span id="total-cost">0.00</span></b>
         </div>
 
-        <button class="btn-confirm" onclick="sendOrder()">تأكيد وإرسال الطلب</button>
+        <button class="btn-confirm" onclick="sendOrder()>تأكيد وإرسال الطلب</button>
     </div>
 
     <script>
@@ -77,10 +77,10 @@
 const API_URL = "https://army-bot-3y9o.onrender.com";
 
 const services = {
-    insta: [
+    insta: """
         { name: "متابعين انستقرام | جودة عالية (1k = 3$)", price: 3.0 },
         { name: "لايكات انستقرام | سريعة (1k = 1$)", price: 1.0 }
-    ],
+    """
     tiktok: [
         { name: "متابعين تيك توك | ثابت (1k = 3$)", price: 3.0 },
         { name: "مشاهدات تيك توك | مليونية (1k = 0.1$)", price: 0.1 }
@@ -98,11 +98,10 @@ function updateServicesList() {
     srvSelect.innerHTML = services[category].map(s => 
         <option value="${s.price}">${s.name}</option>
     ).join('');
-    
     // ضروري: استدعاء الحساب فور تحديث القائمة لكي لا تظهر 0.00
     calculateNow(); 
 }
-
+calculateNow();
 function calculateNow() {
     const srvElement = document.getElementById('srv');
     const pricePer1k = srvElement.value;

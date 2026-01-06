@@ -3,34 +3,36 @@ from flask_cors import CORS
 import telebot
 from telebot import types
 import uuid
-import os
 from threading import Thread
 
-print("ENV BOT_TOKEN =", os.environ.get("BOT_TOKEN"))
-print("ENV ADMIN_ID =", os.environ.get("ADMIN_ID"))
+# ================== الإعدادات ==================
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-ADMIN_ID = os.environ.get("ADMIN_ID")
+BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"   # ← حط توكنك هنا
+ADMIN_ID = "6695916631"                 # ← ايديك
+PRICE_PER_1000 = 3.0
 
-if not BOT_TOKEN or not ADMIN_ID:
-    raise Exception("ENV VARIABLES NOT FOUND")
+# =================================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
-
 app = Flask(__name__)
 CORS(app)
 
-# ====== قواعد بيانات مؤقتة ======
+# قواعد بيانات مؤقتة (RAM)
 users = {}
 orders = {}
 
 def calc_price(qty):
     return round((qty / 1000) * PRICE_PER_1000, 2)
 
+# ================== API ==================
+
 @app.route("/api/register", methods=["POST"])
 def register():
     uid = str(uuid.uuid4())[:8]
-    users[uid] = {"balance": 0.0, "orders": []}
+    users[uid] = {
+        "balance": 0.0,
+        "orders": []
+    }
     return jsonify({"user_id": uid})
 
 @app.route("/api/balance/<uid>")
@@ -51,9 +53,12 @@ def deposit():
 
     bot.send_message(
         ADMIN_ID,
-        f"💰 طلب شحن\n👤 المستخدم: {uid}\n💵 المبلغ: ${amount}",
+        f"💰 طلب شحن رصيد\n"
+        f"👤 المستخدم: {uid}\n"
+        f"💵 المبلغ: ${amount}",
         reply_markup=markup
     )
+
     return jsonify({"status": "sent"})
 
 @app.route("/api/order", methods=["POST"])
@@ -91,11 +96,22 @@ def order():
 
     bot.send_message(
         ADMIN_ID,
-        f"🚀 طلب جديد\n🆔 {order_id}\n📱 {platform}\n🔢 {qty}\n🔗 {link}",
+        f"🚀 طلب رشق جديد\n"
+        f"🆔 {order_id}\n"
+        f"📱 {platform}\n"
+        f"🔢 {qty}\n"
+        f"🔗 {link}\n"
+        f"💵 ${cost}",
         reply_markup=markup
     )
 
-    return jsonify({"order_id": order_id})
+    return jsonify({"order_id": order_id, "cost": cost})
+
+@app.route("/api/order/<order_id>")
+def track(order_id):
+    return jsonify(orders.get(order_id, {}))
+
+# ================== BOT CALLBACKS ==================
 
 @bot.callback_query_handler(func=lambda call: True)
 def callbacks(call):
@@ -111,13 +127,27 @@ def callbacks(call):
                 call.message.chat.id,
                 call.message.message_id
             )
+        else:
+            bot.edit_message_text(
+                "❌ تم رفض الشحن",
+                call.message.chat.id,
+                call.message.message_id
+            )
 
     if data[0] == "ord":
         order_id = data[2]
         if data[1] == "proc":
             orders[order_id]["status"] = "processing"
+            bot.answer_callback_query(call.id, "تم تحويل الطلب قيد التنفيذ")
         elif data[1] == "done":
             orders[order_id]["status"] = "completed"
+            bot.edit_message_text(
+                f"✅ الطلب {order_id} مكتمل",
+                call.message.chat.id,
+                call.message.message_id
+            )
+
+# ================== RUN ==================
 
 if __name__ == "__main__":
     Thread(target=bot.infinity_polling, daemon=True).start()

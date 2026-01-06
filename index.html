@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUHAMMAD SMM | نظام محمد المتكامل</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { margin: 0; min-height: 100vh; background-color: #0c0c0c; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; color: white; padding: 20px 0; }
+        .container { width: 95%; max-width: 450px; background: #1a1a1a; padding: 25px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .header { margin-bottom: 20px; }
+        .header h2 { color: #ff0000; font-size: 22px; margin: 0; }
+
+        /* أيقونات اختيار الخدمات */
+        .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .service-btn { background: #222; border: 1px solid #333; padding: 15px; border-radius: 12px; cursor: pointer; color: #888; transition: 0.3s; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .service-btn i { font-size: 24px; color: #ff0000; }
+        .service-btn.active { border-color: #00ffcc; background: rgba(0, 255, 204, 0.1); color: #fff; }
+
+        /* الحقول */
+        .input-group { margin-bottom: 15px; text-align: right; }
+        .input-field { background: #111; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 10px; width: 100%; box-sizing: border-box; outline: none; border-right: 4px solid #ff0000; }
+
+        /* الحاسبة */
+        #order-cost { color: #00ffcc; font-weight: bold; margin-bottom: 15px; font-size: 16px; }
+
+        .action-button { background: linear-gradient(45deg, #ff0000, #990000); border: none; padding: 16px; border-radius: 10px; cursor: pointer; color: #fff; width: 100%; font-size: 18px; font-weight: bold; display: flex; justify-content: center; align-items: center; gap: 10px; }
+
+        /* قائمة التتبع */
+        .tracking-section { margin-top: 25px; border-top: 1px solid #333; padding-top: 15px; }
+        .order-item { background: #222; padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 13px; }
+        .status-badge { padding: 2px 8px; border-radius: 5px; font-size: 11px; }
+        .pending { background: #ffa50033; color: orange; }
+        .completed { background: #00ffcc33; color: #00ffcc; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h2>نظام رشق محمد 🚀</h2>
+        </div>
+
+        <div class="services-grid">
+            <div class="service-btn active" onclick="selectService(this, 3.0, 'متابعين تيك توك')">
+                <i class="fab fa-tiktok"></i> متابعين تيك توك
+            </div>
+            <div class="service-btn" onclick="selectService(this, 3.0, 'متابعين انستقرام')">
+                <i class="fab fa-instagram"></i> متابعين انستقرام
+            </div>
+            <div class="service-btn" onclick="selectService(this, 0.50, 'لايكات تيك توك')">
+                <i class="fab fa-tiktok"></i> لايكات تيك توك
+            </div>
+            <div class="service-btn" onclick="selectService(this, 2.50, 'أعضاء تليجرام')">
+                <i class="fab fa-telegram"></i> أعضاء تليجرام
+            </div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="link" placeholder="رابط الحساب أو المنشور" class="input-field">
+        </div>
+        <div class="input-group">
+            <input type="number" id="qty" placeholder="الكمية (أقصى حد 50,000)" class="input-field" oninput="calculatePrice()">
+        </div>
+
+        <div id="order-cost">التكلفة: $0.00</div>
+
+        <button id="sendBtn" onclick="sendOrder()" class="action-button">
+            <span>إرسال الطلب الآن</span>
+            <i class="fas fa-paper-plane"></i>
+        </button>
+
+        <div class="tracking-section">
+          <h4 style="text-align:right; margin-bottom:10px;">📦 تتبع طلباتك:</h4>
+            <div id="orders-list">
+                <p style="color:#555; font-size:12px;">لا توجد طلبات حالية</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // رابط سيرفر رندر الخاص بك (مستخرج من صورتك)
+        const SERVER_URL = "https://army-bot-3y9o.onrender.com"; 
+
+        let selectedPrice = 3.0;
+        let selectedName = "متابعين تيك توك";
+        let myOrders = JSON.parse(localStorage.getItem('user_orders_muhammad')) || [];
+
+        function selectService(btn, price, name) {
+            document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPrice = price;
+            selectedName = name;
+            calculatePrice();
+        }
+
+        function calculatePrice() {
+            let qty = document.getElementById('qty').value;
+            if (qty > 50000) { qty = 50000; document.getElementById('qty').value = 50000; }
+            const cost = (qty / 1000) * selectedPrice;
+            document.getElementById('order-cost').innerText = التكلفة: $${cost.toFixed(2)};
+            return cost;
+        }
+
+        async function sendOrder() {
+            const link = document.getElementById('link').value;
+            const qty = document.getElementById('qty').value;
+            const cost = calculatePrice();
+            const orderId = Math.floor(Math.random() * 90000) + 10000;
+
+            if (!link || !qty) return alert("يرجى إكمال البيانات");
+
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerText = "جاري الإرسال...";
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, link, qty, service: selectedName, cost: cost.toFixed(2) })
+                });
+
+                if (response.ok) {
+                    myOrders.push({ orderId, service: selectedName, status: "قيد التنفيذ" });
+                    localStorage.setItem('user_orders_muhammad', JSON.stringify(myOrders));
+                    alert("تم إرسال الطلب بنجاح!");
+                    document.getElementById('link').value = "";
+                    document.getElementById('qty').value = "";
+                    renderOrders();
+                }
+            } catch (e) { alert("خطأ في الاتصال بالسيرفر"); }
+            finally { sendBtn.disabled = false; sendBtn.innerHTML = 'إرسال الطلب الآن <i class="fas fa-paper-plane"></i>'; }
+        }
+
+        async function renderOrders() {
+            const list = document.getElementById('orders-list');
+            if (myOrders.length === 0) return;
+            list.innerHTML = "";
+
+            for (let order of myOrders) {
+                if (order.status !== "تم المكتمل") {
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/status/${order.orderId}`);
+                        const data = await res.json();
+                        order.status = data.status;
+                    } catch (e) {}
+                }
+
+                list.innerHTML += `
+                    <div class="order-item">
+                        <span>#${order.orderId} - ${order.service}</span>
+                        <span class="status-badge ${order.status === 'تم المكتمل' ? 'completed' : 'pending'}">${order.status}</span>
+                    </div>
+                `;
+            }
+        }
+
+        renderOrders();
+        setInterval(renderOrders, 10000); // تحديث الحالة كل 10 ثواني
+    </script>
+</body>
+</html>

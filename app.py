@@ -7,11 +7,18 @@ import os
 from threading import Thread
 
 # ====== الإعدادات من Environment ======
-TOKEN = os.environ.get("BOT_TOKEN")
+import os
+
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = os.environ.get("ADMIN_ID")
+
 PRICE_PER_1000 = 3.0
 
-bot = telebot.TeleBot(TOKEN)
+if not BOT_TOKEN or not ADMIN_ID:
+    raise Exception("❌ BOT_TOKEN أو ADMIN_ID غير موجودين في Environment Variables")
+
+bot = telebot.TeleBot(BOT_TOKEN)
+
 app = Flask(__name__)
 CORS(app, origins=["https://yfrtyftyfttf.github.io"])
 

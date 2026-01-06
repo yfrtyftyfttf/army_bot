@@ -1,44 +1,38 @@
-from flask import Flask, render_template
-import telebot
-import os
+from flask import Flask, render_template, request, redirect, url_for, session
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-ADMIN_ID = os.environ.get("ADMIN_ID")
-
-bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
+app.secret_key = "secret_key_123"
 
-webhook_set = False  # مهم جدًا
+# بيانات تجريبية
+USERNAME = "admin"
+PASSWORD = "1234"
 
-# ===== Telegram =====
-@bot.message_handler(commands=["start"])
-def start(msg):
-    bot.send_message(msg.chat.id, "✅ البوت شغال ومربوط بالسيرفر")
+@app.route("/", methods=["GET", "POST"])
+def login():
+    error = None
 
-# ===== Web =====
-@app.route("/")
-def home():
-    return render_template("index.html")
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-@app.route(f"/{BOT_TOKEN}", methods=["POST"])
-def webhook():
-    update = telebot.types.Update.de_json(
-        request.get_data(as_text=True)
-    )
-    bot.process_new_updates([update])
-    return "OK", 200
+        if username == USERNAME and password == PASSWORD:
+            session["user"] = username
+            return redirect(url_for("dashboard"))
+        else:
+            error = "❌ اسم المستخدم أو كلمة المرور غير صحيحة"
 
-# ===== Set webhook safely =====
-@app.before_request
-def set_webhook_once():
-    global webhook_set
-    if not webhook_set:
-        bot.remove_webhook()
-        bot.set_webhook(
-            url=f"https://army-bot-3y9o.onrender.com/{BOT_TOKEN}"
-        )
-        webhook_set = True
+    return render_template("index.html", error=error)
 
-# ===== Run =====
+@app.route("/dashboard")
+def dashboard():
+    if "user" not in session:
+        return redirect(url_for("login"))
+    return f"👋 أهلاً {session['user']}، تم تسجيل الدخول بنجاح ✅"
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect(url_for("login"))
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=10000)

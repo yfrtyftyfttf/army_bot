@@ -1,45 +1,84 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <title>Army Bot</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    <!-- ربط CSS -->
-    <link rel="stylesheet" href="/static/style.css">
+        .box {
+            background: rgba(0,0,0,0.5);
+            padding: 30px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(0,0,0,0.6);
+        }
 
-    <!-- أيقونة -->
-    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712109.png">
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        p {
+            opacity: 0.8;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #00c6ff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #00a5d6;
+        }
+
+        footer {
+            margin-top: 15px;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+    </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="logo">
-            🤖
-        </div>
+<div class="box">
+    <h1>🤖 Army Bot</h1>
+    <p>نظام متصل بسيرفر Render</p>
 
-        <h1>Army Bot</h1>
-        <p class="subtitle">
-            نظام احترافي لإدارة البوتات  
-            <br>
-            مرتبط بالكامل مع تيليگرام
-        </p>
+    <input type="text" placeholder="اسم المستخدم">
+    <input type="password" placeholder="كلمة المرور">
+    <button>تسجيل الدخول</button>
 
-        <div class="actions">
-            <a href="/login" class="btn primary">تسجيل الدخول</a>
-            <a href="/dashboard" class="btn secondary">لوحة التحكم</a>
-        </div>
-
-        <div class="info">
-            <p>✔ حماية عالية</p>
-            <p>✔ ربط مباشر مع السيرفر</p>
-            <p>✔ تحكم كامل بالبوت</p>
-        </div>
-
-        <footer>
-            <span>© 2026 Army Bot</span>
-        </footer>
-    </div>
+    <footer>
+        السيرفر يعمل بنجاح ✅
+    </footer>
+</div>
 
 </body>
 </html>

@@ -1,85 +1,108 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #fff;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    margin: 100px auto;
+    background: rgba(0,0,0,0.4);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+}
+
+h1, h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #00c6ff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #009ee0;
+}
+
+a {
+    color: #00c6ff;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+}
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Army Panel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-<style>
-body{margin:0;background:#0f172a;color:#e5e7eb;font-family:Cairo}
-header{background:#020617;padding:20px;text-align:center}
-.container{max-width:900px;margin:30px auto;padding:20px}
-.card{background:#020617;padding:20px;border-radius:14px;margin-bottom:20px}
-button,input,select{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:none}
-button{background:#2563eb;color:#fff;font-weight:bold}
-pre{background:#020617;padding:10px;border-radius:10px}
-</style>
+    <title>Army Bot</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-
-<header>
-<h1>🚀 Army SMM Panel</h1>
-</header>
-
-<div class="container">
-
-<div class="card">
-<h3>إنشاء حساب</h3>
-<button onclick="register()">إنشاء User ID</button>
-<p id="uid"></p>
-</div>
-
-<div class="card">
-<h3>الرصيد</h3>
-<button onclick="balance()">عرض الرصيد</button>
-<pre id="bal"></pre>
-</div>
-
-<div class="card">
-<h3>شحن رصيد</h3>
-<input id="amount" placeholder="المبلغ">
-<button onclick="deposit()">إرسال</button>
-</div>
-
-<div class="card">
-<h3>طلب رشق</h3>
-<select id="platform">
-<option>Instagram</option>
-<option>TikTok</option>
-<option>Telegram</option>
-</select>
-<input id="qty" placeholder="الكمية">
-<input id="link" placeholder="الرابط">
-<button onclick="order()">تنفيذ</button>
-<pre id="res"></pre>
-</div>
-
-</div>
-
-<script>
-const API="https://army-bot.onrender.com/api"; // ← غيّرها لرابطك
-let UID=null;
-
-function register(){
-fetch(API+"/register",{method:"POST"})
-.then(r=>r.json())
-.then(d=>{UID=d.user_id;uid.innerText="ID: "+UID})
-}
-
-function balance(){
-fetch(API+"/balance/"+UID).then(r=>r.json()).then(d=>bal.innerText=JSON.stringify(d,null,2))
-}
-
-function deposit(){
-fetch(API+"/deposit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:UID,amount:amount.value})})
-alert("تم الإرسال")
-}
-
-function order(){
-fetch(API+"/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:UID,platform:platform.value,qty:qty.value,link:link.value})})
-.then(r=>r.json()).then(d=>res.innerText=JSON.stringify(d,null,2))
-}
-</script>
-
+    <div class="container">
+        <h1>🤖 Army Bot</h1>
+        <p style="text-align:center">
+            نظام متكامل مربوط مع تيليغرام
+        </p>
+        <a href="/login">
+            <button>تسجيل الدخول</button>
+        </a>
+    </div>
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تسجيل الدخول</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>تسجيل الدخول</h2>
+        <form method="POST">
+            <input type="text" name="username" placeholder="اسم المستخدم" required>
+            <input type="password" name="password" placeholder="كلمة المرور" required>
+            <button type="submit">دخول</button>
+        </form>
+        <a href="/">الرجوع للرئيسية</a>
+    </div>
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>لوحة التحكم</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>أهلاً {{ user }} 👋</h2>
+        <p style="text-align:center">
+            حسابك مربوط بالسيرفر بنجاح
+        </p>
+        <a href="/logout">
+            <button>تسجيل الخروج</button>
+        </a>
+    </div>
 </body>
 </html>

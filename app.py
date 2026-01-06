@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, render_template
 import telebot
 import os
 
@@ -18,7 +18,7 @@ def start(msg):
 # ===== Web =====
 @app.route("/")
 def home():
-    return "Server is running ✅"
+    return render_template("index.html")
 
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():

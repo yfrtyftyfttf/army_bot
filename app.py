@@ -6,8 +6,8 @@ import uuid, os
 from threading import Thread
 
 # ====== إعدادات ======
-TOKEN = os.environ.get"6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
-ADMIN_ID = os.environ.get"6695916631"
+TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
+ADMIN_ID = "6695916631"
 PRICE_PER_1000 = 3.0
 
 bot = telebot.TeleBot(TOKEN)

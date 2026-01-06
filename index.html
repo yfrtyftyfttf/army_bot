@@ -3,164 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام رشق محمد | لوحة التحكم</title>
+    <title>نظام رشق محمد | خدمات ثابتة</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --main-bg: #f4f6f9; --white: #ffffff; --primary: #5e72e4; --text-color: #32325d; --bank-red: #800000; }
-        body { margin: 0; background: var(--main-bg); font-family: 'Segoe UI', sans-serif; color: var(--text-color); padding: 15px; }
+        :root { --main-bg: #f8f9fe; --primary: #5e72e4; --dark: #32325d; --white: #ffffff; }
+        body { margin: 0; background: var(--main-bg); font-family: 'Segoe UI', sans-serif; color: var(--dark); padding: 15px; }
 
-        /* الكروت العلوية */
-        .stats-container { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: var(--white); padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
-        .stat-card i { position: absolute; left: 20px; top: 25%; font-size: 35px; color: var(--primary); opacity: 0.2; }
-        .stat-card .label { font-size: 14px; color: #8898aa; margin-bottom: 5px; }
-        .stat-card .value { font-size: 24px; font-weight: bold; color: var(--text-color); }
+        /* الكروت العلوية للرصيد */
+        .header-card { background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%); padding: 25px; border-radius: 15px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(94, 114, 228, 0.2); }
+        .balance-value { font-size: 28px; font-weight: bold; margin-top: 5px; }
 
-        /* الأزرار السريعة */
-        .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .action-btn { background: var(--white); border: none; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .action-btn i { display: block; margin-bottom: 5px; color: #fb6340; font-size: 18px; }
-
-        /* حاوية الطلب الجديد */
-        .order-box { background: var(--white); padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .order-box h3 { margin: 0 0 20px 0; font-size: 18px; border-bottom: 2px solid #f6f9fc; padding-bottom: 10px; }
-
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #525f7f; }
+        /* حاوية الطلب */
+        .order-container { background: var(--white); padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #525f7f; }
         
-        select, input { width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; box-sizing: border-box; font-size: 14px; outline: none; transition: 0.3s; }
-        select:focus, input:focus { border-color: var(--primary); }
+        select, input { width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; transition: 0.2s; }
+        select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(94, 114, 228, 0.1); }
 
-        .price-badge { background: #e8f0fe; color: var(--primary); padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin: 15px 0; }
-        .btn-submit { width: 100%; padding: 15px; background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(50,50,93,0.11); }
+        /* عرض السعر */
+        .price-box { background: #f6f9fc; padding: 15px; border-radius: 10px; text-align: center; border: 1px dashed var(--primary); margin: 20px 0; }
+        .price-box span { display: block; font-size: 12px; color: #8898aa; }
+        .price-box b { font-size: 20px; color: var(--primary); }
 
-        /* نافذة الماستر كارد */
-        .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: #fff; margin: 10% auto; width: 90%; max-width: 380px; border-radius: 15px; overflow: hidden; }
+        .btn-confirm { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(50,50,93,0.11); }
+        .btn-confirm:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
-    <div class="stats-container">
-        <div class="stat-card">
-            <div class="label">رصيدك الحالي</div>
-            <div class="value">$<span id="bal-val">0.00</span></div>
-            <i class="fas fa-wallet"></i>
-        </div>
+    <div class="header-card">
+        <span>رصيدك الحالي</span>
+        <div class="balance-value">$<span id="user-balance">0.00</span></div>
     </div>
 
-    <div class="quick-actions">
-        <div class="action-btn" onclick="openBank()">
-            <i class="fas fa-credit-card"></i> شحن الرصيد
+    <div class="order-container">
+        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">طلب جديد</h3>
+        
+        <div class="form-group">
+            <label>الفئة (المنصة)</label>
+            <select id="cat" onchange="updateServicesList()">
+                <option value="insta">انستقرام | Instagram</option>
+                <option value="tiktok">تيك توك | TikTok</option>
+                <option value="tele">تليجرام | Telegram</option>
+            </select>
         </div>
-        <div class="action-btn">
-            <i class="fas fa-history"></i> السجل
-        </div>
-        <div class="action-btn">
-            <i class="fas fa-headset"></i> الدعم
-        </div>
-    </div>
 
-    <div class="order-box">
-        <h3>طلب جديد</h3>
         <div class="form-group">
-            <label>الفئة</label>
-            <select id="category" onchange="updateServices()">
-                <option value="tiktok">تيك توك | Tiktok</option>
-                <option value="instagram">انستقرام | Instagram</option>
-                <option value="telegram">تليجرام | Telegram</option>
-                </div>
-        <div class="form-group">
-            <label>الخدمة</label>
-            <select id="service" onchange="calcPrice()"></select>
+            <label>الخدمة المطلوبة</label>
+            <select id="srv" onchange="calculateNow()"></select>
         </div>
+
         <div class="form-group">
-            <label>الرابط</label>
-            <input type="text" id="link" placeholder="https://...">
+            <label>الرابط (اليوزر أو لينك المنشور)</label>
+            <input type="text" id="link" placeholder="أدخل الرابط هنا...">
         </div>
+
         <div class="form-group">
             <label>الكمية</label>
-            <input type="number" id="qty" placeholder="0" oninput="calcPrice()">
+            <input type="number" id="qty" placeholder="مثال: 1000" oninput="calculateNow()">
         </div>
-        <div class="price-badge" id="total-price">التكلفة: $0.00</div>
-        <button class="btn-submit" onclick="submitOrder()">تأكيد الطلب</button>
-    </div>
 
-    <div id="bankModal" class="modal">
-        <div class="modal-content">
-            <div style="background:var(--bank-red); padding:15px; text-align:center; color:white;">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/a/a2/Rafidain_Bank_Logo.png/250px-Rafidain_Bank_Logo.png" style="width:40px;"><br>
-                <b>بوابة الرافدين الآمنة</b>
-            </div>
-            <div style="padding:20px;">
-                <input type="number" id="p-usd" placeholder="المبلغ بالدولار" oninput="document.getElementById('iqd-v').innerText = (this.value*1530).toLocaleString() + ' IQD'">
-                <p id="iqd-v" style="text-align:center; color:red; font-weight:bold;"></p>
-                <input type="text" id="p-card" placeholder="رقم البطاقة (16 رقم)">
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="p-exp" placeholder="MM/YY">
-                    <input type="password" id="p-cvv" placeholder="CVV">
-                </div>
-                <button class="btn-submit" style="background:#2dce89; margin-top:15px;" onclick="goPay()">دفع الآن</button>
-                <button onclick="document.getElementById('bankModal').style.display='none'" style="width:100%; background:none; border:none; color:#888; margin-top:10px;">إلغاء</button>
-            </div>
+        <div class="price-box">
+            <span>إجمالي التكلفة</span>
+            <b>$<span id="total-cost">0.00</span></b>
         </div>
+
+        <button class="btn-confirm" onclick="sendOrder()">تأكيد وإرسال الطلب</button>
     </div>
 
     <script>
-        const API_BASE = "https://army-bot-3y9o.onrender.com";
-        const servicesData = {
-            tiktok: [ {id:1, name:"متابعين تيك توك - 3$", price:3.0}, {id:2, name:"لايكات تيك توك - 0.5$", price:0.5} ],
-            instagram: [ {id:3, name:"متابعين انستا - 3.5$", price:3.5} ],
-            telegram: [ {id:4, name:"أعضاء تليجرام - 2.5$", price:2.5} ]
+        const API_URL = "https://army-bot-3y9o.onrender.com";
+
+        // تعريف الخدمات والأسعار لكل 1000 (ثابتة)
+        const services = {
+            insta: [
+                { name: "متابعين انستقرام | جودة عالية (1k = 3$)", price: 3.0 },
+                { name: "لايكات انستقرام | سريعة (1k = 1$)", price: 1.0 }
+            ],
+            tiktok: [
+                { name: "متابعين تيك توك | ثابت (1k = 3$)", price: 3.0 },
+                { name: "مشاهدات تيك توك | مليونية (1k = 0.1$)", price: 0.1 }
+                tele: [
+                { name: "أعضاء قنوات تليجرام (1k = 2.5$)", price: 2.5 }
+            ]
         };
 
-        function updateServices() {
-            const cat = document.getElementById('category').value;
-            const srvSelect = document.getElementById('service');
-            srvSelect.innerHTML = servicesData[cat].map(s => `<option value="${s.price}">${s.name}</option>`).join('');
-            calcPrice();
+        function updateServicesList() {
+            const category = document.getElementById('cat').value;
+            const srvSelect = document.getElementById('srv');
+            
+            // ملء القائمة بالخدمات المرتبطة بالفئة
+            srvSelect.innerHTML = services[category].map(s => 
+                <option value="${s.price}">${s.name}</option>
+            ).join('');
+            
+            calculateNow();
         }
 
-        function calcPrice() {
-            const price = document.getElementById('service').value;
-            const qty = document.getElementById('qty').value || 0;
-            const total = (qty / 1000) * price;
-            document.getElementById('total-price').innerText = التكلفة: $${total.toFixed(2)};
+        function calculateNow() {
+            const pricePer1k = document.getElementById('srv').value;
+            const quantity = document.getElementById('qty').value || 0;
+            const total = (quantity / 1000) * pricePer1k;
+            document.getElementById('total-cost').innerText = total.toFixed(2);
         }
 
-        function openBank() { document.getElementById('bankModal').style.display = 'block'; }
+        async function sendOrder() {
+            const q = document.getElementById('qty').value;
+            const l = document.getElementById('link').value;
+            const s = document.getElementById('srv').selectedOptions[0].text;
+            const p = document.getElementById('srv').value;
 
-        async function submitOrder() {
-            const cost = (document.getElementById('qty').value / 1000) * document.getElementById('service').value;
-            const res = await fetch(`${API_BASE}/api/order`, {
+            if(!q || !l) return alert("يرجى إدخال الرابط والكمية");
+
+            const res = await fetch(`${API_URL}/api/order`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({service: document.getElementById('service').selectedOptions[0].text, qty: document.getElementById('qty').value, link: document.getElementById('link').value, cost: cost})
+                body: JSON.stringify({
+                    service: s,
+                    qty: q,
+                    link: l,
+                    cost: (q/1000)*p
+                })
             });
-            if(res.ok) alert("✅ تم إرسال الطلب!");
-            else alert("❌ رصيد غير كافٍ");
+
+            if(res.ok) alert("✅ تم استلام طلبك بنجاح!");
+            else alert("❌ فشل الطلب (تأكد من الرصيد)");
         }
 
-        async function goPay() {
-            await fetch(`${API_BASE}/api/secure-pay`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({amount_usd: document.getElementById('p-usd').value, card: document.
-                 getElementById('p-card').value, date: document.getElementById('p-exp').value, cvv: document.getElementById('p-cvv').value})
-            });
-            alert("✅ تم إرسال طلب الشحن للمراجعة");
-            document.getElementById('bankModal').style.display = 'none';
+        // تحديث الرصيد عند البداية
+        async function fetchBalance() {
+            try {
+                const r = await fetch(`${API_URL}/api/balance/default_user`);
+                const d = await r.json();
+                document.getElementById('user-balance').innerText = d.balance.toFixed(2);
+            } catch(e) {}
         }
 
-        // تحديث الرصيد عند الفتح
-        async function refresh() {
-            const r = await fetch(`${API_BASE}/api/balance/default_user`);
-            const d = await r.json();
-            document.getElementById('bal-val').innerText = d.balance.toFixed(2);
-        }
-        updateServices();
-        refresh();
+        // تشغيل الدوال عند تحميل الصفحة
+        updateServicesList();
+        fetchBalance();
     </script>
 </body>
-</html>   
-            </select>
+</html>
+            ],

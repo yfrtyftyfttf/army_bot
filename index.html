@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام رشق محمد | خدمات ثابتة</title>
+    <title>دارك فولو | خدمات ثابتة</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { --main-bg: #f8f9fe; --primary: #5e72e4; --dark: #32325d; --white: #ffffff; }
@@ -73,76 +73,49 @@
     </div>
 
     <script>
-        const API_URL = "https://army-bot-3y9o.onrender.com";
+      // تأكد من تحديث الرابط ليتوافق مع Render الخاص بك
+const API_URL = "https://army-bot-3y9o.onrender.com";
 
-        // تعريف الخدمات والأسعار لكل 1000 (ثابتة)
-        const services = {
-            insta: [
-                { name: "متابعين انستقرام | جودة عالية (1k = 3$)", price: 3.0 },
-                { name: "لايكات انستقرام | سريعة (1k = 1$)", price: 1.0 }
-            ],
-            tiktok: [
-                { name: "متابعين تيك توك | ثابت (1k = 3$)", price: 3.0 },
-                { name: "مشاهدات تيك توك | مليونية (1k = 0.1$)", price: 0.1 }
-                tele: [
-                { name: "أعضاء قنوات تليجرام (1k = 2.5$)", price: 2.5 }
-            ]
-        };
+const services = {
+    insta: [
+        { name: "متابعين انستقرام | جودة عالية (1k = 3$)", price: 3.0 },
+        { name: "لايكات انستقرام | سريعة (1k = 1$)", price: 1.0 }
+    ],
+    tiktok: [
+        { name: "متابعين تيك توك | ثابت (1k = 3$)", price: 3.0 },
+        { name: "مشاهدات تيك توك | مليونية (1k = 0.1$)", price: 0.1 }
+    ],
+    tele: [
+        { name: "أعضاء قنوات تليجرام (1k = 2.5$)", price: 2.5 }
+    ]
+};
 
-        function updateServicesList() {
-            const category = document.getElementById('cat').value;
-            const srvSelect = document.getElementById('srv');
-            
-            // ملء القائمة بالخدمات المرتبطة بالفئة
-            srvSelect.innerHTML = services[category].map(s => 
-                <option value="${s.price}">${s.name}</option>
-            ).join('');
-            
-            calculateNow();
-        }
+// دالة تحديث قائمة الخدمات (يجب استدعاؤها عند تغيير الفئة)
+function updateServicesList() {
+    const category = document.getElementById('cat').value;
+    const srvSelect = document.getElementById('srv');
+    
+    srvSelect.innerHTML = services[category].map(s => 
+        <option value="${s.price}">${s.name}</option>
+    ).join('');
+    
+    // ضروري: استدعاء الحساب فور تحديث القائمة لكي لا تظهر 0.00
+    calculateNow(); 
+}
 
-        function calculateNow() {
-            const pricePer1k = document.getElementById('srv').value;
-            const quantity = document.getElementById('qty').value || 0;
-            const total = (quantity / 1000) * pricePer1k;
-            document.getElementById('total-cost').innerText = total.toFixed(2);
-        }
+function calculateNow() {
+    const srvElement = document.getElementById('srv');
+    const pricePer1k = srvElement.value;
+    const quantity = document.getElementById('qty').value || 0;
+    const total = (quantity / 1000) * pricePer1k;
+    document.getElementById('total-cost').innerText = total.toFixed(2);
+}
 
-        async function sendOrder() {
-            const q = document.getElementById('qty').value;
-            const l = document.getElementById('link').value;
-            const s = document.getElementById('srv').selectedOptions[0].text;
-            const p = document.getElementById('srv').value;
-
-            if(!q || !l) return alert("يرجى إدخال الرابط والكمية");
-
-            const res = await fetch(`${API_URL}/api/order`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    service: s,
-                    qty: q,
-                    link: l,
-                    cost: (q/1000)*p
-                })
-            });
-
-            if(res.ok) alert("✅ تم استلام طلبك بنجاح!");
-            else alert("❌ فشل الطلب (تأكد من الرصيد)");
-        }
-
-        // تحديث الرصيد عند البداية
-        async function fetchBalance() {
-            try {
-                const r = await fetch(`${API_URL}/api/balance/default_user`);
-                const d = await r.json();
-                document.getElementById('user-balance').innerText = d.balance.toFixed(2);
-            } catch(e) {}
-        }
-
-        // تشغيل الدوال عند تحميل الصفحة
-        updateServicesList();
-        fetchBalance();
+// استدعاء الدوال عند تحميل الصفحة لضمان ظهور البيانات فوراً
+window.onload = function() {
+    updateServicesList();
+    fetchBalance(); // دالة جلب الرصيد من السيرفر
+}; 
     </script>
 </body>
 </html>

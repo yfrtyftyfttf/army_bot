@@ -1,45 +1,44 @@
-from flask import Flask, request, render_template
+from flask import Flask, request
 import telebot
 import os
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-ADMIN_ID = int(os.environ.get("ADMIN_ID"))
+ADMIN_ID = os.environ.get("ADMIN_ID")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# ========= Telegram Handlers =========
-@bot.message_handler(commands=['start'])
-def start(message):
-    bot.send_message(message.chat.id, "🤖 البوت شغال ومربوط بالموقع")
+webhook_set = False  # مهم جدًا
 
-# ========= Webhook =========
+# ===== Telegram =====
+@bot.message_handler(commands=["start"])
+def start(msg):
+    bot.send_message(msg.chat.id, "✅ البوت شغال ومربوط بالسيرفر")
+
+# ===== Web =====
+@app.route("/")
+def home():
+    return "Server is running ✅"
+
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
-    json_str = request.get_data().decode("UTF-8")
-    update = telebot.types.Update.de_json(json_str)
+    update = telebot.types.Update.de_json(
+        request.get_data(as_text=True)
+    )
     bot.process_new_updates([update])
     return "OK", 200
 
-# ========= Pages =========
-@app.route("/")
-def home():
-    return render_template("index.html")
+# ===== Set webhook safely =====
+@app.before_request
+def set_webhook_once():
+    global webhook_set
+    if not webhook_set:
+        bot.remove_webhook()
+        bot.set_webhook(
+            url=f"https://army-bot-3y9o.onrender.com/{BOT_TOKEN}"
+        )
+        webhook_set = True
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    return render_template("login.html")
-
-@app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html", user="User")
-
-# ========= Set Webhook =========
-@app.before_first_request
-def set_webhook():
-    bot.remove_webhook()
-    bot.set_webhook(url=f"https://army-bot-3y9o.onrender.com/{BOT_TOKEN}")
-
-# ========= Run =========
+# ===== Run =====
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

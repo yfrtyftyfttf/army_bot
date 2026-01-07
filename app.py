@@ -1,38 +1,38 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import requests
 
 app = Flask(__name__)
-app.secret_key = "secret_key_123"
+CORS(app)
 
-# بيانات تجريبية
-USERNAME = "admin"
-PASSWORD = "1234"
+BOT_TOKEN = "7465926974:AAHzPv067I1ser4kExbRt5Hzj9R3Ma5Xjik"
+CHAT_ID = "6695916631"
 
-@app.route("/", methods=["GET", "POST"])
-def login():
-    error = None
+@app.route('/')
+def home():
+    return "سيرفر الجيش يعمل بنجاح!"
 
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+@app.route('/send_order', methods=['POST'])
+def send_order():
+    try:
+        data = request.json
+        order_type = data.get('type')
+        details = data.get('details')
 
-        if username == USERNAME and password == PASSWORD:
-            session["user"] = username
-            return redirect(url_for("dashboard"))
-        else:
-            error = "❌ اسم المستخدم أو كلمة المرور غير صحيحة"
+        message = f"🚨 {order_type} جديد\n"
+        message += "------------------------\n"
+        for key, value in details.items():
+            message += f"🔹 {key}: {value}\n"
+        
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        requests.post(url, json={"chat_id": CHAT_ID, "text": message})
+        
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "msg": str(e)}), 500
 
-    return render_template("index.html", error=error)
-
-@app.route("/dashboard")
-def dashboard():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    return f"👋 أهلاً {session['user']}، تم تسجيل الدخول بنجاح ✅"
-
-@app.route("/logout")
-def logout():
-    session.pop("user", None)
-    return redirect(url_for("login"))
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+if __name__ == '__main__':
+    # مهم جداً لعمل الرابط أونلاين
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)

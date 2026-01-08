@@ -1,69 +1,221 @@
-// تأكد من وضع هذا الجزء في نهاية الـ Script في ملف index.html
-window.onload = function() {
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Army SMM - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    // ربط زر الشحن
-    const chargeBtn = document.getElementById('chargeBtn');
-    if(chargeBtn) {
-        chargeBtn.onclick = async function() {
-            const amt = document.getElementById('chargeAmount').value;
-            const code = document.getElementById('transferCode').value;
-            if(!amt || !code) return alert("أكمل البيانات");
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
-            this.disabled = true;
-            this.innerText = "جاري الإرسال...";
+    <style>
+        :root { --primary: #00d2ff; --secondary: #3a7bd5; --glass: rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle at center, #302b63, #0f0c29); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .dashboard { width: 95%; max-width: 400px; background: var(--glass); backdrop-filter: blur(15px); border-radius: 30px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 45px rgba(0,0,0,0.5); }
+        .balance-card { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; position: relative; }
+        .user-id-tag { position: absolute; top: 10px; right: 15px; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 10px; font-size: 11px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #0f0c29; color: white; box-sizing: border-box; }
+        .btn-send { background: var(--primary); border: none; padding: 12px; width: 100%; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-send:disabled { background: #444; cursor: not-allowed; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; border: 1px solid var(--primary); }
+        #authOverlay { position: fixed; inset: 0; background: #0a0b0e; z-index: 10000; display: flex; justify-content: center; align-items: center; }
+        .auth-card { background: #1a1c23; padding: 30px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; border: 1px solid var(--primary); }
+    </style>
+</head>
+<body>
 
+    <div id="authOverlay">
+        <div class="auth-card">
+            <h2 id="authTitle">إنشاء حساب</h2>
+            <input type="text" id="regName" placeholder="الاسم الكامل">
+            <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
+            <input type="password" id="regPass" placeholder="كلمة المرور">
+            <button id="authBtn" class="btn-send">دخول / تسجيل</button>
+            <p id="toggleAuth" style="color: var(--primary); cursor: pointer; margin-top:15px;">لديك حساب؟ سجل دخول</p>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="balance-card">
+            <div class="user-id-tag">ID: <span id="displayUserCode">------</span></div>
+            <h3 style="margin:0;">مرحباً، <span id="displayUserName">...</span></h3>
+            <h1 style="font-size: 40px; margin: 10px 0;">$<span id="userBalance">0.00</span></h1>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+            <button onclick="document.getElementById('rechargeModal').style.display='flex'" class="btn-send" style="background: #28a745;">شحن رصيد</button>
+            <button onclick="window.open('https://t.me/yfrtyftyfttf')" class="btn-send" style="background: #17a2b8;">دعم فني</button>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px;">
+            <select id="platform">
+                <option value="" disabled selected>اختر المنصة</option>
+                <option value="instagram">إنستغرام</option>
+                <option value="tiktok">تيك توك</option>
+                <option value="telegram">تليجرام</option>
+            </select>
+            <select id="serviceType">
+                <option value="followers">متابعين ($3/1k)</option>
+                <option value="likes">لايكات ($1/1k)</option>
+                <option value="views">مشاهدات ($0.1/1k)</option>
+            </select>
+            <input type="text" id="targetLink" placeholder="الرابط هنا">
+            <input type="number" id="quantity" placeholder="الكمية">
+            <div style="text-align: center; margin-bottom: 10px;">السعر الإجمالي: $<span id="totalPrice">0.00</span></div>
+            <button id="orderBtn" class="btn-send">تأكيد الطلب</button>
+        </div>
+        <button onclick="firebase.auth().signOut()" style="background:none; border:none; color:gray; width:100%; margin-top:15px; cursor:pointer;">خروج</button>
+    </div>
+
+    <div id="rechargeModal" class="modal">
+        <div class="modal-content">
+            <h3 style="text-align: center;">شحن الرصيد</h3>
+            <input type="number" id="chargeAmount" placeholder="المبلغ ($)">
+            <input type="text" id="transferCode" placeholder="كود التحويل">
+            <button id="chargeBtn" class="btn-send">إرسال للمراجعة</button>
+            <button onclick="document.getElementById('rechargeModal').style.display='none'" style="background:none; border:none; color:red; width:100%; margin-top:10px; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
+
+    <script>
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
+            authDomain: "army-smm.firebaseapp.com",
+            projectId: "army-smm",
+            storageBucket: "army-smm.firebasestorage.app",
+            messagingSenderId: "27268417960",
+            appId: "1:27268417960:web:990e040e77a0c38a11f59d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let isLoginMode = false;
+        let userData = null;
+
+        // تبديل بين تسجيل الدخول وإنشاء الحساب
+        document.getElementById('toggleAuth').onclick = () => {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').innerText = isLoginMode ? "تسجيل الدخول" : "إنشاء حساب";
+            document.getElementById('regName').style.display = isLoginMode ? "none" : "block";
+        };
+
+        // معالجة تسجيل الدخول / التسجيل
+        document.getElementById('authBtn').onclick = async () => {
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            const name = document.getElementById('regName').value;
+            if(!email || !pass) return alert("يرجى إدخال البيانات");
             try {
-                const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    mode: 'cors',
-                    body: JSON.stringify({
-                        type: 'شحن رصيد',
-                        user_name: userData.name,
-                        acc_code: userData.accountCode,
-                        details: {"المبلغ": amt, "كود_التحويل": code}
-                    })
+                if (isLoginMode) {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                } else {
+                    const res = await auth.createUserWithEmailAndPassword(email, pass);
+                    const accCode = Math.floor(100000 + Math.random() * 900000);
+                    await db.collection("users").doc(res.user.uid).set({
+                        name: name || "عميل",
+                        email: email,
+                        balance: 0,
+                        uid: res.user.uid,
+                        accountCode: accCode
+                    });
+                }
+            } catch(e) { alert(e.message); }
+        };
+
+        // مراقبة حالة المستخدم
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('authOverlay').style.display = 'none';
+                db.collection("users").doc(user.uid).onSnapshot(doc => {
+                    userData = doc.data();
+                    document.getElementById('displayUserName').innerText = userData.name;
+                    document.getElementById('userBalance').innerText = userData.balance.toFixed(2);
+                    document.getElementById('displayUserCode').innerText = userData.accountCode;
                 });
-                if(res.ok) alert("✅ تم الإرسال للمراجعة");
-                else alert("❌ خطأ من السيرفر: " + res.status);
-            } catch (e) {
-                console.error(e);
-                alert("⚠️ فشل الاتصال بالسيرفر! تأكد أن سيرفر Render يعمل.");
-            } finally {
-                this.disabled = false;
-                this.innerText = "إرسال للمراجعة";
-                document.getElementById('rechargeModal').style.display = 'none';
+            } else {
+                document.getElementById('authOverlay').style.display = 'flex';
+            }
+        });
+
+        // حساب السعر التلقائي
+        document.getElementById('quantity').oninput = () => {
+            const rates = { followers: 3, likes: 1, views: 0.1 };
+            const type = document.getElementById('serviceType').value;
+            const qty = document.getElementById('quantity').value;
+            document.getElementById('totalPrice').innerText = (qty * (rates[type] || 0) / 1000).toFixed(2);
+        };
+
+        // --- الجزء الذي أرسلته (ربط الأزرار عند تحميل النافذة) ---
+        window.onload = function() {
+            const chargeBtn = document.getElementById('chargeBtn');
+            if(chargeBtn) {
+                chargeBtn.onclick = async function() {
+                    const amt = document.getElementById('chargeAmount').value;
+                    const code = document.getElementById('transferCode').value;
+                    if(!amt || !code) return alert("أكمل البيانات");
+
+                    this.disabled = true;
+                    this.innerText = "جاري الإرسال...";
+
+                    try {
+                        const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            mode: 'cors',
+                            body: JSON.stringify({
+                                type: 'شحن رصيد',
+                                user_name: userData.name,
+                                acc_code: userData.accountCode,
+                                details: {"المبلغ": amt, "كود_التحويل": code}
+                            })
+                        });
+                        if(res.ok) alert("✅ تم الإرسال للمراجعة");
+                        else alert("❌ خطأ من السيرفر: " + res.status);
+                    } catch (e) {
+                        console.error(e);
+                        alert("⚠️ فشل الاتصال بالسيرفر! تأكد أن سيرفر Render يعمل.");
+                    } finally {
+                        this.disabled = false;
+                        this.innerText = "إرسال للمراجعة";
+                        document.getElementById('rechargeModal').style.display = 'none';
+                    }
+                };
+            }
+
+            const orderBtn = document.getElementById('orderBtn');
+            if(orderBtn) {
+                orderBtn.onclick = async function() {
+                    const price = parseFloat(document.getElementById('totalPrice').innerText);
+                    if(userData.balance < price) return alert("رصيدك غير كافٍ");
+
+                    this.disabled = true;
+                    try {
+                        const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            mode: 'cors',
+                            body: JSON.stringify({
+                                type: 'طلب رشق',
+                                user_name: userData.name,
+                                acc_code: userData.accountCode,
+                                details: {
+                                    "المنصة": document.getElementById('platform').value,
+                                    "الكمية": document.getElementById('quantity').value,
+                                    "السعر": price + "$"
+                                }
+                            })
+                        });
+                        if(res.ok) alert("✅ تم استلام طلبك");
+                    } catch (e) { alert("⚠️ فشل الاتصال"); }
+                    finally { this.disabled = false; }
+                };
             }
         };
-    }
-
-    // ربط زر الطلب
-    const orderBtn = document.getElementById('orderBtn');
-    if(orderBtn) {
-        orderBtn.onclick = async function() {
-            const price = parseFloat(document.getElementById('totalPrice').innerText);
-            if(userData.balance < price) return alert("رصيدك غير كافٍ");
-
-            this.disabled = true;
-            try {
-                const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    mode: 'cors',
-                    body: JSON.stringify({
-                        type: 'طلب رشق',
-                        user_name: userData.name,
-                        acc_code: userData.accountCode,
-                        details: {
-                            "المنصة": document.getElementById('platform').value,
-                            "الكمية": document.getElementById('quantity').value,
-                            "السعر": price + "$"
-                        }
-                    })
-                });
-                if(res.ok) alert("✅ تم استلام طلبك");
-            } catch (e) { alert("⚠️ فشل الاتصال"); }
-            finally { this.disabled = false; }
-        };
-    }
-};
+    </script>
+</body>
+</html>

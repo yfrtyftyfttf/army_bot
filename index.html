@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMM Luxury Dashboard</title>
+    <title>Army SMM Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -11,34 +11,37 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --primary: #00d2ff; --secondary: #3a7bd5; --glass: rgba(255, 255, 255, 0.1); }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(to right, #24243e, #302b63, #0f0c29); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        :root { --primary: #00d2ff; --secondary: #3a7bd5; --bg: #0f0c29; --glass: rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #24243e, #302b63, #0f0c29); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
         /* واجهة الدخول */
         #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 11, 14, 0.98); z-index: 10000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: #1a1c23; padding: 30px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; border: 1px solid var(--primary); }
+        .auth-card { background: #1a1c23; padding: 30px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; border: 1px solid var(--primary); box-shadow: 0 0 20px rgba(0, 210, 255, 0.2); }
 
         /* لوحة التحكم */
-        .dashboard { width: 90%; max-width: 450px; background: var(--glass); backdrop-filter: blur(15px); border-radius: 30px; padding: 25px; box-shadow: 0 25px 45px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); }
-        .balance-card { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 30px; border-radius: 20px; margin-bottom: 25px; text-align: center; }
+        .dashboard { width: 95%; max-width: 450px; background: var(--glass); backdrop-filter: blur(15px); border-radius: 30px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 45px rgba(0,0,0,0.3); }
+        .balance-card { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 25px; border-radius: 20px; margin-bottom: 20px; text-align: center; }
         
-        .actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-        .action-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.3s; text-align: center; font-size: 14px; }
-        .action-item:hover { background: rgba(255,255,255,0.15); transform: translateY(-3px); }
+        .actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .action-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.3s; text-align: center; font-size: 13px; border: 1px solid transparent; }
+        .action-item:hover { background: rgba(255,255,255,0.15); border-color: var(--primary); transform: translateY(-3px); }
 
+        /* النوافذ المنبثقة */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 2000; }
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; border: 1px solid var(--primary); }
         
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #0f0c29; color: white; box-sizing: border-box; }
-        .btn-send { background: var(--primary); border: none; padding: 12px; width: 100%; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-send:disabled { background: #555; cursor: not-allowed; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #0f0c29; color: white; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--primary); }
+        .btn-send { background: var(--primary); border: none; padding: 12px; width: 100%; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; }
+        .btn-send:hover { background: var(--secondary); }
+        .btn-send:disabled { background: #444; cursor: not-allowed; opacity: 0.7; }
     </style>
 </head>
 <body>
 
     <div id="authOverlay">
         <div class="auth-card">
-            <h2 id="authTitle">إنشاء حساب جديد</h2>
+            <h2 id="authTitle" style="margin-top:0;">إنشاء حساب جديد</h2>
             <input type="text" id="regName" placeholder="الاسم الكامل">
             <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
             <input type="password" id="regPass" placeholder="كلمة المرور">
@@ -54,39 +57,43 @@
         </div>
 
         <div class="actions-grid">
-            <div class="action-item" onclick="openModal('rechargeModal')"><i class="fas fa-wallet"></i><br>شحن</div>
-            <div class="action-item" onclick="window.open('https://t.me/your_tele_user', '_blank')"><i class="fas fa-headset"></i><br>دعم</div>
-            <div class="action-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><br>خروج</div>
+            <div class="action-item" onclick="openModal('rechargeModal')"><i class="fas fa-wallet fa-lg"></i><br>شحن رصيد</div>
+            <div class="action-item" onclick="window.open('https://t.me/yfrtyftyfttf', '_blank')"><i class="fas fa-headset fa-lg"></i><br>دعم فني</div>
+            <div class="action-item" onclick="logout()"><i class="fas fa-sign-out-alt fa-lg"></i><br>خروج</div>
         </div>
 
-        <div class="service-section" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px;">
-            <h4 style="margin-top:0; color: var(--primary);">طلب خدمة سريعة</h4>
+        <div class="service-section" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px;">
+            <h4 style="margin-top:0; color: var(--primary); text-align: center;">طلب خدمة رشق</h4>
             <select id="platform" onchange="updateServiceOptions()">
                 <option value="" disabled selected>اختر المنصة</option>
                 <option value="instagram">إنستغرام</option>
                 <option value="tiktok">تيك توك</option>
                 <option value="telegram">تليجرام</option>
             </select>
-            <select id="serviceType" onchange="calculatePrice()"><option value="" disabled selected>اختر النوع</option></select>
-            <input type="text" id="targetLink" placeholder="ضع الرابط هنا">
-            <input type="number" id="quantity" placeholder="الكمية" oninput="calculatePrice()">
-            <div style="text-align: center; margin: 10px 0; font-weight: bold; color: #00ff88;">السعر الإجمالي: $<span id="totalPrice">0.00</span></div>
+            <select id="serviceType" onchange="calculatePrice()">
+                <option value="" disabled selected>اختر النوع</option>
+            </select>
+            <input type="text" id="targetLink" placeholder="رابط الحساب أو المنشور">
+            <input type="number" id="quantity" placeholder="الكمية المطلوبة" oninput="calculatePrice()">
+            <div style="text-align: center; margin: 15px 0; font-weight: bold;">
+                السعر الإجمالي: <span style="color: #00ff88;">$<span id="totalPrice">0.00</span></span>
+            </div>
             <button id="orderBtn" class="btn-send" onclick="sendOrder()">تأكيد الطلب</button>
         </div>
     </div>
 
     <div id="rechargeModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-top:0; text-align: center;">شحن الرصيد</h3>
-            <input type="number" id="chargeAmount" placeholder="المبلغ ($)">
-            <input type="text" id="transferCode" placeholder="رقم التحويل / كود الكارت">
+            <h3 style="margin-top:0; text-align: center; color: var(--primary);">شحن رصيد</h3>
+            <input type="number" id="chargeAmount" placeholder="المبلغ المراد شحنه ($)">
+            <input type="text" id="transferCode" placeholder="كود التحويل أو رقم المعاملة">
             <button id="chargeBtn" class="btn-send" onclick="sendRecharge()">إرسال للمراجعة</button>
             <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:#ff4d4d; width:100%; margin-top:10px; cursor:pointer">إلغاء</button>
         </div>
     </div>
 
     <script>
-        // --- إعدادات Firebase ---
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
             authDomain: "army-smm.firebaseapp.com",
@@ -102,7 +109,7 @@
         let isLoginMode = false;
         let userData = null;
 
-        // --- وظائف الهوية ---
+        // وظائف الهوية
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
             document.getElementById('authTitle').innerText = isLoginMode ? "تسجيل الدخول" : "إنشاء حساب جديد";
@@ -125,7 +132,7 @@
                 } else {
                     const res = await auth.createUserWithEmailAndPassword(email, pass);
                     await db.collection("users").doc(res.user.uid).set({
-                        name: name || "عميل جديد", email: email, balance: 0, uid: res.user.uid
+                        name: name || "عميل", email: email, balance: 0, uid: res.user.uid
                     });
                 }
             } catch (e) { alert("خطأ: " + e.message); btn.disabled = false; }
@@ -148,7 +155,7 @@
 
         function logout() { auth.signOut(); }
 
-        // --- وظائف الربط مع السيرفر ---
+        // دالة الاتصال بالسيرفر
         async function callServer(payload, btnId) {
             const btn = document.getElementById(btnId);
             btn.disabled = true;
@@ -162,16 +169,15 @@
                     body: JSON.stringify(payload)
                 });
                 if(res.ok) {
-                    alert("✅ تم الإرسال بنجاح! انتظر رد الإدارة.");
+                    alert("✅ تم إرسال طلبك بنجاح!");
                     return true;
                 }
             } catch (e) {
-                alert("❌ فشل الاتصال بالسيرفر. تأكد أن السيرفر Live.");
+                alert("❌ فشل الاتصال بالسيرفر.");
             } finally { btn.disabled = false; }
             return false;
         }
 
-        // --- إرسال شحن الرصيد ---
         async function sendRecharge() {
             const amt = document.getElementById('chargeAmount').value;
             const code = document.getElementById('transferCode').value;
@@ -185,7 +191,6 @@
             }
         }
 
-        // --- إرسال طلب الخدمة ---
         async function sendOrder() {
             const price = parseFloat(document.getElementById('totalPrice').innerText);
             if(price <= 0) return alert("يرجى تحديد الكمية والخدمة");
@@ -207,25 +212,35 @@
             }
         }
 
-        // --- وظائف الواجهة ---
+        // وظائف الواجهة
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         const rates = { followers: 3, likes: 1, views: 0.1 };
+        
         function updateServiceOptions() {
-            const p = document.getElementById('platform').value;
-            const s = document.getElementById('serviceType');
-            s.innerHTML = '<option value="" disabled selected>اختر النوع</option>';
-            s.innerHTML += '<option value="followers">متابعين ($3/1000)</option>';
-            if(p !== 'telegram') s.innerHTML += '<option value="likes">لايكات ($1/1000)</option>';
-            s.innerHTML += '<option value="views">مشاهدات ($0.1/1000)</option>';
+            const platform = document.getElementById('platform').value;
+            const serviceSelect = document.getElementById('serviceType');
+            serviceSelect.innerHTML = '<option value="" disabled selected>اختر النوع</option>';
+            
+            serviceSelect.innerHTML += '<option value="followers">متابعين ($3/1000)</option>';
+            if(platform !== 'telegram') {
+                serviceSelect.innerHTML += '<option value="likes">لايكات ($1/1000)</option>';
+            }
+            serviceSelect.innerHTML += '<option value="views">مشاهدات ($0.1/1000)</option>';
+            calculatePrice();
         }
 
         function calculatePrice() {
             const service = document.getElementById('serviceType').value;
             const qty = document.getElementById('quantity').value;
+            const priceSpan = document.getElementById('totalPrice');
+            
             if (service && qty > 0) {
-                document.getElementById('totalPrice').innerText = (qty * (rates[service]/1000)).toFixed(2);
+                const total = (qty * (rates[service] / 1000)).toFixed(2);
+                priceSpan.innerText = total;
+            } else {
+                priceSpan.innerText = "0.00";
             }
         }
     </script>

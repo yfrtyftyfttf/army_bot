@@ -5,69 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMM Luxury Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    
+
     <style>
-        :root {
-            --primary: #00d2ff;
-            --secondary: #3a7bd5;
-            --bg-dark: #0f0c29;
-            --glass: rgba(255, 255, 255, 0.1);
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
-            color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
-        }
-
-        /* شاشة الدخول المنبثقة */
-        #authOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 11, 14, 0.98); z-index: 10000;
-            display: flex; justify-content: center; align-items: center;
-        }
-
-        .auth-card {
-            background: #1a1c23; padding: 30px; border-radius: 20px;
-            width: 90%; max-width: 380px; text-align: center; border: 1px solid var(--primary);
-        }
-
-        .dashboard {
-            width: 90%; max-width: 450px; background: var(--glass);
-            backdrop-filter: blur(15px); border-radius: 30px; padding: 25px;
-            box-shadow: 0 25px 45px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .balance-card {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            padding: 30px; border-radius: 20px; margin-bottom: 25px;
-        }
-
+        :root { --primary: #00d2ff; --secondary: #3a7bd5; --glass: rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(to right, #24243e, #302b63, #0f0c29); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 11, 14, 0.98); z-index: 10000; display: flex; justify-content: center; align-items: center; }
+        .auth-card { background: #1a1c23; padding: 30px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; border: 1px solid var(--primary); }
+        .dashboard { width: 90%; max-width: 450px; background: var(--glass); backdrop-filter: blur(15px); border-radius: 30px; padding: 25px; box-shadow: 0 25px 45px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); }
+        .balance-card { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 30px; border-radius: 20px; margin-bottom: 25px; }
         .actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-        .action-item {
-            background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px;
-            cursor: pointer; transition: 0.3s; text-align: center;
-        }
+        .action-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.3s; text-align: center; }
         .action-item:hover { background: rgba(255,255,255,0.15); transform: translateY(-5px); }
-        
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; position: relative; }
-        
-        input, select, textarea {
-            width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px;
-            border: 1px solid #333; background: #0f0c29; color: white; box-sizing: border-box;
-        }
-        
-        .btn-send {
-            background: var(--primary); border: none; padding: 12px; width: 100%;
-            border-radius: 10px; color: white; font-weight: bold; cursor: pointer;
-        }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #0f0c29; color: white; box-sizing: border-box; }
+        .btn-send { background: var(--primary); border: none; padding: 12px; width: 100%; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -78,7 +34,7 @@
             <input type="text" id="regName" placeholder="الاسم الكامل">
             <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
             <input type="password" id="regPass" placeholder="كلمة المرور">
-            <button onclick="handleAuthAction()" class="btn-send" id="authMainBtn">تأكيد</button>
+            <button onclick="handleAuthAction()" class="btn-send">تأكيد</button>
             <p onclick="toggleAuthMode()" id="toggleText" style="color: var(--primary); margin-top: 15px; cursor: pointer;">لديك حساب بالفعل؟ سجل دخولك</p>
         </div>
     </div>
@@ -91,13 +47,13 @@
 
         <div class="actions-grid">
             <div class="action-item" onclick="openModal('rechargeModal')">
-                <i class="fas fa-wallet"></i><br><span>شحن الرصيد</span>
+                <i class="fas fa-wallet"></i><br><span>شحن</span>
             </div>
             <div class="action-item" onclick="openModal('supportModal')">
-                <i class="fas fa-headset"></i><br><span>الدعم الفني</span>
+                <i class="fas fa-headset"></i><br><span>دعم</span>
             </div>
-            <div class="action-item" onclick="openModal('historyModal')">
-                <i class="fas fa-sign-out-alt"></i><br><span onclick="firebase.auth().signOut()">خروج</span>
+            <div class="action-item" onclick="firebase.auth().signOut()">
+                <i class="fas fa-sign-out-alt"></i><br><span>خروج</span>
             </div>
         </div>
 
@@ -110,43 +66,43 @@
                 <option value="telegram">تليجرام</option>
             </select>
             <select id="serviceType" onchange="calculatePrice()">
-                <option value="" disabled selected>اختر نوع الخدمة</option>
+                <option value="" disabled selected>اختر النوع</option>
             </select>
-            <input type="text" id="targetLink" placeholder="رابط الحساب أو المنشور">
+            <input type="text" id="targetLink" placeholder="الرابط هنا">
             <input type="number" id="quantity" placeholder="الكمية" oninput="calculatePrice()">
-            <div style="padding: 10px; border: 1px dashed var(--primary); margin-bottom: 10px;">
-                السعر: <span id="totalPrice" style="color: #00ff88;">0.00</span>$
+            <div style="padding: 10px; border: 1px dashed var(--primary); margin-bottom: 10px; text-align: center;">
+                السعر: <span id="totalPrice" style="color: #00ff88; font-weight: bold;">0.00</span>$
             </div>
-            <button class="btn-send" onclick="sendOrderToBot()">تأكيد طلب الرشق</button>
+            <button class="btn-send" onclick="sendOrderToBot()">تأكيد الطلب</button>
         </div>
     </div>
 
     <div id="rechargeModal" class="modal">
         <div class="modal-content">
-            <h3 style="text-align:center">شحن رصيد</h3>
-            <input type="number" id="chargeAmount" placeholder="المبلغ (بالدولار للدقة)">
-            <input type="text" id="transferCode" placeholder="كود الكارت أو رقم التحويل">
-            <button class="btn-send" onclick="sendToBot('شحن رصيد')">إرسال للتأكيد</button>
-            <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:red; width:100%; margin-top:10px">إلغاء</button>
+            <h3>شحن رصيد (آسيا)</h3>
+            <input type="number" id="chargeAmount" placeholder="المبلغ المتوقع بالدولار">
+            <input type="text" id="transferCode" placeholder="رقم التحويل أو كود الكارت">
+            <button class="btn-send" onclick="sendToBot('شحن رصيد')">إرسال للمراجعة</button>
+            <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:red; width:100%; margin-top:10px">إغلاق</button>
         </div>
     </div>
 
     <script>
-        // --- إعدادات FIREBASE (ضع بياناتك هنا) ---
+        // --- إعدادات FIREBASE الحقيقية التي أرسلتها ---
         const firebaseConfig = {
-            apiKey: "ضع_هنا",
+            apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
             authDomain: "army-smm.firebaseapp.com",
             projectId: "army-smm",
-            storageBucket: "army-smm.appspot.com",
-            messagingSenderId: "...",
-            appId: "..."
+            storageBucket: "army-smm.firebasestorage.app",
+            messagingSenderId: "27268417960",
+            appId: "1:27268417960:web:990e040e77a0c38a11f59d"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
         let isLoginMode = false;
-        let currentUserData = null;
+        let userData = null;
 
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
@@ -158,7 +114,6 @@
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
             const name = document.getElementById('regName').value;
-
             try {
                 if (isLoginMode) {
                     await auth.signInWithEmailAndPassword(email, pass);
@@ -168,54 +123,48 @@
                         name: name, email: email, balance: 0, uid: res.user.uid
                     });
                 }
-            } catch (e) { alert("خطأ: " + e.message); }
+            } catch (e) { alert(e.message); }
         }
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('authOverlay').style.display = 'none';
                 db.collection("users").doc(user.uid).onSnapshot(doc => {
-                    currentUserData = doc.data();
-                    document.getElementById('displayUserName').innerText = currentUserData.name;
-                    document.getElementById('userBalance').innerText = currentUserData.balance.toFixed(2);
+                    userData = doc.data();
+                    document.getElementById('displayUserName').innerText = userData.name;
+                    document.getElementById('userBalance').innerText = userData.balance.toFixed(2);
                 });
             } else {
                 document.getElementById('authOverlay').style.display = 'flex';
             }
         });
 
-        // --- وظائف الموقع ---
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        async function sendRequest(payload) {
-            const serverUrl = 'https://army-bot-3y9o.onrender.com/send_order';
+        async function callServer(payload) {
             payload.user_uid = auth.currentUser.uid;
-            payload.user_name = currentUserData.name;
-
+            payload.user_name = userData.name;
             try {
-                const res = await fetch(serverUrl, {
+                const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
                 });
-                if(res.ok) alert("تم إرسال طلبك! انتظر رد الإدارة في البوت.");
-            } catch (e) { alert("السيرفر لا يستجيب"); }
+                if(res.ok) alert("تم إرسال طلبك للبوت بنجاح!");
+            } catch (e) { alert("تأكد من تشغيل سيرفر Render"); }
         }
 
         function sendToBot(type) {
-            const details = {
-                "المبلغ": document.getElementById('chargeAmount').value,
-                "الكود": document.getElementById('transferCode').value
-            };
-            sendRequest({ type: type, details: details });
+            const details = { "المبلغ": document.getElementById('chargeAmount').value, "الكود": document.getElementById('transferCode').value };
+            callServer({ type: type, details: details });
             closeModal('rechargeModal');
         }
 
         function sendOrderToBot() {
             const price = parseFloat(document.getElementById('totalPrice').innerText);
-            if(currentUserData.balance < price) return alert("رصيدك غير كافٍ!");
-
+            if(userData.balance < price) return alert("رصيدك غير كافٍ!");
+            
             const details = {
                 "المنصة": document.getElementById('platform').value,
                 "الخدمة": document.getElementById('serviceType').value,
@@ -223,18 +172,17 @@
                 "الكمية": document.getElementById('quantity').value,
                 "السعر": price + "$"
             };
-            sendRequest({ type: "طلب رشق", details: details });
+            callServer({ type: "طلب رشق", details: details });
         }
 
-        // --- نظام الأسعار ---
         const rates = { followers: 3, likes: 1, views: 0.1 };
         function updateServiceOptions() {
             const p = document.getElementById('platform').value;
             const s = document.getElementById('serviceType');
             s.innerHTML = '<option value="" disabled selected>اختر الخدمة</option>';
-            s.innerHTML += '<option value="followers">متابعين ($3 لكل 1000)</option>';
-            if(p !== 'telegram') s.innerHTML += '<option value="likes">لايكات ($1 لكل 1000)</option>';
-            s.innerHTML += '<option value="views">مشاهدات ($0.1 لكل 1000)</option>';
+            s.innerHTML += '<option value="followers">متابعين ($3/1000)</option>';
+            if(p !== 'telegram') s.innerHTML += '<option value="likes">لايكات ($1/1000)</option>';
+            s.innerHTML += '<option value="views">مشاهدات ($0.1/1000)</option>';
         }
 
         function calculatePrice() {

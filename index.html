@@ -24,6 +24,7 @@
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; position: relative; }
         input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #0f0c29; color: white; box-sizing: border-box; }
         .btn-send { background: var(--primary); border: none; padding: 12px; width: 100%; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+        .btn-send:disabled { background: #444; opacity: 0.7; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -34,8 +35,8 @@
             <input type="text" id="regName" placeholder="الاسم الكامل">
             <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
             <input type="password" id="regPass" placeholder="كلمة المرور">
-            <button onclick="handleAuthAction()" class="btn-send">تأكيد</button>
-            <p onclick="toggleAuthMode()" id="toggleText" style="color: var(--primary); margin-top: 15px; cursor: pointer;">لديك حساب بالفعل؟ سجل دخولك</p>
+            <button id="authBtnSubmit" class="btn-send">تأكيد</button>
+            <p id="toggleText" style="color: var(--primary); margin-top: 15px; cursor: pointer;">لديك حساب بالفعل؟ سجل دخولك</p>
         </div>
     </div>
 
@@ -49,7 +50,7 @@
             <div class="action-item" onclick="openModal('rechargeModal')">
                 <i class="fas fa-wallet"></i><br><span>شحن</span>
             </div>
-            <div class="action-item" onclick="alert('تواصل مع @your_tele_user')">
+            <div class="action-item" onclick="alert('تواصل مع الدعم الفني عبر تليجرام')">
                 <i class="fas fa-headset"></i><br><span>دعم</span>
             </div>
             <div class="action-item" onclick="firebase.auth().signOut()">
@@ -59,21 +60,21 @@
 
         <div class="service-section">
             <h3 style="color: var(--primary);">طلب خدمة جديدة</h3>
-            <select id="platform" onchange="updateServiceOptions()">
+            <select id="platform">
                 <option value="" disabled selected>اختر المنصة</option>
                 <option value="instagram">إنستغرام</option>
                 <option value="tiktok">تيك توك</option>
                 <option value="telegram">تليجرام</option>
             </select>
-            <select id="serviceType" onchange="calculatePrice()">
+            <select id="serviceType">
                 <option value="" disabled selected>اختر النوع</option>
             </select>
             <input type="text" id="targetLink" placeholder="الرابط هنا">
-            <input type="number" id="quantity" placeholder="الكمية" oninput="calculatePrice()">
+            <input type="number" id="quantity" placeholder="الكمية">
             <div style="padding: 10px; border: 1px dashed var(--primary); margin-bottom: 10px; text-align: center;">
                 السعر: <span id="totalPrice" style="color: #00ff88; font-weight: bold;">0.00</span>$
             </div>
-            <button class="btn-send" onclick="sendOrderToBot()">تأكيد الطلب</button>
+            <button id="btnOrderSubmit" class="btn-send">تأكيد الطلب</button>
         </div>
     </div>
 
@@ -82,21 +83,19 @@
             <h3>شحن رصيد</h3>
             <input type="number" id="chargeAmount" placeholder="المبلغ المطلوب بالدولار">
             <input type="text" id="transferCode" placeholder="كود الكارت أو رقم التحويل">
-            <button class="btn-send" onclick="sendToBot('شحن رصيد')">إرسال للمراجعة</button>
+            <button id="btnRechargeSubmit" class="btn-send">إرسال للمراجعة</button>
             <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:red; width:100%; margin-top:10px; cursor:pointer">إغلاق</button>
         </div>
     </div>
 
     <script>
-        // --- إعدادات Firebase من لقطة الشاشة الخاصة بك ---
         const firebaseConfig = {
           apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
           authDomain: "army-smm.firebaseapp.com",
           projectId: "army-smm",
           storageBucket: "army-smm.firebasestorage.app",
           messagingSenderId: "27268417960",
-          appId: "1:27268417960:web:990e040e77a0c38a11f59d",
-          measurementId: "G-79LNVTPQ77"
+          appId: "1:27268417960:web:990e040e77a0c38a11f59d"
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -106,14 +105,15 @@
         let isLoginMode = false;
         let userData = null;
 
-        function toggleAuthMode() {
+        // --- إصلاح نظام الدخول ---
+        document.getElementById('toggleText').onclick = function() {
             isLoginMode = !isLoginMode;
             document.getElementById('authTitle').innerText = isLoginMode ? "تسجيل الدخول" : "إنشاء حساب جديد";
             document.getElementById('regName').style.display = isLoginMode ? "none" : "block";
-            document.getElementById('toggleText').innerText = isLoginMode ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب بالفعل؟ سجل دخولك";
-        }
+            this.innerText = isLoginMode ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب بالفعل؟ سجل دخولك";
+        };
 
-        async function handleAuthAction() {
+        document.getElementById('authBtnSubmit').onclick = async function() {
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
             const name = document.getElementById('regName').value;
@@ -125,11 +125,11 @@
                 } else {
                     const res = await auth.createUserWithEmailAndPassword(email, pass);
                     await db.collection("users").doc(res.user.uid).set({
-                        name: name, email: email, balance: 0, uid: res.user.uid
+                        name: name || "عميل", email: email, balance: 0, uid: res.user.uid, accountCode: Math.floor(100000+Math.random()*900000)
                     });
                 }
-            } catch (e) { alert("خطأ Firebase: " + e.message); }
-        }
+            } catch (e) { alert("خطأ: " + e.message); }
+        };
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -146,59 +146,70 @@
             }
         });
 
+        // --- وظائف المودال ---
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        async function callServer(payload) {
-            payload.user_uid = auth.currentUser.uid;
-            payload.user_name = userData.name;
-            try {
-                const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                if(res.ok) alert("تم إرسال طلبك بنجاح!");
-            } catch (e) { alert("خطأ في الاتصال بالسيرفر"); }
-        }
-
-        function sendToBot(type) {
-            const details = { "المبلغ": document.getElementById('chargeAmount').value, "الكود": document.getElementById('transferCode').value };
-            callServer({ type: type, details: details });
-            closeModal('rechargeModal');
-        }
-
-        function sendOrderToBot() {
-            const price = parseFloat(document.getElementById('totalPrice').innerText);
-            if(userData.balance < price) return alert("رصيدك غير كافٍ!");
-            
-            const details = {
-                "المنصة": document.getElementById('platform').value,
-                "الخدمة": document.getElementById('serviceType').value,
-                "الرابط": document.getElementById('targetLink').value,
-                "الكمية": document.getElementById('quantity').value,
-                "السعر": price + "$"
-            };
-            callServer({ type: "طلب رشق", details: details });
-        }
-
+        // --- حساب السعر واختيار الخدمات ---
         const rates = { followers: 3, likes: 1, views: 0.1 };
-        function updateServiceOptions() {
-            const p = document.getElementById('platform').value;
+        document.getElementById('platform').onchange = function() {
             const s = document.getElementById('serviceType');
             s.innerHTML = '<option value="" disabled selected>اختر النوع</option>';
             s.innerHTML += '<option value="followers">متابعين ($3/1000)</option>';
-            if(p !== 'telegram') s.innerHTML += '<option value="likes">لايكات ($1/1000)</option>';
+            if(this.value !== 'telegram') s.innerHTML += '<option value="likes">لايكات ($1/1000)</option>';
             s.innerHTML += '<option value="views">مشاهدات ($0.1/1000)</option>';
-        }
+        };
 
-        function calculatePrice() {
+        document.getElementById('quantity').oninput = document.getElementById('serviceType').onchange = function() {
             const service = document.getElementById('serviceType').value;
             const qty = document.getElementById('quantity').value;
             if (service && qty > 0) {
                 document.getElementById('totalPrice').innerText = (qty * (rates[service]/1000)).toFixed(2);
             }
+        };
+
+        // --- الربط مع السيرفر ---
+        async function callServer(payload, btn) {
+            if(!userData) return alert("انتظر تحميل البيانات");
+            btn.disabled = true;
+            try {
+                const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ...payload,
+                        user_uid: auth.currentUser.uid,
+                        user_name: userData.name,
+                        acc_code: userData.accountCode || "000000"
+                    })
+                });
+                if(res.ok) alert("✅ تم إرسال طلبك!");
+            } catch (e) { alert("❌ خطأ في السيرفر"); }
+            btn.disabled = false;
         }
+
+        document.getElementById('btnRechargeSubmit').onclick = function() {
+            const amt = document.getElementById('chargeAmount').value;
+            const code = document.getElementById('transferCode').value;
+            if(!amt || !code) return alert("أكمل البيانات");
+            callServer({ type: "شحن رصيد", details: {"المبلغ": amt, "الكود": code} }, this);
+            closeModal('rechargeModal');
+        };
+
+        document.getElementById('btnOrderSubmit').onclick = function() {
+            const price = parseFloat(document.getElementById('totalPrice').innerText);
+            if(userData.balance < price) return alert("رصيدك غير كافٍ!");
+            callServer({ 
+                type: "طلب رشق", 
+                details: {
+                    "المنصة": document.getElementById('platform').value,
+                    "الخدمة": document.getElementById('serviceType').value,
+                    "الرابط": document.getElementById('targetLink').value,
+                    "الكمية": document.getElementById('quantity').value,
+                    "السعر": price + "$"
+                } 
+            }, this);
+        };
     </script>
 </body>
 </html>

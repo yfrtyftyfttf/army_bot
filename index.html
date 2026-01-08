@@ -3,27 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Army SMM - Advanced Dashboard</title>
+    <title>Army SMM - Final Stable</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <style>
         :root { --primary: #00d2ff; --secondary: #3a7bd5; --glass: rgba(255, 255, 255, 0.1); }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #24243e, #302b63, #0f0c29); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .dashboard { width: 95%; max-width: 450px; background: var(--glass); backdrop-filter: blur(15px); border-radius: 30px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 45px rgba(0,0,0,0.3); }
-        .balance-card { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px; border-radius: 20px; margin-bottom: 20px; text-align: center; position: relative; }
-        .user-id-tag { position: absolute; top: 10px; right: 15px; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 10px; font-size: 11px; }
-        .actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .action-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; cursor: pointer; text-align: center; font-size: 13px; transition: 0.3s; }
-        .action-item:hover { background: rgba(255,255,255,0.15); transform: translateY(-3px); }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #0f0c29; color: white; box-sizing: border-box; }
-        .btn-send { background: var(--primary); border: none; padding: 12px; width: 100%; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; border: 1px solid var(--primary); }
-        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0b0e; z-index: 10000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: #1a1c23; padding: 30px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; border: 1px solid var(--primary); }
+        body { font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle at center, #302b63, #0f0c29); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        .dashboard { width: 90%; max-width: 400px; background: var(--glass); backdrop-filter: blur(10px); border-radius: 25px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .balance-card { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; position: relative; }
+        .user-id { position: absolute; top: 5px; right: 10px; font-size: 10px; opacity: 0.8; }
+        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #1a1a2e; color: white; box-sizing: border-box; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-primary:active { transform: scale(0.95); opacity: 0.8; }
+        
+        #authOverlay { position: fixed; inset: 0; background: #0a0b0e; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+        .auth-card { background: #161b22; padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; border: 1px solid var(--primary); }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: #1a1c23; padding: 20px; border-radius: 15px; width: 80%; border: 1px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -34,46 +37,50 @@
             <input type="text" id="regName" placeholder="الاسم الكامل">
             <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
             <input type="password" id="regPass" placeholder="كلمة المرور">
-            <button id="authBtn" onclick="handleAuthAction()" class="btn-send">دخول / تسجيل</button>
-            <p onclick="toggleAuthMode()" id="toggleText" style="color: var(--primary); cursor: pointer; margin-top:15px;">لديك حساب؟ سجل دخول</p>
+            <button id="authBtn" class="btn-primary">دخول / تسجيل</button>
+            <p id="toggleAuth" style="color: var(--primary); cursor: pointer; text-align: center; font-size: 13px; margin-top: 15px;">لديك حساب؟ سجل دخول</p>
         </div>
     </div>
 
     <div class="dashboard">
         <div class="balance-card">
-            <div class="user-id-tag">ID: <span id="displayUserCode">000000</span></div>
+            <div class="user-id">ID: <span id="displayUserCode">000000</span></div>
             <h3 style="margin:0;">مرحباً، <span id="displayUserName">...</span></h3>
-            <h1 style="font-size: 40px; margin: 10px 0;">$<span id="userBalance">0.00</span></h1>
+            <h1 style="margin: 10px 0;">$<span id="userBalance">0.00</span></h1>
         </div>
 
-        <div class="actions-grid">
-            <div class="action-item" onclick="openModal('rechargeModal')"><i class="fas fa-wallet"></i><br>شحن</div>
-            <div class="action-item" onclick="window.open('https://t.me/yfrtyftyfttf')"><i class="fas fa-headset"></i><br>دعم</div>
-            <div class="action-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><br>خروج</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+            <button onclick="document.getElementById('rechargeModal').style.display='flex'" class="btn-primary" style="background: #28a745;"><i class="fas fa-plus"></i> شحن</button>
+            <button onclick="window.open('https://t.me/yfrtyftyfttf')" class="btn-primary" style="background: #17a2b8;"><i class="fas fa-headset"></i> دعم</button>
         </div>
 
-        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px;">
-            <select id="platform" onchange="updateServiceOptions()">
+        <div class="order-form">
+            <select id="platform">
                 <option value="" disabled selected>اختر المنصة</option>
                 <option value="instagram">إنستغرام</option>
                 <option value="tiktok">تيك توك</option>
                 <option value="telegram">تليجرام</option>
             </select>
-            <select id="serviceType" onchange="calculatePrice()"><option value="">اختر الخدمة</option></select>
+            <select id="serviceType">
+                <option value="followers">متابعين ($3/1k)</option>
+                <option value="likes">لايكات ($1/1k)</option>
+                <option value="views">مشاهدات ($0.1/1k)</option>
+            </select>
             <input type="text" id="targetLink" placeholder="الرابط هنا">
-            <input type="number" id="quantity" placeholder="الكمية" oninput="calculatePrice()">
-            <div style="text-align: center; margin-bottom: 10px;">السعر: $<span id="totalPrice">0.00</span></div>
-            <button id="orderBtn" class="btn-send" onclick="sendOrder()">تأكيد الطلب</button>
+            <input type="number" id="quantity" placeholder="الكمية">
+            <div style="text-align: center; margin: 10px 0;">السعر: <span id="totalPrice" style="color: #00ff88;">0.00</span>$</div>
+            <button id="orderBtn" class="btn-primary">تأكيد الطلب</button>
         </div>
+        <button onclick="firebase.auth().signOut()" style="background:none; border:none; color:gray; width:100%; margin-top:15px; cursor:pointer;">تسجيل الخروج</button>
     </div>
 
     <div id="rechargeModal" class="modal">
         <div class="modal-content">
-            <h3 style="text-align: center;">شحن الرصيد</h3>
+            <h3 style="text-align: center;">شحن رصيد</h3>
             <input type="number" id="chargeAmount" placeholder="المبلغ ($)">
             <input type="text" id="transferCode" placeholder="كود التحويل">
-            <button id="chargeBtn" class="btn-send" onclick="sendRecharge()">إرسال</button>
-            <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:red; width:100%; margin-top:10px;">إلغاء</button>
+            <button id="chargeBtn" class="btn-primary">إرسال للمراجعة</button>
+            <button onclick="document.getElementById('rechargeModal').style.display='none'" style="background:none; border:none; color:red; width:100%; margin-top:10px; cursor:pointer;">إلغاء</button>
         </div>
     </div>
 
@@ -87,76 +94,120 @@
             appId: "1:27268417960:web:990e040e77a0c38a11f59d"
         };
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth(), db = firebase.firestore();
-        let isLoginMode = false, userData = null;
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('authTitle').innerText = isLoginMode ? "تسجيل الدخول" : "إنشاء حساب";
-            document.getElementById('regName').style.display = isLoginMode ? "none" : "block";
-        }
+        let isLoginMode = false;
+        let userData = null;
 
-        async function handleAuthAction() {
-            const email = document.getElementById('regEmail').value, pass = document.getElementById('regPass').value, name = document.getElementById('regName').value;
+        // --- معالجة الأزرار (طريقة الأمان العالية) ---
+        
+        // 1. زر الدخول / التسجيل
+        document.getElementById('authBtn').addEventListener('click', async () => {
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            const name = document.getElementById('regName').value;
+            
             if(!email || !pass) return alert("أكمل البيانات");
+            
             try {
-                if (isLoginMode) await auth.signInWithEmailAndPassword(email, pass);
-                else {
+                if(isLoginMode) {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                } else {
                     const res = await auth.createUserWithEmailAndPassword(email, pass);
                     const accCode = Math.floor(100000 + Math.random() * 900000);
-                    await db.collection("users").doc(res.user.uid).set({ name: name||"عميل", email, balance: 0, uid: res.user.uid, accountCode: accCode });
+                    await db.collection("users").doc(res.user.uid).set({
+                        name: name || "عميل", email, balance: 0, uid: res.user.uid, accountCode: accCode
+                    });
                 }
-            } catch(e) { alert(e.message); }
-        }
+            } catch(e) { alert("خطأ: " + e.message); }
+        });
 
+        // 2. زر إرسال الشحن
+        document.getElementById('chargeBtn').addEventListener('click', async () => {
+            const amt = document.getElementById('chargeAmount').value;
+            const code = document.getElementById('transferCode').value;
+            if(!amt || !code) return alert("أكمل البيانات");
+            
+            const btn = document.getElementById('chargeBtn');
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        type: 'شحن رصيد',
+                        user_uid: auth.currentUser.uid,
+                        user_name: userData.name,
+                        details: {"المبلغ": amt, "الكود": code, "كود_الحساب": userData.accountCode}
+                    })
+                });
+                if(res.ok) {
+                    alert("✅ تم الإرسال!");
+                    document.getElementById('rechargeModal').style.display = 'none';
+                }
+            } catch(e) { alert("فشل الاتصال بالسيرفر"); }
+            btn.disabled = false;
+        });
+
+        // 3. زر تأكيد الطلب
+        document.getElementById('orderBtn').addEventListener('click', async () => {
+            const price = parseFloat(document.getElementById('totalPrice').innerText);
+            if(userData.balance < price) return alert("رصيد غير كافٍ");
+            
+            const btn = document.getElementById('orderBtn');
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        type: 'طلب رشق',
+                        user_uid: auth.currentUser.uid,
+                        user_name: userData.name,
+                        details: {
+                            "المنصة": document.getElementById('platform').value,
+                            "الكمية": document.getElementById('quantity').value,
+                            "السعر": price + "$",
+                            "كود_الحساب": userData.accountCode
+                        }
+                    })
+                });
+                if(res.ok) alert("✅ تم استلام طلبك!");
+            } catch(e) { alert("خطأ في الإرسال"); }
+            btn.disabled = false;
+        });
+
+        // حساب السعر تلقائياً
+        document.getElementById('quantity').addEventListener('input', () => {
+            const rates = { followers: 3, likes: 1, views: 0.1 };
+            const type = document.getElementById('serviceType').value;
+            const qty = document.getElementById('quantity').value;
+            document.getElementById('totalPrice').innerText = (qty * (rates[type] || 0) / 1000).toFixed(2);
+        });
+
+        // مراقبة الدخول
         auth.onAuthStateChanged(user => {
-            if (user) {
+            if(user) {
                 document.getElementById('authOverlay').style.display = 'none';
                 db.collection("users").doc(user.uid).onSnapshot(doc => {
                     userData = doc.data();
                     document.getElementById('displayUserName').innerText = userData.name;
                     document.getElementById('userBalance').innerText = userData.balance.toFixed(2);
-                    document.getElementById('displayUserCode').innerText = userData.accountCode || "------";
+                    document.getElementById('displayUserCode').innerText = userData.accountCode;
                 });
-            } else document.getElementById('authOverlay').style.display = 'flex';
+            } else {
+                document.getElementById('authOverlay').style.display = 'flex';
+            }
         });
 
-        async function callServer(payload, btnId) {
-            const btn = document.getElementById(btnId); btn.disabled = true;
-            payload.user_uid = auth.currentUser.uid; payload.user_name = userData.name;
-            try {
-                const res = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                if(res.ok) alert("✅ تم الإرسال!");
-            } finally { btn.disabled = false; }
-        }
-
-        async function sendRecharge() {
-            const amt = document.getElementById('chargeAmount').value, code = document.getElementById('transferCode').value;
-            if(await callServer({type:'شحن رصيد', details:{"المبلغ":amt, "الكود":code, "كود_الحساب":userData.accountCode}}, 'chargeBtn')) closeModal('rechargeModal');
-        }
-
-        async function sendOrder() {
-            const p = parseFloat(document.getElementById('totalPrice').innerText);
-            if(userData.balance < p) return alert("رصيد غير كافٍ");
-            const details = { "المنصة": document.getElementById('platform').value, "الرابط": document.getElementById('targetLink').value, "الكمية": document.getElementById('quantity').value, "السعر": p+"$" };
-            await callServer({type:'طلب رشق', details}, 'orderBtn');
-        }
-
-        function openModal(id) { document.getElementById(id).style.display='flex'; }
-        function closeModal(id) { document.getElementById(id).style.display='none'; }
-        const rates = { followers: 3, likes: 1, views: 0.1 };
-        function updateServiceOptions() {
-            const s = document.getElementById('serviceType');
-            s.innerHTML = '<option value="followers">متابعين ($3/1k)</option><option value="likes">لايكات ($1/1k)</option><option value="views">مشاهدات ($0.1/1k)</option>';
-        }
-        function calculatePrice() {
-            const s = document.getElementById('serviceType').value, q = document.getElementById('quantity').value;
-            document.getElementById('totalPrice').innerText = (q * (rates[s]||0) / 1000).toFixed(2);
-        }
-        function logout() { auth.signOut(); }
+        document.getElementById('toggleAuth').onclick = () => {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').innerText = isLoginMode ? "تسجيل الدخول" : "إنشاء حساب";
+            document.getElementById('regName').style.display = isLoginMode ? "none" : "block";
+        };
     </script>
 </body>
 </html>

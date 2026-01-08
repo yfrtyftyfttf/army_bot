@@ -144,52 +144,11 @@
             document.getElementById('totalPrice').innerText = (q * (rates[type] || 0) / 1000).toFixed(2);
         };
 
-       // --- وظيفة الإرسال المصلحة نهائياً ---
+        // الإرسال للسيرفر
         async function sendToServer(payload, btn) {
-            // محاولة جلب البيانات مباشرة إذا لم تكن موجودة في المتغير العام
-            let currentUser = auth.currentUser;
-            if (!currentUser) return alert("يرجى تسجيل الدخول أولاً");
-
-            btn.disabled = true;
-            const oldText = btn.innerText;
-            btn.innerText = "جاري الإرسال...";
-
-            try {
-                // جلب نسخة طازجة من البيانات من قاعدة البيانات مباشرة
-                const userDoc = await db.collection("users").doc(currentUser.uid).get();
-                const data = userDoc.data();
-
-                if (!data) {
-                    alert("خطأ: لم نجد بيانات لحسابك في السيرفر");
-                    return;
-                }
-
-                const response = await fetch('https://army-bot-3y9o.onrender.com/send_order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    mode: 'cors',
-                    body: JSON.stringify({
-                        ...payload,
-                        user_uid: currentUser.uid,
-                        user_name: data.name,
-                        acc_code: data.accountCode
-                    })
-                });
-
-                if (response.ok) {
-                    alert("✅ تم الإرسال بنجاح!");
-                    if(btn.id === 'chargeBtn') document.getElementById('rechargeModal').style.display = 'none';
-                } else {
-                    alert("❌ فشل السيرفر في الرد. تأكد من تشغيل Render.");
-                }
-            } catch (e) {
-                console.error(e);
-                alert("⚠️ حدث خطأ في الاتصال.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = oldText;
-            }
-        }
+            if (!userData) {
+                alert("يرجى الانتظار حتى تحميل بيانات حسابك...");
+                return;
             }
 
             btn.disabled = true;

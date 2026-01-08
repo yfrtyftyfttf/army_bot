@@ -7,9 +7,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-# تم تعديل CORS لتسمح للموقع بالوصول دون قيود
+# تفعيل CORS بشكل كامل لمنع مشاكل الاتصال من المتصفح
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# تهيئة Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred)
@@ -30,17 +31,17 @@ def send_order():
         data = request.json
         u_uid = data.get('user_uid')
         u_name = data.get('user_name', 'عميل')
+        acc_code = data.get('acc_code', '000000')
         o_type = data.get('type')
         details = data.get('details', {})
         o_id = f"{random.randint(1000, 9999)}"
 
-        text = f"📦 طلب #{o_id} جديد\n👤 العميل: {u_name}\n🆔 UID: {u_uid}\n"
+        text = f"📦 طلب #{o_id} جديد\n👤 العميل: {u_name}\n🆔 كود الحساب: {acc_code}\n🆔 UID: {u_uid}\n"
         text += "------------------------\n"
         for key, value in details.items():
             text += f"🔹 {key}: {value}\n"
 
         if o_type == 'شحن رصيد':
-            # تنظيف المبلغ من أي رموز غير رقمية
             amt = str(details.get('المبلغ', '0')).replace('$', '')
             buttons = [[
                 {"text": "✅ قبول وشحن", "callback_data": f"add_{u_uid}_{amt}_{o_id}"},
@@ -53,7 +54,7 @@ def send_order():
                 [{"text": f"❌ رفض وإرجاع {prc}$", "callback_data": f"ref_{u_uid}_{prc}_{o_id}"}]
             ]
 
-        res = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
+        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
             "chat_id": CHAT_ID,
             "text": text,
             "reply_markup": {"inline_keyboard": buttons}
@@ -70,43 +71,27 @@ def telegram_webhook():
         callback_data = query["data"]
         msg_id = query["message"]["message_id"]
         chat_id = query["message"]["chat"]["id"]
-        
         parts = callback_data.split('_')
         action = parts[0]
         
-        log_msg = "فشل الإجراء"
         try:
             if action == "add": 
-                uid, amt, oid = parts[1], float(parts[2]), parts[3]
+                uid, amt = parts[1], float(parts[2])
                 db.collection('users').document(uid).update({'balance': firestore.Increment(amt)})
-                log_msg = f"✅ تم شحن {amt}$ للطلب #{oid}"
-            
+                res_text = f"✅ تم شحن {amt}$"
             elif action == "ref": 
-                uid, prc, oid = parts[1], float(parts[2]), parts[3]
+                uid, prc = parts[1], float(parts[2])
                 db.collection('users').document(uid).update({'balance': firestore.Increment(prc)})
-                log_msg = f"💰 تم رفض #{oid} وإرجاع {prc}$"
-            
-            elif action == "done":
-                log_msg = f"🎉 تم تنفيذ الطلب #{parts[1]}"
-            
-            elif action == "rej":
-                log_msg = f"❌ تم رفض طلب الشحن #{parts[1]}"
+                res_text = f"💰 تم إرجاع {prc}$"
+            elif action == "done": res_text = "🎉 تم التنفيذ"
+            elif action == "rej": res_text = "❌ تم الرفض"
 
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText", json={
-                "chat_id": chat_id,
-                "message_id": msg_id,
-                "text": f"{query['message']['text']}\n\n⚙️ النتيجة: {log_msg}"
+                "chat_id": chat_id, "message_id": msg_id,
+                "text": f"{query['message']['text']}\n\n⚙️ النتيجة: {res_text}"
             })
-            
-            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery", json={
-                "callback_query_id": query["id"],
-                "text": log_msg
-            })
-
         except Exception as e:
-            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
-                "chat_id": chat_id, "text": f"⚠️ خطأ في المعالجة: {str(e)}"
-            })
+            print(f"Webhook Error: {e}")
             
     return jsonify({"status": "ok"}), 200
 

@@ -7,9 +7,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+# تم تعديل CORS لتسمح للموقع بالوصول دون قيود
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-# تهيئة Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred)
@@ -20,10 +20,12 @@ CHAT_ID = "6695916631"
 
 @app.route('/')
 def home():
-    return "سيرفر الجيش يعمل بنجاح!"
+    return "سيرفر الجيش يعمل بنجاح!", 200
 
-@app.route('/send_order', methods=['POST'])
+@app.route('/send_order', methods=['POST', 'OPTIONS'])
 def send_order():
+    if request.method == 'OPTIONS':
+        return jsonify({"status": "ok"}), 200
     try:
         data = request.json
         u_uid = data.get('user_uid')
@@ -38,7 +40,8 @@ def send_order():
             text += f"🔹 {key}: {value}\n"
 
         if o_type == 'شحن رصيد':
-            amt = details.get('المبلغ', '0')
+            # تنظيف المبلغ من أي رموز غير رقمية
+            amt = str(details.get('المبلغ', '0')).replace('$', '')
             buttons = [[
                 {"text": "✅ قبول وشحن", "callback_data": f"add_{u_uid}_{amt}_{o_id}"},
                 {"text": "❌ رفض", "callback_data": f"rej_{o_id}"}
@@ -50,7 +53,7 @@ def send_order():
                 [{"text": f"❌ رفض وإرجاع {prc}$", "callback_data": f"ref_{u_uid}_{prc}_{o_id}"}]
             ]
 
-        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
+        res = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
             "chat_id": CHAT_ID,
             "text": text,
             "reply_markup": {"inline_keyboard": buttons}
@@ -73,7 +76,6 @@ def telegram_webhook():
         
         log_msg = "فشل الإجراء"
         try:
-            # السطر التالي هو الذي تم إصلاحه (استخدام db.collection().document())
             if action == "add": 
                 uid, amt, oid = parts[1], float(parts[2]), parts[3]
                 db.collection('users').document(uid).update({'balance': firestore.Increment(amt)})
@@ -102,7 +104,6 @@ def telegram_webhook():
             })
 
         except Exception as e:
-            # هذا ما يرسل لك رسالة الخطأ الحالية
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
                 "chat_id": chat_id, "text": f"⚠️ خطأ في المعالجة: {str(e)}"
             })

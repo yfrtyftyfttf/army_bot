@@ -9,18 +9,25 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-# تهيئة Firebase
-if not firebase_admin._apps:
-    cred = credentials.Certificate("serviceAccountKey.json")
-    firebase_admin.initialize_app(cred)
-db = firestore.client()
+# تهيئة Firebase مع التأكد من المسار الصحيح
+try:
+    if not firebase_admin._apps:
+        # استخدام المسار المطلق للملف لضمان العثور عليه
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        json_path = os.path.join(base_path, "serviceAccountKey.json")
+        cred = credentials.Certificate(json_path)
+        firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    print("✅ تم الربط مع Firebase بنجاح")
+except Exception as e:
+    print(f"❌ خطأ في تهيئة Firebase: {str(e)}")
 
 BOT_TOKEN = "7465926974:AAHzPv067I1ser4kExbRt5Hzj9R3Ma5Xjik"
 CHAT_ID = "6695916631"
 
 @app.route('/')
 def home():
-    return "سيرفر الجيش يعمل بنجاح!"
+    return "سيرفر الجيش يعمل!"
 
 @app.route('/send_order', methods=['POST'])
 def send_order():
@@ -51,9 +58,7 @@ def send_order():
             ]
 
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
-            "chat_id": CHAT_ID,
-            "text": text,
-            "reply_markup": {"inline_keyboard": buttons}
+            "chat_id": CHAT_ID, "text": text, "reply_markup": {"inline_keyboard": buttons}
         })
         return jsonify({"status": "success"}), 200
     except Exception as e:
@@ -71,44 +76,28 @@ def telegram_webhook():
         parts = callback_data.split('_')
         action = parts[0]
         
-        log_msg = "فشل الإجراء"
         try:
-            # السطر التالي هو الذي تم إصلاحه (استخدام db.collection().document())
             if action == "add": 
                 uid, amt, oid = parts[1], float(parts[2]), parts[3]
                 db.collection('users').document(uid).update({'balance': firestore.Increment(amt)})
-                log_msg = f"✅ تم شحن {amt}$ للطلب #{oid}"
-            
+                res_txt = f"✅ تم شحن {amt}$ للطلب #{oid}"
             elif action == "ref": 
                 uid, prc, oid = parts[1], float(parts[2]), parts[3]
                 db.collection('users').document(uid).update({'balance': firestore.Increment(prc)})
-                log_msg = f"💰 تم رفض #{oid} وإرجاع {prc}$"
-            
+                res_txt = f"💰 تم رفض #{oid} وإرجاع {prc}$"
             elif action == "done":
-                log_msg = f"🎉 تم تنفيذ الطلب #{parts[1]}"
-            
+                res_txt = f"🎉 تم تنفيذ الطلب #{parts[1]}"
             elif action == "rej":
-                log_msg = f"❌ تم رفض طلب الشحن #{parts[1]}"
+                res_txt = f"❌ تم رفض الطلب #{parts[1]}"
 
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText", json={
-                "chat_id": chat_id,
-                "message_id": msg_id,
-                "text": f"{query['message']['text']}\n\n⚙️ النتيجة: {log_msg}"
+                "chat_id": chat_id, "message_id": msg_id, "text": f"{query['message']['text']}\n\n⚙️ النتيجة: {res_txt}"
             })
-            
-            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery", json={
-                "callback_query_id": query["id"],
-                "text": log_msg
-            })
-
         except Exception as e:
-            # هذا ما يرسل لك رسالة الخطأ الحالية
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
-                "chat_id": chat_id, "text": f"⚠️ خطأ في المعالجة: {str(e)}"
+                "chat_id": chat_id, "text": f"⚠️ خطأ Firebase: {str(e)}"
             })
-            
     return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))

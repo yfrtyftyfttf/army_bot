@@ -49,7 +49,7 @@
             <div class="action-item" onclick="openModal('rechargeModal')">
                 <i class="fas fa-wallet"></i><br><span>شحن</span>
             </div>
-            <div class="action-item" onclick="openModal('supportModal')">
+            <div class="action-item" onclick="alert('تواصل مع @your_tele_user')">
                 <i class="fas fa-headset"></i><br><span>دعم</span>
             </div>
             <div class="action-item" onclick="firebase.auth().signOut()">
@@ -79,24 +79,26 @@
 
     <div id="rechargeModal" class="modal">
         <div class="modal-content">
-            <h3>شحن رصيد (آسيا)</h3>
-            <input type="number" id="chargeAmount" placeholder="المبلغ المتوقع بالدولار">
-            <input type="text" id="transferCode" placeholder="رقم التحويل أو كود الكارت">
+            <h3>شحن رصيد</h3>
+            <input type="number" id="chargeAmount" placeholder="المبلغ المطلوب بالدولار">
+            <input type="text" id="transferCode" placeholder="كود الكارت أو رقم التحويل">
             <button class="btn-send" onclick="sendToBot('شحن رصيد')">إرسال للمراجعة</button>
-            <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:red; width:100%; margin-top:10px">إغلاق</button>
+            <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:red; width:100%; margin-top:10px; cursor:pointer">إغلاق</button>
         </div>
     </div>
 
     <script>
-        // --- إعدادات FIREBASE الحقيقية التي أرسلتها ---
+        // --- إعدادات Firebase من لقطة الشاشة الخاصة بك ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
-            authDomain: "army-smm.firebaseapp.com",
-            projectId: "army-smm",
-            storageBucket: "army-smm.firebasestorage.app",
-            messagingSenderId: "27268417960",
-            appId: "1:27268417960:web:990e040e77a0c38a11f59d"
+          apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
+          authDomain: "army-smm.firebaseapp.com",
+          projectId: "army-smm",
+          storageBucket: "army-smm.firebasestorage.app",
+          messagingSenderId: "27268417960",
+          appId: "1:27268417960:web:990e040e77a0c38a11f59d",
+          measurementId: "G-79LNVTPQ77"
         };
+        
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -108,12 +110,15 @@
             isLoginMode = !isLoginMode;
             document.getElementById('authTitle').innerText = isLoginMode ? "تسجيل الدخول" : "إنشاء حساب جديد";
             document.getElementById('regName').style.display = isLoginMode ? "none" : "block";
+            document.getElementById('toggleText').innerText = isLoginMode ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب بالفعل؟ سجل دخولك";
         }
 
         async function handleAuthAction() {
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
             const name = document.getElementById('regName').value;
+            if(!email || !pass) return alert("يرجى ملء البيانات");
+
             try {
                 if (isLoginMode) {
                     await auth.signInWithEmailAndPassword(email, pass);
@@ -123,16 +128,18 @@
                         name: name, email: email, balance: 0, uid: res.user.uid
                     });
                 }
-            } catch (e) { alert(e.message); }
+            } catch (e) { alert("خطأ Firebase: " + e.message); }
         }
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('authOverlay').style.display = 'none';
                 db.collection("users").doc(user.uid).onSnapshot(doc => {
-                    userData = doc.data();
-                    document.getElementById('displayUserName').innerText = userData.name;
-                    document.getElementById('userBalance').innerText = userData.balance.toFixed(2);
+                    if(doc.exists) {
+                        userData = doc.data();
+                        document.getElementById('displayUserName').innerText = userData.name;
+                        document.getElementById('userBalance').innerText = userData.balance.toFixed(2);
+                    }
                 });
             } else {
                 document.getElementById('authOverlay').style.display = 'flex';
@@ -151,8 +158,8 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
                 });
-                if(res.ok) alert("تم إرسال طلبك للبوت بنجاح!");
-            } catch (e) { alert("تأكد من تشغيل سيرفر Render"); }
+                if(res.ok) alert("تم إرسال طلبك بنجاح!");
+            } catch (e) { alert("خطأ في الاتصال بالسيرفر"); }
         }
 
         function sendToBot(type) {
@@ -179,7 +186,7 @@
         function updateServiceOptions() {
             const p = document.getElementById('platform').value;
             const s = document.getElementById('serviceType');
-            s.innerHTML = '<option value="" disabled selected>اختر الخدمة</option>';
+            s.innerHTML = '<option value="" disabled selected>اختر النوع</option>';
             s.innerHTML += '<option value="followers">متابعين ($3/1000)</option>';
             if(p !== 'telegram') s.innerHTML += '<option value="likes">لايكات ($1/1000)</option>';
             s.innerHTML += '<option value="views">مشاهدات ($0.1/1000)</option>';

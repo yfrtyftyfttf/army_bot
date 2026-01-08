@@ -22,7 +22,6 @@ CHAT_ID = "6695916631"
 def home():
     return "سيرفر الجيش يعمل بنجاح!"
 
-# استقبال الطلبات من الموقع وإرسالها للتليجرام
 @app.route('/send_order', methods=['POST'])
 def send_order():
     try:
@@ -38,10 +37,8 @@ def send_order():
         for key, value in details.items():
             text += f"🔹 {key}: {value}\n"
 
-        # إعداد الأزرار بناءً على النوع
         if o_type == 'شحن رصيد':
             amt = details.get('المبلغ', '0')
-            # callback_data: action_uid_amount_orderid
             buttons = [[
                 {"text": "✅ قبول وشحن", "callback_data": f"add_{u_uid}_{amt}_{o_id}"},
                 {"text": "❌ رفض", "callback_data": f"rej_{o_id}"}
@@ -62,7 +59,6 @@ def send_order():
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)}), 500
 
-# معالجة ضغطات الأزرار (Webhook)
 @app.route('/webhook', methods=['POST'])
 def telegram_webhook():
     update = request.json
@@ -77,36 +73,36 @@ def telegram_webhook():
         
         log_msg = "فشل الإجراء"
         try:
-            if action == "add": # شحن رصيد
+            # السطر التالي هو الذي تم إصلاحه (استخدام db.collection().document())
+            if action == "add": 
                 uid, amt, oid = parts[1], float(parts[2]), parts[3]
-                db.collection('users').doc(uid).update({'balance': firestore.Increment(amt)})
+                db.collection('users').document(uid).update({'balance': firestore.Increment(amt)})
                 log_msg = f"✅ تم شحن {amt}$ للطلب #{oid}"
             
-            elif action == "ref": # إرجاع رصيد (رفض طلب رشق)
+            elif action == "ref": 
                 uid, prc, oid = parts[1], float(parts[2]), parts[3]
-                db.collection('users').doc(uid).update({'balance': firestore.Increment(prc)})
+                db.collection('users').document(uid).update({'balance': firestore.Increment(prc)})
                 log_msg = f"💰 تم رفض #{oid} وإرجاع {prc}$"
             
             elif action == "done":
-                log_msg = f"🎉 تم تنفيذ الطلب #{parts[1]} بنجاح"
+                log_msg = f"🎉 تم تنفيذ الطلب #{parts[1]}"
             
             elif action == "rej":
                 log_msg = f"❌ تم رفض طلب الشحن #{parts[1]}"
 
-            # تحديث الرسالة الأصلية في تليجرام لتأكيد العملية
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText", json={
                 "chat_id": chat_id,
                 "message_id": msg_id,
                 "text": f"{query['message']['text']}\n\n⚙️ النتيجة: {log_msg}"
             })
             
-            # إرسال إشعار "Alert" صغير في تليجرام
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery", json={
                 "callback_query_id": query["id"],
                 "text": log_msg
             })
 
         except Exception as e:
+            # هذا ما يرسل لك رسالة الخطأ الحالية
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
                 "chat_id": chat_id, "text": f"⚠️ خطأ في المعالجة: {str(e)}"
             })

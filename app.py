@@ -1,4 +1,5 @@
 import os
+import random
 import requests
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -6,88 +7,108 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-# السماح الشامل لكل النطاقات لمنع فشل الاتصال من المتصفح
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app)
 
-# تهيئة Firebase (تأكد من وجود ملف الـ JSON في نفس المجلد)
+# تهيئة Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-BOT_TOKEN = "7465926974:AAHzPv067I1ser4kExbRt5Hzj9R3Ma5Xjik"
+BOT_TOKEN = "6785445743:AAFquuyfY2IIjgs2x6PnL61uA-3apHIpz2k"
 CHAT_ID = "6695916631"
 
 @app.route('/')
 def home():
-    # هذا المسار يمنع ظهور خطأ 404 عند فتح رابط السيرفر مباشرة
-    return "Server is Running Successfully!", 200
+    return "سيرفر الجيش يعمل بنجاح!"
 
-@app.route('/send_order', methods=['POST', 'OPTIONS'])
+@app.route('/send_order', methods=['POST'])
 def send_order():
-    if request.method == 'OPTIONS':
-        return jsonify({"status": "ok"}), 200
-    
     try:
         data = request.json
         u_uid = data.get('user_uid')
-        u_name = data.get('user_name', 'Customer')
-        acc_code = data.get('acc_code', '000000')
-        o_type = data.get('type', 'Order')
+        u_name = data.get('user_name', 'عميل')
+        o_type = data.get('type')
         details = data.get('details', {})
+        o_id = f"{random.randint(1000, 9999)}"
 
-        # تجهيز الرسالة للتليجرام
-        msg = f"🔔 طلب جديد: {o_type}\n👤 العميل: {u_name}\n🆔 الكود: {acc_code}\n"
-        for k, v in details.items():
-            msg += f"🔹 {k}: {v}\n"
+        text = f"📦 طلب #{o_id} جديد\n👤 العميل: {u_name}\n🆔 UID: {u_uid}\n"
+        text += "------------------------\n"
+        for key, value in details.items():
+            text += f"🔹 {key}: {value}\n"
 
-        # إذا كان الطلب "شحن رصيد"، نضع زر "موافقة" يحتوي على المبلغ والـ UID
-        reply_markup = None
         if o_type == 'شحن رصيد':
-            amount = details.get('المبلغ', 0)
-            reply_markup = {
-                "inline_keyboard": [[
-                    {"text": "✅ موافقة وشحن الرصيد", "callback_data": f"confirm_{u_uid}_{amount}"}
-                ]]
-            }
+            amt = details.get('المبلغ', '0')
+            buttons = [[
+                {"text": "✅ قبول وشحن", "callback_data": f"add_{u_uid}_{amt}_{o_id}"},
+                {"text": "❌ رفض", "callback_data": f"rej_{o_id}"}
+            ]]
+        else:
+            prc = str(details.get('السعر', '0')).replace('$', '')
+            buttons = [
+                [{"text": "✅ تم التنفيذ", "callback_data": f"done_{o_id}"}],
+                [{"text": f"❌ رفض وإرجاع {prc}$", "callback_data": f"ref_{u_uid}_{prc}_{o_id}"}]
+            ]
 
-        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", 
-                      json={"chat_id": CHAT_ID, "text": msg, "reply_markup": reply_markup})
-        
+        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
+            "chat_id": CHAT_ID,
+            "text": text,
+            "reply_markup": {"inline_keyboard": buttons}
+        })
         return jsonify({"status": "success"}), 200
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "msg": str(e)}), 500
 
 @app.route('/webhook', methods=['POST'])
 def telegram_webhook():
     update = request.json
-    
-    # معالجة الضغط على زر الموافقة
     if "callback_query" in update:
-        call = update["callback_query"]
-        data = call["data"]
+        query = update["callback_query"]
+        callback_data = query["data"]
+        msg_id = query["message"]["message_id"]
+        chat_id = query["message"]["chat"]["id"]
         
-        if data.startswith("confirm_"):
-            parts = data.split("_")
-            u_uid = parts[1]
-            amount = float(parts[2])
+        parts = callback_data.split('_')
+        action = parts[0]
+        
+        log_msg = "فشل الإجراء"
+        try:
+            # السطر التالي هو الذي تم إصلاحه (استخدام db.collection().document())
+            if action == "add": 
+                uid, amt, oid = parts[1], float(parts[2]), parts[3]
+                db.collection('users').document(uid).update({'balance': firestore.Increment(amt)})
+                log_msg = f"✅ تم شحن {amt}$ للطلب #{oid}"
             
-            # تحديث الرصيد في Firebase
-            user_ref = db.collection('users').document(u_uid)
-            user_ref.update({'balance': firestore.Increment(amount)})
+            elif action == "ref": 
+                uid, prc, oid = parts[1], float(parts[2]), parts[3]
+                db.collection('users').document(uid).update({'balance': firestore.Increment(prc)})
+                log_msg = f"💰 تم رفض #{oid} وإرجاع {prc}$"
             
-            # تحديث رسالة التليجرام لتأكيد العملية
-            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText", 
-                          json={
-                              "chat_id": CHAT_ID, 
-                              "message_id": call["message"]["message_id"], 
-                              "text": call["message"]["text"] + f"\n\n✅ تم شحن {amount}$ بنجاح!"
-                          })
+            elif action == "done":
+                log_msg = f"🎉 تم تنفيذ الطلب #{parts[1]}"
+            
+            elif action == "rej":
+                log_msg = f"❌ تم رفض طلب الشحن #{parts[1]}"
+
+            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText", json={
+                "chat_id": chat_id,
+                "message_id": msg_id,
+                "text": f"{query['message']['text']}\n\n⚙️ النتيجة: {log_msg}"
+            })
+            
+            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery", json={
+                "callback_query_id": query["id"],
+                "text": log_msg
+            })
+
+        except Exception as e:
+            # هذا ما يرسل لك رسالة الخطأ الحالية
+            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={
+                "chat_id": chat_id, "text": f"⚠️ خطأ في المعالجة: {str(e)}"
+            })
             
     return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
-    # المنفذ 10000 هو الافتراضي لـ Render
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)

@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-# تفعيل CORS بشكل كامل لمنع مشاكل الاتصال من المتصفح
+# تفعيل CORS الشامل ضروري جداً لربط GitHub Pages بـ Render
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # تهيئة Firebase
@@ -31,12 +31,11 @@ def send_order():
         data = request.json
         u_uid = data.get('user_uid')
         u_name = data.get('user_name', 'عميل')
-        acc_code = data.get('acc_code', '000000')
         o_type = data.get('type')
         details = data.get('details', {})
         o_id = f"{random.randint(1000, 9999)}"
 
-        text = f"📦 طلب #{o_id} جديد\n👤 العميل: {u_name}\n🆔 كود الحساب: {acc_code}\n🆔 UID: {u_uid}\n"
+        text = f"📦 طلب #{o_id} جديد\n👤 العميل: {u_name}\n🆔 UID: {u_uid}\n"
         text += "------------------------\n"
         for key, value in details.items():
             text += f"🔹 {key}: {value}\n"
@@ -72,27 +71,24 @@ def telegram_webhook():
         msg_id = query["message"]["message_id"]
         chat_id = query["message"]["chat"]["id"]
         parts = callback_data.split('_')
-        action = parts[0]
         
         try:
+            action = parts[0]
             if action == "add": 
                 uid, amt = parts[1], float(parts[2])
                 db.collection('users').document(uid).update({'balance': firestore.Increment(amt)})
-                res_text = f"✅ تم شحن {amt}$"
+                res_txt = "✅ تم الشحن"
             elif action == "ref": 
                 uid, prc = parts[1], float(parts[2])
                 db.collection('users').document(uid).update({'balance': firestore.Increment(prc)})
-                res_text = f"💰 تم إرجاع {prc}$"
-            elif action == "done": res_text = "🎉 تم التنفيذ"
-            elif action == "rej": res_text = "❌ تم الرفض"
+                res_txt = "💰 تم الإرجاع"
+            else: res_txt = "⚙️ نُفذ الإجراء"
 
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText", json={
                 "chat_id": chat_id, "message_id": msg_id,
-                "text": f"{query['message']['text']}\n\n⚙️ النتيجة: {res_text}"
+                "text": f"{query['message']['text']}\n\n⚙️ النتيجة: {res_txt}"
             })
-        except Exception as e:
-            print(f"Webhook Error: {e}")
-            
+        except: pass
     return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':

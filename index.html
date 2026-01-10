@@ -88,7 +88,6 @@
         .upload-proof { background: #1c2128; border: 1px dashed #555; padding: 10px; border-radius: 10px; cursor: pointer; display: block; margin: 10px 0; font-size: 12px; }
         #proofPreview { width: 100%; max-height: 150px; object-fit: contain; margin-top: 10px; display: none; border-radius: 10px; }
 
-        /* ستايل عرض صورة الإثبات في لوحة الإدمن */
         .admin-proof-img { width: 100%; max-width: 200px; border-radius: 10px; border: 1px solid var(--main); margin-top: 10px; cursor: pointer; }
     </style>
 </head>
@@ -148,7 +147,7 @@
     <div class="action-grid">
         <div class="action-btn" onclick="openModal('rechargeChoiceModal')"><i class="fas fa-wallet"></i> شحن</div>
         <div class="action-btn" onclick="openUserOrders()"><i class="fas fa-list-check"></i> طلباتي</div>
-        <div class="action-btn" onclick="openModal('offersModal')"><i class="fas fa-fire"></i> عروض</div>
+        <div class="action-btn" onclick="openModal('offersModal')"><i class="fas fa-fire"></i> عروض مجانيه كل يوم</div>
         <div class="action-btn" onclick="window.location.href='https://t.me/lRAQ97'"><i class="fab fa-telegram-plane"></i> الدعم</div>
     </div>
 
@@ -258,11 +257,16 @@
 
 <div id="offersModal" class="modal">
     <div class="modal-content">
-        <h3 style="color:var(--gold)"><i class="fas fa-bolt"></i> عروض حصرية</h3>
+        <h3 style="color:var(--gold)"><i class="fas fa-bolt"></i> عروض مجانيه كل يوم</h3>
         <div class="order-card" style="border-right-color: var(--gold); background: #1c2128;">
             <b>رشق متابعين تلكرام (ضمان شهر تعويض تلقائي )</b><br>
             <span style="font-size: 11px; color: var(--success);">السعر: 0.30$ لكل 1000 متابع</span><br>
             <button class="btn-main" style="padding: 8px; font-size: 12px;" onclick="selectOffer('تليجرام', 'متابعين ضمان شهر ', 0.30)">اختيار العرض</button>
+        </div>
+        <div class="order-card" style="border-right-color: var(--main); background: #1c2128; margin-top: 10px;">
+            <b>لكل حساب 25 متابع تيك توك مجاني</b><br>
+            <span style="font-size: 11px; color: var(--success);">السعر: مجاني 🎁</span><br>
+            <button class="btn-main" style="padding: 8px; font-size: 12px; background: var(--success);" onclick="selectOffer('تيك توك', 'متابع مجاني لكل حساب', 0.00)">اختيار العرض</button>
         </div>
         <button onclick="closeModal('offersModal')" class="btn-main" style="background:gray; margin-top: 15px;">إغلاق</button>
     </div>
@@ -493,6 +497,14 @@
     function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id === 'rechargeModal') updateExchangeHint(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+    // دالة العروض
+    function selectOffer(p, s, price) {
+        document.getElementById('platform').value = p;
+        updateServiceList();
+        alert("✅ تم اختيار العرض: " + s);
+        closeModal('offersModal');
+    }
+
     async function sendOrderRequest() {
         const platform = document.getElementById('platform').value, service = document.getElementById('serviceType').value, qty = parseInt(document.getElementById('orderQty').value), link = document.getElementById('orderLink').value, price = parseFloat(document.getElementById('totalPrice').innerText);
         if(!qty || !link) return alert("أدخل البيانات!");
@@ -540,56 +552,45 @@
                 listDiv.innerHTML += `
                 <div class="admin-user-card">
                     <div style="font-size:13px;">👤 <b>${u.name}</b></div>
-                    <div style="font-size:12px; color:var(--success)">💰 الرصيد: $${u.balance.toFixed(2)}</div>
+                    <div style="font-size:12px; color:var(--main)">Balance: $${u.balance.toFixed(2)}</div>
+                    <div style="font-size:10px; color:gray;">UID: ${doc.id}</div>
                     <div class="admin-actions">
-                        <button class="admin-btn" style="background:var(--success)" onclick="adminAddBalance('${doc.id}', 1)">+1$</button>
-                        <button class="admin-btn" style="background:var(--gold)" onclick="adminAddBalance('${doc.id}', 5)">+5$</button>
-                        <button class="admin-btn" style="background:var(--danger); color:white" onclick="adminResetBalance('${doc.id}')">تصفير 0</button>
-                        <button class="admin-btn" style="background:#ff4444; color:white" onclick="adminDeleteUser('${doc.id}')">حذف X</button>
+                        <button class="admin-btn" style="background:var(--success)" onclick="adjustBalance('${doc.id}', 1)">+1$</button>
+                        <button class="admin-btn" style="background:var(--danger)" onclick="adjustBalance('${doc.id}', -1)">-1$</button>
+                        <button class="admin-btn" style="background:var(--gold)" onclick="deleteUser('${doc.id}')">حذف</button>
                     </div>
                 </div>`;
             });
         });
     }
 
-    async function adminAddBalance(uid, amount) {
-        if(confirm(`هل تريد إضافة ${amount}$ لهذا الحساب؟`)) {
-            await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amount) });
-        }
+    async function adjustBalance(uid, amt) {
+        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amt) });
     }
 
-    async function adminResetBalance(uid) {
-        if(confirm("هل أنت متأكد من تصفير رصيد هذا المستخدم؟")) {
-            await db.collection("users").doc(uid).update({ balance: 0 });
-        }
-    }
-
-    async function adminDeleteUser(uid) {
-        if(confirm("⚠️ سيتم حذف المستخدم نهائياً! هل أنت متأكد؟")) {
-            await db.collection("users").doc(uid).delete();
-        }
+    async function deleteUser(uid) {
+        if(confirm("حذف المستخدم نهائياً؟")) await db.collection("users").doc(uid).delete();
     }
 
     function loadAdminOrders() {
-        const list = document.getElementById('adminOrdersList');
+        const listDiv = document.getElementById('adminOrdersList');
         db.collection("recharge_orders").orderBy("date", "desc").onSnapshot(snap => {
-            list.innerHTML = "";
+            listDiv.innerHTML = "";
             snap.forEach(doc => {
                 const o = doc.data();
                 if(o.status === "pending") {
-                    let content = `<b>${o.name}</b> - `;
+                    let content = `<b>الاسم:</b> ${o.name}<br>`;
                     if(o.type === "USDT") {
-                        // إضافة كشف الإثبات كصورة بوضوح
-                        content += `شحن USDT بقيمة $${o.amount} <br> <img src="${o.proof}" class="admin-proof-img" onclick="window.open('${o.proof}')">`;
+                        content += `<b>USDT:</b> $${o.amount}<br><img src="${o.proof}" class="admin-proof-img" onclick="window.open(this.src)">`;
                     } else {
-                        content += `كارت آسيا: ${o.iqd_info} د.ع - الكود: ${o.code}`;
+                        content += `<b>آسيا:</b> ${o.iqd_info}<br><b>الكود:</b> ${o.code}`;
                     }
-                    list.innerHTML += `
-                    <div class="order-card" style="border-right-color:orange;">
-                        ${content}
+                    listDiv.innerHTML += `
+                    <div class="order-card" style="border-right-color:orange">
+                        ${content}<br>
                         <div class="admin-actions">
-                            <button class="admin-btn" style="background:var(--success)" onclick="approveOrder('${doc.id}', '${o.uid}', ${o.category || o.amount})">موافقة</button>
-                            <button class="admin-btn" style="background:var(--danger); color:white" onclick="rejectOrder('${doc.id}', 'recharge_orders')">رفض</button>
+                            <button class="admin-btn" style="background:var(--success)" onclick="approveRecharge('${doc.id}', '${o.uid}', ${o.category || o.amount})">قبول</button>
+                            <button class="admin-btn" style="background:var(--danger)" onclick="updateStatus('recharge_orders', '${doc.id}', 'rejected')">رفض</button>
                         </div>
                     </div>`;
                 }
@@ -597,26 +598,26 @@
         });
     }
 
-    async function approveOrder(oid, uid, amount) {
-        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amount), hasRecharged: true });
-        await db.collection("recharge_orders").doc(oid).update({ status: "approved" });
-        alert("✅ تمت الموافقة وإضافة الرصيد.");
+    async function approveRecharge(docId, uid, amt) {
+        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amt), hasRecharged: true });
+        await db.collection("recharge_orders").doc(docId).update({ status: "approved" });
+        alert("تم الشحن بنجاح!");
     }
 
     function loadAdminServices() {
-        const list = document.getElementById('adminServicesList');
+        const listDiv = document.getElementById('adminServicesList');
         db.collection("services_orders").orderBy("date", "desc").onSnapshot(snap => {
-            list.innerHTML = "";
+            listDiv.innerHTML = "";
             snap.forEach(doc => {
                 const s = doc.data();
                 if(s.status === "pending") {
-                    list.innerHTML += `
-                    <div class="order-card">
-                        <b>${s.name}</b> طلب ${s.service} <br>
-                        الكمية: ${s.qty} - الرابط: <a href="${s.link}" target="_blank">فتح</a>
+                    listDiv.innerHTML += `
+                    <div class="order-card" style="border-right-color:var(--main)">
+                        <b>الخدمة:</b> ${s.service}<br><b>الكمية:</b> ${s.qty}<br>
+                        <b>الرابط:</b> <a href="${s.link}" target="_blank" style="color:var(--main)">فتح</a><br>
                         <div class="admin-actions">
-                            <button class="admin-btn" style="background:var(--success)" onclick="updateStatus('${doc.id}', 'completed')">تم</button>
-                            <button class="admin-btn" style="background:var(--danger); color:white" onclick="updateStatus('${doc.id}', 'rejected')">رفض</button>
+                            <button class="admin-btn" style="background:var(--success)" onclick="updateStatus('services_orders', '${doc.id}', 'completed')">تم</button>
+                            <button class="admin-btn" style="background:var(--danger)" onclick="updateStatus('services_orders', '${doc.id}', 'canceled')">إلغاء</button>
                         </div>
                     </div>`;
                 }
@@ -624,62 +625,38 @@
         });
     }
 
-    async function updateStatus(id, stat) {
-        await db.collection("services_orders").doc(id).update({ status: stat });
+    async function updateStatus(coll, id, status) {
+        await db.collection(coll).doc(id).update({ status });
     }
 
-    async function rejectOrder(id, coll) {
-        await db.collection(coll).doc(id).update({ status: "rejected" });
-    }
-
-    function loadLeaderboard() {
-        const list = document.getElementById('leaderList');
-        db.collection("users").orderBy("balance", "desc").limit(3).get().then(snap => {
-            list.innerHTML = "";
+    function openUserOrders() {
+        openModal('userOrdersModal');
+        const listDiv = document.getElementById('userOrdersList');
+        db.collection("services_orders").where("uid", "==", auth.currentUser.uid).orderBy("date", "desc").onSnapshot(snap => {
+            listDiv.innerHTML = "";
             snap.forEach(doc => {
-                const u = doc.data();
-                list.innerHTML += `<div class="leader-row"><span>${u.name}</span> <span>$${u.balance.toFixed(2)}</span></div>`;
+                const o = doc.data();
+                const statusText = o.status === "completed" ? "✅ مكتمل" : o.status === "pending" ? "⏳ قيد الانتظار" : "❌ ملغي";
+                listDiv.innerHTML += `<div class="order-card"><b>${o.service}</b><br>الكمية: ${o.qty}<br>الحالة: ${statusText}</div>`;
             });
         });
     }
 
-    async function applyPromo() {
-        const code = document.getElementById('promoCode').value;
-        const uRef = db.collection("users").doc(auth.currentUser.uid);
-        const u = await uRef.get();
-        if(u.data().usedPromo) return alert("استخدمت كوداً مسبقاً!");
-        if(code === "DARK10") {
-            await uRef.update({ balance: firebase.firestore.FieldValue.increment(0.10), usedPromo: true });
-            alert("✅ تم إضافة 0.10$!");
-        } else { alert("الكود خطأ!"); }
-    }
-
-    async function claimTask(amt, taskID) {
-        const uRef = db.collection("users").doc(auth.currentUser.uid);
-        const u = await uRef.get();
-        if(u.data()[taskID]) return alert("تم تنفيذ المهمة مسبقاً!");
-        await uRef.update({ balance: firebase.firestore.FieldValue.increment(amt), [taskID]: true });
-        alert("✅ تمت إضافة المكافأة!");
-    }
-
-    function selectOffer(plat, serv, price) {
-        document.getElementById('platform').value = plat;
-        updateServiceList();
-        document.getElementById('serviceType').value = serv;
-        closeModal('offersModal');
-        alert("تم اختيار العرض! أدخل الكمية والرابط الآن.");
-    }
-
-    async function openUserOrders() {
-        openModal('userOrdersModal');
-        const list = document.getElementById('userOrdersList');
-        const snap = await db.collection("services_orders").where("uid", "==", auth.currentUser.uid).orderBy("date", "desc").get();
-        list.innerHTML = snap.empty ? "لا توجد طلبات." : "";
-        snap.forEach(doc => {
-            const d = doc.data();
-            list.innerHTML += `<div class="order-card" style="border-right-color:${d.status==='completed'?'green':'orange'}">${d.service} - ${d.qty} <br> الحالة: ${d.status}</div>`;
+    function loadLeaderboard() {
+        const listDiv = document.getElementById('leaderList');
+        db.collection("users").orderBy("balance", "desc").limit(5).get().then(snap => {
+            listDiv.innerHTML = "";
+            snap.forEach((doc, index) => {
+                const u = doc.data();
+                listDiv.innerHTML += `
+                <div class="leader-row">
+                    <span>${index+1}. ${u.name}</span>
+                    <span style="color:var(--gold)">$${u.balance.toFixed(2)}</span>
+                </div>`;
+            });
         });
     }
 </script>
+
 </body>
 </html>

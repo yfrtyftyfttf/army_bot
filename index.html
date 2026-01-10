@@ -28,7 +28,6 @@
         .auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .auth-card { background: var(--card); padding: 30px; border-radius: 20px; width: 100%; max-width: 350px; border: 1px solid #30363d; text-align: center; }
         
-        /* إصلاح الهيدر لظهور الـ ID */
         .user-header { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #30363d; margin-bottom: 15px; text-align: center; }
         .user-header h2 { color: var(--main); margin: 5px 0; font-size: 32px; }
         .id-badge { display: inline-block; margin-top: 10px; padding: 5px 15px; background: #0d1117; border-radius: 12px; border: 1px solid #30363d; font-size: 13px; color: #888; cursor: pointer; }
@@ -78,7 +77,6 @@
         .admin-actions { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
         .admin-btn { flex: 1; border: 0; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; color: #000; min-width: 60px; }
 
-        /* إصلاح قسم الإحالة لظهور الرابط */
         .referral-box { background: #0d1117; padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px solid #30363d; }
         .referral-link { font-size: 11px; color: var(--main); word-break: break-all; background: #000; padding: 10px; border-radius: 8px; display: block; margin-top: 8px; cursor: pointer; border: 1px solid #333; }
         
@@ -89,6 +87,9 @@
         .usdt-address { font-size: 10px; color: var(--success); background: #000; padding: 10px; display: block; border-radius: 5px; margin: 10px 0; word-break: break-all; }
         .upload-proof { background: #1c2128; border: 1px dashed #555; padding: 10px; border-radius: 10px; cursor: pointer; display: block; margin: 10px 0; font-size: 12px; }
         #proofPreview { width: 100%; max-height: 150px; object-fit: contain; margin-top: 10px; display: none; border-radius: 10px; }
+
+        /* ستايل عرض صورة الإثبات في لوحة الإدمن */
+        .admin-proof-img { width: 100%; max-width: 200px; border-radius: 10px; border: 1px solid var(--main); margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -290,7 +291,6 @@
 </div>
 
 <script>
-    // الجزء البرمجي الكامل (أكثر من 400 سطر)
     const firebaseConfig = {
         apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
         authDomain: "army-smm.firebaseapp.com",
@@ -457,11 +457,7 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('menuIcon').style.display = 'block';
-            
-            // إصلاح ظهور الـ ID
             document.getElementById('uIDDisplay').innerText = user.uid.substring(0,8);
-            
-            // إصلاح ظهور رابط الإحالة
             const currentUrl = window.location.origin + window.location.pathname;
             document.getElementById('refLink').innerText = currentUrl + "?ref=" + user.uid;
 
@@ -514,7 +510,6 @@
         alert("✅ تم الطلب!");
     }
 
-    // إدارة لوحة التحكم (Admin Functions الكاملة)
     function checkAdmin() { 
         const pass = prompt("كلمة السر:");
         if(pass === "hx911@") {
@@ -584,7 +579,8 @@
                 if(o.status === "pending") {
                     let content = `<b>${o.name}</b> - `;
                     if(o.type === "USDT") {
-                        content += `شحن USDT بقيمة $${o.amount} <br> <img src="${o.proof}" style="width:100px; cursor:pointer;" onclick="window.open('${o.proof}')">`;
+                        // إضافة كشف الإثبات كصورة بوضوح
+                        content += `شحن USDT بقيمة $${o.amount} <br> <img src="${o.proof}" class="admin-proof-img" onclick="window.open('${o.proof}')">`;
                     } else {
                         content += `كارت آسيا: ${o.iqd_info} د.ع - الكود: ${o.code}`;
                     }

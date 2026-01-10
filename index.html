@@ -41,7 +41,6 @@
         .task-item { background: #0d1117; padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .order-card { background: #0d1117; padding: 12px; border-radius: 12px; margin-bottom: 10px; border-right: 4px solid var(--main); text-align: right; }
         
-        /* تصميم أيقونات لوحة التحكم */
         #adminPanel { display: none; background: #161b22; border: 2px solid var(--main); padding: 15px; border-radius: 20px; margin-top: 20px; }
         .admin-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
         .choice-card { background: #0d1117; border: 1px solid #30363d; padding: 20px 10px; border-radius: 15px; text-align: center; cursor: pointer; transition: 0.3s; }
@@ -76,6 +75,11 @@
         
         .admin-user-card { background: #0d1117; padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #333; }
         .order-time { font-size: 10px; color: #888; display: block; margin-top: 5px; }
+
+        /* ستايل شحن USDT */
+        .usdt-address { background: #000; padding: 10px; border-radius: 8px; font-size: 11px; color: var(--success); word-break: break-all; margin: 10px 0; border: 1px solid #333; }
+        .upload-label { display: block; background: #1c2128; padding: 10px; border-radius: 8px; border: 1px dashed var(--main); cursor: pointer; margin-top: 10px; font-size: 12px; }
+        #cryptoPreview { width: 100%; max-height: 150px; object-fit: contain; margin-top: 10px; border-radius: 10px; display: none; }
     </style>
 </head>
 <body>
@@ -132,7 +136,7 @@
     </div>
 
     <div class="action-grid">
-        <div class="action-btn" onclick="openModal('rechargeModal')"><i class="fas fa-wallet"></i> شحن</div>
+        <div class="action-btn" onclick="openModal('rechargeOptionsModal')"><i class="fas fa-wallet"></i> شحن</div>
         <div class="action-btn" onclick="openUserOrders()"><i class="fas fa-list-check"></i> طلباتي</div>
         <div class="action-btn" onclick="openModal('offersModal')"><i class="fas fa-fire"></i> عروض</div>
         <div class="action-btn" onclick="window.location.href='https://t.me/lRAQ97'"><i class="fab fa-telegram-plane"></i> الدعم</div>
@@ -181,7 +185,6 @@
 
     <div id="adminPanel">
         <h3 style="color:var(--main); text-align:center;">لوحة المسؤول</h3>
-        
         <div id="adminMenu" class="admin-choices">
             <div class="choice-card" onclick="showAdminSection('rechargeOrdersSection')">
                 <i class="fas fa-money-bill-wave"></i>
@@ -191,9 +194,13 @@
                 <i class="fas fa-rocket"></i>
                 <span>طلبات الرشق</span>
             </div>
-            <div class="choice-card full-width" onclick="showAdminSection('usersManagementSection')">
+            <div class="choice-card" onclick="showAdminSection('cryptoOrdersSection')">
+                <i class="fab fa-ethereum"></i>
+                <span>طلبات USDT</span>
+            </div>
+            <div class="choice-card" onclick="showAdminSection('usersManagementSection')">
                 <i class="fas fa-user-shield"></i>
-                <span>كشف حساب المستخدمين</span>
+                <span>المستخدمين</span>
             </div>
         </div>
 
@@ -201,12 +208,14 @@
             <button class="back-btn" onclick="hideAdminSections()">⬅ رجوع</button>
             <div id="adminOrdersList"></div>
         </div>
-
         <div id="serviceOrdersSection" class="admin-content-section">
             <button class="back-btn" onclick="hideAdminSections()">⬅ رجوع</button>
             <div id="adminServicesList"></div>
         </div>
-
+        <div id="cryptoOrdersSection" class="admin-content-section">
+            <button class="back-btn" onclick="hideAdminSections()">⬅ رجوع</button>
+            <div id="adminCryptoList"></div>
+        </div>
         <div id="usersManagementSection" class="admin-content-section">
             <button class="back-btn" onclick="hideAdminSections()">⬅ رجوع</button>
             <div id="adminUsersList">جاري التحميل...</div>
@@ -216,25 +225,34 @@
     <button onclick="firebase.auth().signOut()" style="background:none; border:none; color:gray; width:100%; margin-top:20px; cursor:pointer;">خروج من الحساب</button>
 </div>
 
-<div id="offersModal" class="modal">
+<div id="rechargeOptionsModal" class="modal">
     <div class="modal-content">
-        <h3 style="color:var(--gold)"><i class="fas fa-bolt"></i> عروض حصرية</h3>
-        <div class="order-card" style="border-right-color: var(--gold); background: #1c2128;">
-            <b>رشق متابعين تلكرام (ضمان شهر تعويض تلقائي  )</b><br>
-            <span style="font-size: 11px; color: var(--success);">السعر: 0.30$ لكل 1000 متابع</span><br>
-            <button class="btn-main" style="padding: 8px; font-size: 12px;" onclick="selectOffer('تليجرام', 'متابعين ضمان شهر  ', 0.30)">اختيار العرض</button>
-        </div>
-        <button onclick="closeModal('offersModal')" class="btn-main" style="background:gray; margin-top: 15px;">إغلاق</button>
+        <h3>اختر وسيلة الشحن</h3>
+        <button class="btn-main" onclick="closeModal('rechargeOptionsModal'); openModal('rechargeModal')"><i class="fas fa-phone"></i> كارت آسيا سيل</button>
+        <button class="btn-main" style="background:#26a17b; color:white;" onclick="closeModal('rechargeOptionsModal'); openModal('usdtModal')"><i class="fab fa-ethereum"></i> USDT (TRC20)</button>
+        <button onclick="closeModal('rechargeOptionsModal')" class="btn-main" style="background:gray;">إلغاء</button>
     </div>
 </div>
 
-<div id="aboutModal" class="modal"><div class="modal-content"><h3 style="color:var(--main)">تعريف الموقع</h3><p style="line-height:1.6">موقع مختص برشق الحسابات بارخص الاسعار<br>مدير الموقع Mohamed Ahmed<br><a href="https://t.me/lRAQ888" style="color:var(--main)">@lRAQ888</a></p><button onclick="closeModal('aboutModal')" class="btn-main">إغلاق</button></div></div>
-<div id="userOrdersModal" class="modal"><div class="modal-content"><h3>سجل طلباتي</h3><div id="userOrdersList"></div><button onclick="closeModal('userOrdersModal')" class="btn-main" style="background:gray;">إغلاق</button></div></div>
+<div id="usdtModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color:#26a17b">شحن USDT (TRC20)</h3>
+        <p style="font-size:12px;">قم بالتحويل إلى العنوان التالي وارفع الإثبات:</p>
+        <div class="usdt-address" id="myUsdtAddr">TYourWalletAddressHere123456789</div>
+        <input type="number" id="usdtAmount" placeholder="المبلغ المحول ($)">
+        <label class="upload-label">
+            <i class="fas fa-image"></i> ارفع صورة الإثبات
+            <input type="file" id="cryptoImg" hidden accept="image/*" onchange="previewCrypto(this)">
+        </label>
+        <img id="cryptoPreview">
+        <button class="btn-main" style="background:#26a17b; color:white;" onclick="submitCryptoCharge()">إرسال الطلب</button>
+        <button onclick="closeModal('usdtModal')" style="background:none; border:none; color:red; margin-top:10px; cursor:pointer;">إلغاء</button>
+    </div>
+</div>
 
 <div id="rechargeModal" class="modal">
     <div class="modal-content">
-        <h3> شحن رصيد آسيا ويتم تحويله الى الدولار الصرف يكون مقابل قيمة الرصيد</h3>
-        <p style="font-size: 11px; color: var(--main); margin-bottom: 10px;">اختر فئة الكارت لرؤية القيمة بالدولار</p>
+        <h3> شحن رصيد آسيا</h3>
         <select id="cardCategory" onchange="updateExchangeHint()">
             <option value="5000">كارت 5,000 د.ع</option>
             <option value="10000">كارت 10,000 د.ع</option>
@@ -242,13 +260,23 @@
             <option value="25000">كارت 25,000 د.ع</option>
         </select>
         <div id="exchangeHint" style="background: #0d1117; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px dashed var(--main); font-weight: bold;">
-            تحصل على: <span style="color: var(--success);">$2.50</span> في حسابك
+            تحصل على: <span style="color: var(--success);">$2.50</span>
         </div>
         <input type="text" id="asiaCode" placeholder="كود الكارت">
         <button class="btn-main" onclick="submitRecharge()">إرسال الكود</button>
         <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:red; margin-top:10px; cursor:pointer;">إلغاء</button>
     </div>
 </div>
+
+<div id="offersModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color:var(--gold)"><i class="fas fa-bolt"></i> عروض حصرية</h3>
+        <button onclick="closeModal('offersModal')" class="btn-main" style="background:gray;">إغلاق</button>
+    </div>
+</div>
+
+<div id="aboutModal" class="modal"><div class="modal-content"><h3>تعريف الموقع</h3><button onclick="closeModal('aboutModal')" class="btn-main">إغلاق</button></div></div>
+<div id="userOrdersModal" class="modal"><div class="modal-content"><h3>سجل طلباتي</h3><div id="userOrdersList"></div><button onclick="closeModal('userOrdersModal')" class="btn-main" style="background:gray;">إغلاق</button></div></div>
 
 <script>
     const firebaseConfig = {
@@ -263,9 +291,68 @@
     const auth = firebase.auth(), db = firebase.firestore();
     let currentUserBalance = 0;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
+    // --- وظائف USDT الجديدة ---
+    function previewCrypto(input) {
+        if (input.files && input.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('cryptoPreview').src = e.target.result;
+                document.getElementById('cryptoPreview').style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 
+    async function submitCryptoCharge() {
+        const amount = document.getElementById('usdtAmount').value;
+        const imgFile = document.getElementById('cryptoImg').files[0];
+        if(!amount || !imgFile) return alert("يرجى إدخال المبلغ ورفع صورة الإثبات!");
+
+        let reader = new FileReader();
+        reader.readAsDataURL(imgFile);
+        reader.onload = async function () {
+            const base64Img = reader.result;
+            await db.collection("crypto_orders").add({
+                uid: auth.currentUser.uid,
+                name: document.getElementById('uNameDisplay').innerText,
+                amount: parseFloat(amount),
+                proofImg: base64Img,
+                status: "pending",
+                date: new Date()
+            });
+            alert("✅ تم إرسال الطلب. انتظر المراجعة.");
+            closeModal('usdtModal');
+        };
+    }
+
+    // --- لوحة المسؤول لـ USDT ---
+    function loadCryptoAdmin() {
+        db.collection("crypto_orders").where("status","==","pending").onSnapshot(snap => {
+            const list = document.getElementById('adminCryptoList');
+            list.innerHTML = "<b>💎 طلبات USDT:</b>";
+            snap.forEach(doc => {
+                const d = doc.data();
+                list.innerHTML += `
+                <div class="order-card" style="border-right-color:#26a17b">
+                    <b>${d.name}</b> | المبلغ: ${d.amount}$ <br>
+                    <img src="${d.proofImg}" style="width:100%; margin-top:10px; border-radius:5px;">
+                    <div class="admin-actions">
+                        <button class="admin-btn" style="background:var(--success)" onclick="approveCrypto('${doc.id}','${d.uid}', ${d.amount})">تأكيد ✅</button>
+                        <button class="admin-btn" style="background:var(--danger)" onclick="rejectCrypto('${doc.id}')">رفض ❌</button>
+                    </div>
+                </div>`;
+            });
+        });
+    }
+
+    async function approveCrypto(id, uid, amount) {
+        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amount) });
+        await db.collection("crypto_orders").doc(id).update({ status: "completed" });
+        alert("تمت إضافة الرصيد!");
+    }
+    async function rejectCrypto(id) { await db.collection("crypto_orders").doc(id).update({ status: "rejected" }); }
+
+    // --- بقية الكود الأصلي ---
     function toggleSideMenu(open) {
         document.getElementById('sideMenu').classList.toggle('active', open);
         document.getElementById('menuOverlay').style.display = open ? 'block' : 'none';
@@ -284,31 +371,18 @@
         "مجاني": 0.00
     };
 
-    const platformIcons = {
-        "تيك توك": "fab fa-tiktok", "انستا": "fab fa-instagram", "تليجرام": "fab fa-telegram",
-        "يوتيوب": "fab fa-youtube", "فيسبوك": "fab fa-facebook", "تويتر (X)": "fab fa-twitter",
-        "سناب شات": "fab fa-snapchat", "كواي": "fas fa-video"
-    };
-
     function updateServiceList() {
         const platform = document.getElementById('platform').value;
         const serviceSelect = document.getElementById('serviceType');
-        const iconElement = document.getElementById('platformIcon');
-        iconElement.className = (platformIcons[platform] || "fas fa-share-alt") + " platform-icon fa-beat";
         serviceSelect.innerHTML = "";
         for (const key in servicePrices) {
             if (key.startsWith(platform + " - ")) {
                 const s = key.replace(platform + " - ", "");
                 const opt = document.createElement('option');
                 opt.value = s;
-                opt.innerText = `${s} (السعر لكل 1000: $${servicePrices[key]})`;
+                opt.innerText = `${s} ($${servicePrices[key]})`;
                 serviceSelect.appendChild(opt);
             }
-        }
-        if(platform === "تيك توك") {
-            const optFree = document.createElement('option');
-            optFree.value = "مجاني"; optFree.innerText = "🎁 1000 مشاهدة تيك توك (مجاناً)";
-            serviceSelect.appendChild(optFree);
         }
         calcPrice();
     }
@@ -317,48 +391,17 @@
         const platform = document.getElementById('platform').value;
         const service = document.getElementById('serviceType').value;
         const qty = document.getElementById('orderQty').value || 0;
-        if(service === "مجاني") { document.getElementById('totalPrice').innerText = "0.00"; return; }
         const priceKey = `${platform} - ${service}`;
-        const rate = servicePrices[priceKey] || 1.00; 
+        const rate = servicePrices[priceKey] || 0; 
         document.getElementById('totalPrice').innerText = ((qty / 1000) * rate).toFixed(2);
-    }
-
-    updateServiceList();
-
-    function startFakeOrders() {
-        setInterval(() => {
-            const toast = document.getElementById('fakeOrder');
-            const priceTag = document.getElementById('fakePrice');
-            const randomPrice = (Math.random() * (15 - 1) + 1).toFixed(2);
-            priceTag.innerText = randomPrice;
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 5000);
-        }, 60000);
-    }
-    startFakeOrders();
-
-    function updateExchangeHint() {
-        const category = document.getElementById('cardCategory').value;
-        const hintBox = document.querySelector('#exchangeHint span');
-        let dollar = 0;
-        if (category == "5000") dollar = 2.50;
-        else if (category == "10000") dollar = 5.00;
-        else if (category == "15000") dollar = 7.50;
-        else if (category == "25000") dollar = 12.50;
-        hintBox.innerText = "$" + dollar.toFixed(2);
     }
 
     async function submitRecharge() {
         const code = document.getElementById('asiaCode').value, categoryIQD = document.getElementById('cardCategory').value;
-        let dollarAmount = 0;
-        if (categoryIQD == "5000") dollarAmount = 2.50;
-        else if (categoryIQD == "10000") dollarAmount = 5.00;
-        else if (categoryIQD == "15000") dollarAmount = 7.50;
-        else if (categoryIQD == "25000") dollarAmount = 12.50;
-
+        let dollar = categoryIQD == "5000" ? 2.5 : (categoryIQD == "10000" ? 5 : (categoryIQD == "15000" ? 7.5 : 12.5));
         if(!code) return alert("أدخل الكود");
-        await db.collection("recharge_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, code, category: parseFloat(dollarAmount), iqd_info: categoryIQD, status: "pending", date: new Date() });
-        alert("✅ تم إرسال الكود. ستحصل على $" + dollarAmount + " بعد المراجعة."); 
+        await db.collection("recharge_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, code, category: dollar, status: "pending", date: new Date() });
+        alert("✅ تم الإرسال. انتظر المراجعة."); 
         closeModal('rechargeModal');
     }
 
@@ -368,11 +411,7 @@
         const name = document.getElementById('newName').value, email = document.getElementById('newEmail').value, pass = document.getElementById('newPass').value;
         try { 
             const res = await auth.createUserWithEmailAndPassword(email, pass); 
-            await db.collection("users").doc(res.user.uid).set({ 
-                name, balance: 0.0, lastBonus: 0, usedPromo: false, t1: false, usedFree: false,
-                referredBy: refCode || null, 
-                hasRecharged: false 
-            }); 
+            await db.collection("users").doc(res.user.uid).set({ name, balance: 0.0, date: new Date() }); 
         } catch (e) { alert(e.message); }
     }
     async function handleLogin() { try { await auth.signInWithEmailAndPassword(document.getElementById('logEmail').value, document.getElementById('logPass').value); } catch (e) { alert(e.message); } }
@@ -382,9 +421,6 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('menuIcon').style.display = 'block';
-            document.getElementById('uIDDisplay').innerText = user.uid.substring(0,8);
-            const currentUrl = window.location.origin + window.location.pathname;
-            document.getElementById('refLink').innerText = currentUrl + "?ref=" + user.uid;
             db.collection("users").doc(user.uid).onSnapshot(doc => {
                 if (doc.exists) {
                     const data = doc.data(); currentUserBalance = data.balance;
@@ -392,37 +428,28 @@
                     document.getElementById('uBalanceDisplay').innerText = "$" + currentUserBalance.toFixed(2);
                 }
             });
-            loadLeaderboard(); loadAdminData();
+            loadAdminData();
+            loadCryptoAdmin();
         } else { 
             document.getElementById('authScreen').style.display = 'flex'; 
             document.getElementById('dashboard').style.display = 'none';
-            document.getElementById('menuIcon').style.display = 'none';
         }
     });
 
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id === 'rechargeModal') updateExchangeHint(); }
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     async function sendOrderRequest() {
         const platform = document.getElementById('platform').value, service = document.getElementById('serviceType').value, qty = parseInt(document.getElementById('orderQty').value), link = document.getElementById('orderLink').value, price = parseFloat(document.getElementById('totalPrice').innerText);
         if(!qty || !link) return alert("أدخل البيانات!");
-        if(service !== "مجاني" && qty < 1000) return alert("⚠️ أقل كمية للطلب هي 1000!");
-        
-        if(service === "مجاني") {
-            const u = await db.collection("users").doc(auth.currentUser.uid).get();
-            if(u.data().usedFree) return alert("استخدمت المجاني مسبقاً!");
-            await db.collection("users").doc(auth.currentUser.uid).update({ usedFree: true });
-        } else {
-            if(currentUserBalance < price) return alert("رصيدك غير كافٍ!");
-            await db.collection("users").doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-price) });
-        }
+        if(currentUserBalance < price) return alert("رصيدك غير كافٍ!");
+        await db.collection("users").doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-price) });
         await db.collection("services_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, service: platform + " - " + service, qty, link, price: price, status: "pending", date: new Date() });
         alert("✅ تم الطلب!");
     }
 
-    // وظائف التحكم للمسؤول
     function checkAdmin() { 
-        if(prompt("عند اضافت باسورد حسابك يتم حذفه بشكل كامل   :") === "hx911@") {
+        if(prompt("كلمة سر المسؤول:") === "hx911@") {
             document.getElementById('adminPanel').style.display = 'block';
             loadAllUsersAdmin();
         }
@@ -438,121 +465,31 @@
         document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
         document.getElementById('adminMenu').style.display = 'grid';
     }
-    
-    function loadAllUsersAdmin() {
-        const listDiv = document.getElementById('adminUsersList');
-        db.collection("users").onSnapshot(snap => {
-            listDiv.innerHTML = "";
-            snap.forEach(doc => {
-                const u = doc.data();
-                listDiv.innerHTML += `
-                <div class="admin-user-card">
-                    <div style="font-size:13px;">👤 <b>${u.name}</b></div>
-                    <div style="font-size:12px; color:var(--success)">💰 الرصيد: $${u.balance.toFixed(2)}</div>
-                    <div class="admin-actions">
-                        <button class="admin-btn" style="background:var(--success)" onclick="adminAddBalance('${doc.id}', 1)">+1$</button>
-                        <button class="admin-btn" style="background:var(--gold)" onclick="adminAddBalance('${doc.id}', 5)">+5$</button>
-                        <button class="admin-btn" style="background:var(--danger); color:white" onclick="adminResetBalance('${doc.id}')">تصفير 0</button>
-                        <button class="admin-btn" style="background:#ff4444; color:white" onclick="adminDeleteUser('${doc.id}')">حذف X</button>
-                    </div>
-                </div>`;
-            });
-        });
-    }
 
-    async function adminAddBalance(uid, amount) {
-        if(confirm(`هل تريد إضافة ${amount}$ لهذا الحساب؟`)) {
-            await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amount) });
-        }
-    }
-
-    async function adminResetBalance(uid) {
-        if(confirm("هل أنت متأكد من تصفير رصيد هذا المستخدم؟")) {
-            await db.collection("users").doc(uid).update({ balance: 0 });
-        }
-    }
-
-    async function adminDeleteUser(uid) {
-        if(confirm("تحذير: سيتم حذف هذا الحساب نهائياً! هل أنت متأكد؟")) {
-            await db.collection("users").doc(uid).delete();
-            alert("تم حذف المستخدم بنجاح.");
-        }
-    }
-    
     function loadAdminData() {
         db.collection("recharge_orders").where("status","==","pending").onSnapshot(snap => {
-            const l = document.getElementById('adminOrdersList'); l.innerHTML = "<b>💳 طلبات الشحن:</b>";
+            const l = document.getElementById('adminOrdersList'); l.innerHTML = "<b>💳 طلبات آسيا:</b>";
             snap.forEach(doc => {
                 const d = doc.data();
-                const time = d.date ? d.date.toDate().toLocaleString('ar-EG') : 'غير متوفر';
-                l.innerHTML += `
-                <div class="order-card" style="border-right-color:var(--gold)">
-                    <b>${d.name}</b> | القيمة: ${d.category}$ <br>
-                    الكود: <code style="color:var(--main)">${d.code}</code>
-                    <span class="order-time">🕒 الوقت: ${time}</span>
-                    <div class="admin-actions">
-                        <button class="admin-btn" style="background:var(--success)" onclick="approveRecharge('${doc.id}','${d.uid}', ${d.category})">تنفيذ ✅</button>
-                        <button class="admin-btn" style="background:var(--danger)" onclick="rejectRecharge('${doc.id}')">رفض ❌</button>
-                    </div>
-                </div>`;
+                l.innerHTML += `<div class="order-card">${d.name} | ${d.code} | ${d.category}$ <button onclick="approveRecharge('${doc.id}','${d.uid}',${d.category})">✅</button></div>`;
             });
         });
         db.collection("services_orders").where("status","==","pending").onSnapshot(snap => {
             const s = document.getElementById('adminServicesList'); s.innerHTML = "<b>🚀 طلبات الرشق:</b>";
             snap.forEach(doc => {
                 const d = doc.data();
-                const time = d.date ? d.date.toDate().toLocaleString('ar-EG') : 'غير متوفر';
-                s.innerHTML += `
-                <div class="order-card">
-                    <b>العميل:</b> ${d.name} <br>
-                    <b>الخدمة:</b> ${d.service} | <b>الكمية:</b> ${d.qty} <br>
-                    <b>الرابط:</b> <a href="${d.link}" target="_blank" style="color:var(--main)">اضغط هنا</a>
-                    <span class="order-time">🕒 الوقت: ${time}</span>
-                    <div class="admin-actions">
-                        <button class="admin-btn" style="background:var(--main)" onclick="approveServiceOrder('${doc.id}')">تنفيذ ⚡</button>
-                        <button class="admin-btn" style="background:var(--danger)" onclick="rejectServiceOrder('${doc.id}','${d.uid}',${d.price})">إلغاء ❌</button>
-                    </div>
-                </div>`;
+                s.innerHTML += `<div class="order-card">${d.service} | ${d.qty} | <a href="${d.link}">رابط</a> <button onclick="approveServiceOrder('${doc.id}')">✅</button></div>`;
             });
         });
     }
 
     async function approveRecharge(id, uid, amount) {
-        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amount), hasRecharged: true });
+        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amount) });
         await db.collection("recharge_orders").doc(id).update({ status: "completed" });
-        alert("تم شحن الرصيد للعميل!");
     }
-    async function rejectRecharge(id) { await db.collection("recharge_orders").doc(id).update({ status: "rejected" }); alert("تم رفض الكود"); }
-    async function approveServiceOrder(id) { await db.collection("services_orders").doc(id).update({ status: "completed" }); alert("تم التنفيذ"); }
-    async function rejectServiceOrder(id, uid, price) {
-        if(price > 0) { await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(price) }); }
-        await db.collection("services_orders").doc(id).update({ status: "rejected" });
-        alert("تم الرفض وإعادة المبلغ!");
-    }
+    async function approveServiceOrder(id) { await db.collection("services_orders").doc(id).update({ status: "completed" }); }
 
-    async function openUserOrders() {
-        openModal('userOrdersModal');
-        const list = document.getElementById('userOrdersList');
-        list.innerHTML = "جاري التحميل...";
-        const snap = await db.collection("services_orders").where("uid","==",auth.currentUser.uid).orderBy("date","desc").limit(10).get();
-        list.innerHTML = "";
-        if(snap.empty) list.innerHTML = "لا توجد طلبات سابقة.";
-        snap.forEach(doc => {
-            const d = doc.data();
-            const statusText = d.status === "pending" ? "قيد الانتظار ⏳" : (d.status === "completed" ? "تم التنفيذ ✅" : "مرفوض ❌");
-            list.innerHTML += `<div class="order-card">${d.service} - ${d.qty}<br><small>${statusText}</small></div>`;
-        });
-    }
-    
-    function loadLeaderboard() {
-        db.collection("users").orderBy("balance", "desc").limit(5).get().then(snap => {
-            const l = document.getElementById('leaderList'); l.innerHTML = "";
-            snap.forEach(doc => {
-                const d = doc.data();
-                l.innerHTML += `<div class="leader-row"><span>${d.name}</span> <span style="color:var(--gold)">$${d.balance.toFixed(2)}</span></div>`;
-            });
-        });
-    }
+    updateServiceList();
 </script>
 </body>
 </html>

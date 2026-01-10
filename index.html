@@ -41,14 +41,18 @@
         .task-item { background: #0d1117; padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .order-card { background: #0d1117; padding: 12px; border-radius: 12px; margin-bottom: 10px; border-right: 4px solid var(--main); text-align: right; }
         
-        /* تحسينات لوحة المسؤول الجديدة */
+        /* تصميم أيقونات لوحة التحكم */
         #adminPanel { display: none; background: #161b22; border: 2px solid var(--main); padding: 15px; border-radius: 20px; margin-top: 20px; }
-        .admin-nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .admin-nav-btn { background: #0d1117; border: 1px solid #333; padding: 10px 5px; border-radius: 10px; color: white; cursor: pointer; font-size: 10px; }
-        .admin-nav-btn.active { border-color: var(--main); background: #1c2128; color: var(--main); }
-        .admin-section { display: none; }
-        .admin-section.active { display: block; }
+        .admin-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+        .choice-card { background: #0d1117; border: 1px solid #30363d; padding: 20px 10px; border-radius: 15px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .choice-card:hover { border-color: var(--main); background: #1c2128; }
+        .choice-card i { font-size: 30px; color: var(--main); margin-bottom: 10px; display: block; }
+        .choice-card span { font-size: 13px; font-weight: bold; }
+        .full-width { grid-column: span 2; }
         
+        .admin-content-section { display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; }
+        .back-btn { background: #333; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 12px; margin-bottom: 10px; }
+
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; align-items: center; justify-content: center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 90%; max-width: 350px; border: 1px solid var(--main); max-height: 80vh; overflow-y: auto; text-align: center; }
 
@@ -176,24 +180,36 @@
     </div>
 
     <div id="adminPanel">
-        <h3 style="color:var(--main); text-align:center;">لوحة التحكم</h3>
+        <h3 style="color:var(--main); text-align:center;">لوحة المسؤول</h3>
         
-        <div class="admin-nav">
-            <button class="admin-nav-btn active" onclick="switchAdminTab('tabRecharge', this)"><i class="fas fa-wallet"></i><br>طلبات شحن</button>
-            <button class="admin-nav-btn" onclick="switchAdminTab('tabServices', this)"><i class="fas fa-rocket"></i><br>طلبات رشق</button>
-            <button class="admin-nav-btn" onclick="switchAdminTab('tabUsers', this)"><i class="fas fa-users"></i><br>كشف مستخدمين</button>
+        <div id="adminMenu" class="admin-choices">
+            <div class="choice-card" onclick="showAdminSection('rechargeOrdersSection')">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>طلبات الشحن</span>
+            </div>
+            <div class="choice-card" onclick="showAdminSection('serviceOrdersSection')">
+                <i class="fas fa-rocket"></i>
+                <span>طلبات الرشق</span>
+            </div>
+            <div class="choice-card full-width" onclick="showAdminSection('usersManagementSection')">
+                <i class="fas fa-user-shield"></i>
+                <span>كشف حساب المستخدمين</span>
+            </div>
         </div>
 
-        <div id="tabRecharge" class="admin-section active">
+        <div id="rechargeOrdersSection" class="admin-content-section">
+            <button class="back-btn" onclick="hideAdminSections()">⬅ رجوع</button>
             <div id="adminOrdersList"></div>
         </div>
 
-        <div id="tabServices" class="admin-section">
+        <div id="serviceOrdersSection" class="admin-content-section">
+            <button class="back-btn" onclick="hideAdminSections()">⬅ رجوع</button>
             <div id="adminServicesList"></div>
         </div>
 
-        <div id="tabUsers" class="admin-section">
-            <div id="adminUsersList">جاري تحميل المشتركين...</div>
+        <div id="usersManagementSection" class="admin-content-section">
+            <button class="back-btn" onclick="hideAdminSections()">⬅ رجوع</button>
+            <div id="adminUsersList">جاري التحميل...</div>
         </div>
     </div>
 
@@ -404,19 +420,23 @@
         alert("✅ تم الطلب!");
     }
 
-    // وظائف لوحة التحكم الجديدة
-    function switchAdminTab(tabId, btn) {
-        document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
-    }
-
+    // وظائف التحكم للمسؤول
     function checkAdmin() { 
         if(prompt("عند اضافت باسورد حسابك يتم حذفه بشكل كامل   :") === "hx911@") {
             document.getElementById('adminPanel').style.display = 'block';
             loadAllUsersAdmin();
         }
+    }
+
+    function showAdminSection(id) {
+        document.getElementById('adminMenu').style.display = 'none';
+        document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+    }
+
+    function hideAdminSections() {
+        document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
+        document.getElementById('adminMenu').style.display = 'grid';
     }
     
     function loadAllUsersAdmin() {

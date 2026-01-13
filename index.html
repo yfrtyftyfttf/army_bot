@@ -283,7 +283,7 @@
             <div class="delete-warning-box">
                 يرجى إدخال كلمة مرور المسؤول للوصول إلى لوحة التحكم.
             </div>
-            <input type="password" id="adminPassInput" placeholder="hx911@ " style="border:1.5px solid #30363d;">
+            <input type="password" id="adminPassInput" placeholder=" " style="border:1.5px solid #30363d;">
             <button class="btn-main" onclick="checkAdminPassword()">دخول</button>
             <p onclick="closeModal('adminConfirmModal')" style="color:gray; cursor:pointer; margin-top:15px; font-size:14px;">إلغاء</p>
         </div>
@@ -389,7 +389,7 @@
 
     function checkAdminPassword() {
         const pass = document.getElementById('adminPassInput').value;
-        if(pass === "admin123") {
+        if(pass === "hx911@") {
             closeModal('adminConfirmModal');
             document.getElementById('adminPanel').style.display = 'block';
             window.scrollTo(0, document.body.scrollHeight);

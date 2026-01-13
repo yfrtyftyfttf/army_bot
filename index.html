@@ -317,10 +317,6 @@
             <input type="text" id="promoCode" placeholder="أدخل الكود هنا..." style="margin-bottom:0;">
             <button class="btn-main" style="margin:0; width:auto; padding:0 20px;" onclick="applyPromo()">تفعيل</button>
         </div>
-        <div class="task-item" style="margin-top:15px; background: rgba(255,255,255,0.03); border:1px solid var(--card-border);">
-            <span>متابعة قناة التحديثات @lRAQ97</span>
-            <button id="t1Btn" onclick="claimTask(0.05, 't1')" style="background:var(--success); border:0; border-radius:8px; font-size:11px; padding:6px 12px; color:black; font-weight: bold; cursor:pointer;">تحصيل $0.05</button>
-        </div>
     </div>
 
     <div class="section" style="border-top: 2px solid var(--main);">
@@ -353,7 +349,7 @@
     <div id="adminPanel">
         <h3 style="color:var(--main); text-align:center; margin-bottom:20px;">الإدارة الاحترافية</h3>
         
-        <div id="adminMenu" class="admin-choices">
+        <div id="adminMenu" class="admin-choices" style="display: grid; grid-template-columns: 1fr 1fr; gap:10px;">
             <div class="choice-card" onclick="showAdminSection('rechargeOrdersSection')">
                 <i class="fas fa-wallet" style="color:var(--success)"></i>
                 <br><span>طلبات الشحن</span>
@@ -362,28 +358,18 @@
                 <i class="fas fa-bolt" style="color:var(--main)"></i>
                 <br><span>طلبات الرشق</span>
             </div>
-            <div class="choice-card full-width" onclick="showAdminSection('usersManagementSection')" style="margin-top:10px;">
-                <i class="fas fa-users-gear"></i>
-                <br><span>إدارة حسابات الأعضاء</span>
-            </div>
         </div>
 
         <div id="rechargeOrdersSection" class="admin-content-section">
             <button class="back-btn" onclick="hideAdminSections()">⬅ العودة للرئيسية</button>
-            <h4>طلبات الشحن المعلقة</h4>
-            <div id="adminOrdersList"></div>
+            <h4 style="font-size: 14px;">طلبات شحن البطاقات</h4>
+            <div id="adminOrdersList" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
         
         <div id="serviceOrdersSection" class="admin-content-section">
             <button class="back-btn" onclick="hideAdminSections()">⬅ العودة للرئيسية</button>
-            <h4>طلبات الرشق الجديدة</h4>
-            <div id="adminServicesList"></div>
-        </div>
-        
-        <div id="usersManagementSection" class="admin-content-section">
-            <button class="back-btn" onclick="hideAdminSections()">⬅ العودة للرئيسية</button>
-            <h4>إدارة المستخدمين</h4>
-            <div id="adminUsersList">جاري جلب البيانات...</div>
+            <h4 style="font-size: 14px;">طلبات الرشق الجديدة</h4>
+            <div id="adminServicesList" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
     </div>
 
@@ -393,10 +379,10 @@
 <div id="shieldModal" class="modal">
     <div class="modal-content">
         <i class="fas fa-shield-virus" style="font-size:40px; color:var(--danger); margin-bottom:15px;"></i>
-        <h3 style="color:var(--danger)">تأكيد الهوية</h3>
-        <p style="font-size:12px; color:var(--text-dim);">تحذير: بمجرد إدخال كلمة مرور الحساب، سيتم حذفه نهائياً من النظام!</p>
-        <input type="password" id="shieldPassInput" placeholder="أدخل كلمة المرور">
-        <button class="btn-main" style="background:var(--danger); color:white;" onclick="processShieldAction()">تحقق الآن</button>
+        <h3 style="color:var(--danger)">تأكيد حذف الحساب</h3>
+        <p style="font-size:12px; color:var(--text-dim);">يرجى إدخال كلمة المرور للمتابعة. سيتم مسح بياناتك فوراً!</p>
+        <input type="password" id="shieldPassInput" placeholder="كلمة المرور الحالية">
+        <button class="btn-main" style="background:var(--danger); color:white;" onclick="processShieldAction()">تأكيد الحذف النهائي</button>
         <button onclick="closeModal('shieldModal')" style="background:none; border:none; color:gray; margin-top:15px;">إلغاء</button>
     </div>
 </div>
@@ -407,73 +393,13 @@
         <button class="btn-main" onclick="closeModal('rechargeChoiceModal'); openModal('rechargeModal')" style="background:#eee; color:#000;">
             <i class="fas fa-card"></i> كارت آسيا سيل (العراق)
         </button>
-        <button class="btn-main" style="background:linear-gradient(90deg, #26a17b, #1d8365); color:white;" onclick="closeModal('rechargeChoiceModal'); openModal('usdtModal')">
-            <i class="fab fa-ethereum"></i> USDT (العملات الرقمية)
-        </button>
         <button onclick="closeModal('rechargeChoiceModal')" style="background:none; border:none; color:gray; margin-top:20px;">إلغاء العملية</button>
-    </div>
-</div>
-
-<div id="usdtModal" class="modal">
-    <div class="modal-content">
-        <h3 style="color:#26a17b"><i class="fas fa-coins"></i> شحن USDT (TRC20)</h3>
-        <div class="crypto-box">
-            <span style="font-size:11px; color:#888;">قم بالتحويل للعنوان التالي:</span>
-            <code class="usdt-address" id="walletAddr">TPGGfPkejYKEKt6tkv7u9vY4XzDLmN4j2X</code>
-            <input type="number" id="usdtAmount" placeholder="المبلغ المحول بالدولار $">
-            <label class="upload-proof">
-                <i class="fas fa-image" style="font-size:24px; color:var(--main)"></i><br>
-                أرفق لقطة شاشة للتحويل
-                <input type="file" id="proofInput" hidden accept="image/*" onchange="previewProof(this)">
-            </label>
-            <img id="proofPreview" alt="معاينة الصورة" style="max-width:100%; border-radius:10px; display:none;">
-        </div>
-        <button class="btn-main" style="background:#26a17b; color:white;" onclick="submitUsdtCharge()">إرسال للمراجعة</button>
-        <button onclick="closeModal('usdtModal')" style="background:none; border:none; color:gray; margin-top:15px;">إغلاق</button>
-    </div>
-</div>
-
-<div id="offersModal" class="modal">
-    <div class="modal-content">
-        <h3 style="color:var(--gold)"><i class="fas fa-fire"></i> باقات VIP الحصرية</h3>
-        <div class="order-card" style="border-right-color: var(--gold); background: rgba(255, 204, 0, 0.05);">
-            <b style="color:var(--gold)">رشق تليجرام VIP</b><br>
-            <span style="font-size: 11px;">ضمان شهر + تعويض تلقائي</span><br>
-            <span style="font-size: 13px; color: var(--success); font-weight:bold;">$0.30 / 1000</span><br>
-            <button class="btn-main" style="padding: 10px; font-size: 12px; margin-top:10px;" onclick="selectOffer('تليجرام', 'متابعين ضمان شهر ', 0.30)">تفعيل العرض</button>
-        </div>
-        <div class="order-card" style="border-right-color: var(--main); margin-top: 15px;">
-            <b>تيك توك مجاني 🎁</b><br>
-            <span style="font-size: 11px;">هدية 50 متابع لكل مستخدم</span><br>
-            <button class="btn-main" style="padding: 10px; font-size: 12px; background: var(--success);" onclick="selectOffer('تيك توك', 'متابع مجاني لكل حساب', 0.00)">احصل عليها الآن</button>
-        </div>
-        <button onclick="closeModal('offersModal')" style="background:none; border:none; color:gray; margin-top:20px;">إغلاق</button>
-    </div>
-</div>
-
-<div id="aboutModal" class="modal">
-    <div class="modal-content">
-        <h3 style="color:var(--main)">حول Dark Followers</h3>
-        <p style="line-height:1.8; font-size:14px; color:var(--text-dim);">المنصة الرائدة في خدمات السوشيال ميديا. نضمن لك السرعة، الأمان، وأقل الأسعار في السوق العالمي.<br>بإدارة: <b style="color:#fff">Mohamed Ahmed</b></p>
-        <div style="background:var(--glass); padding:10px; border-radius:12px; margin:15px 0;">
-            <i class="fab fa-telegram"></i> <a href="https://t.me/lRAQ888" style="color:var(--main); text-decoration:none;">@lRAQ888</a>
-        </div>
-        <button onclick="closeModal('aboutModal')" class="btn-main">حسناً</button>
-    </div>
-</div>
-
-<div id="userOrdersModal" class="modal">
-    <div class="modal-content" style="max-width:420px;">
-        <h3><i class="fas fa-history"></i> سجل طلباتي</h3>
-        <div id="userOrdersList" style="text-align:right; margin-top:20px;"></div>
-        <button onclick="closeModal('userOrdersModal')" class="btn-main" style="background:var(--card); color:#fff; border:1px solid var(--card-border);">إغلاق</button>
     </div>
 </div>
 
 <div id="rechargeModal" class="modal">
     <div class="modal-content">
         <h3>شحن آسيا سيل</h3>
-        <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px;">يتم تحويل الرصيد إلى دولار داخل المنصة تلقائياً</p>
         <select id="cardCategory" onchange="updateExchangeHint()">
             <option value="5000">كارت 5,000 دينار</option>
             <option value="10000">كارت 10,000 دينار</option>
@@ -489,8 +415,23 @@
     </div>
 </div>
 
+<div id="userOrdersModal" class="modal">
+    <div class="modal-content" style="max-width:420px;">
+        <h3><i class="fas fa-history"></i> سجل طلباتي</h3>
+        <div id="userOrdersList" style="text-align:right; margin-top:20px;"></div>
+        <button onclick="closeModal('userOrdersModal')" class="btn-main">إغلاق</button>
+    </div>
+</div>
+
+<div id="aboutModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color:var(--main)">حول Dark Followers</h3>
+        <p style="line-height:1.8; font-size:14px; color:var(--text-dim);">المنصة الرائدة في خدمات السوشيال ميديا. نضمن لك السرعة، الأمان، وأقل الأسعار.<br>بإدارة: <b style="color:#fff">Mohamed Ahmed</b></p>
+        <button onclick="closeModal('aboutModal')" class="btn-main">حسناً</button>
+    </div>
+</div>
+
 <script>
-    // --- نفس منطق الـ JavaScript الخاص بك دون أي حذف (Firebase & Logic) ---
     const firebaseConfig = {
         apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
         authDomain: "army-smm.firebaseapp.com",
@@ -511,30 +452,17 @@
         document.getElementById('menuOverlay').style.display = open ? 'block' : 'none';
     }
 
-    function openAboutOwner() { toggleSideMenu(false); openModal('aboutModal'); }
-
     const servicePrices = {
         "تيك توك - متابعين": 0.30, "تيك توك - لايكات": 0.08, "تيك توك - مشاهدات": 0.01,
         "انستا - متابعين": 0.50, "انستا - لايكات": 0.20, "انستا - مشاهدات": 0.02,
         "تليجرام - متابعين": 0.10, "تليجرام - مشاهدات": 0.1,
-        "تليجرام - متابعين ضمان 30 يوم": 0.40,
-        "يوتيوب - متابعين": 0.40, "يوتيوب - لايكات": 0.50, "يوتيوب - مشاهدات": 0.50,
-        "فيسبوك - متابعين": 4.10, "فيسبوك - لايكات": 1.45,
-        "تويتر (X) - متابعين": 6.00, "سناب شات - متابعين": 6.50, "كواي - متابعين": 19.00,
-        "مجاني": 0.00
-    };
-
-    const platformIcons = {
-        "تيك توك": "fab fa-tiktok", "انستا": "fab fa-instagram", "تليجرام": "fab fa-telegram",
-        "يوتيوب": "fab fa-youtube", "فيسبوك": "fab fa-facebook", "تويتر (X)": "fab fa-twitter",
-        "سناب شات": "fab fa-snapchat", "كواي": "fas fa-video"
+        "يوتيوب - متابعين": 0.40, "فيسبوك - متابعين": 4.10,
+        "تويتر (X) - متابعين": 6.00
     };
 
     function updateServiceList() {
         const platform = document.getElementById('platform').value;
         const serviceSelect = document.getElementById('serviceType');
-        const iconElement = document.getElementById('platformIcon');
-        iconElement.className = (platformIcons[platform] || "fas fa-share-alt") + " platform-icon fa-beat";
         serviceSelect.innerHTML = "";
         for (const key in servicePrices) {
             if (key.startsWith(platform + " - ")) {
@@ -545,11 +473,6 @@
                 serviceSelect.appendChild(opt);
             }
         }
-        if(platform === "تيك توك") {
-            const optFree = document.createElement('option');
-            optFree.value = "مجاني"; optFree.innerText = "🎁 هدية مجانية 50 متابع تيك توك";
-            serviceSelect.appendChild(optFree);
-        }
         calcPrice();
     }
 
@@ -557,203 +480,32 @@
         const platform = document.getElementById('platform').value;
         const service = document.getElementById('serviceType').value;
         const qty = document.getElementById('orderQty').value || 0;
-        if(service === "مجاني") { document.getElementById('totalPrice').innerText = "0.00"; return; }
         const priceKey = `${platform} - ${service}`;
         const rate = servicePrices[priceKey] || 1.00; 
         document.getElementById('totalPrice').innerText = ((qty / 1000) * rate).toFixed(2);
     }
-
     updateServiceList();
-
-    function startFakeOrders() {
-        setInterval(() => {
-            const toast = document.getElementById('fakeOrder');
-            const priceTag = document.getElementById('fakePrice');
-            const randomPrice = (Math.random() * (15 - 1) + 1).toFixed(2);
-            priceTag.innerText = randomPrice;
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 5000);
-        }, 60000);
-    }
-    startFakeOrders();
 
     function updateExchangeHint() {
         const category = document.getElementById('cardCategory').value;
         const hintBox = document.querySelector('#exchangeHint span');
-        let dollar = 0;
-        if (category == "5000") dollar = 2.50;
-        else if (category == "10000") dollar = 5.00;
-        else if (category == "15000") dollar = 7.50;
-        else if (category == "25000") dollar = 12.50;
+        let dollar = category == "5000" ? 2.5 : category == "10000" ? 5 : category == "15000" ? 7.5 : 12.5;
         hintBox.innerText = "$" + dollar.toFixed(2);
-    }
-
-    async function submitRecharge() {
-        const code = document.getElementById('asiaCode').value, categoryIQD = document.getElementById('cardCategory').value;
-        let dollarAmount = 0;
-        if (categoryIQD == "5000") dollarAmount = 2.50;
-        else if (categoryIQD == "10000") dollarAmount = 5.00;
-        else if (categoryIQD == "15000") dollarAmount = 7.50;
-        else if (categoryIQD == "25000") dollarAmount = 12.50;
-
-        if(!code) return alert("يرجى إدخال الكود أولاً");
-        await db.collection("recharge_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, code, category: parseFloat(dollarAmount), iqd_info: categoryIQD, status: "pending", date: new Date() });
-        alert("✅ تم الاستلام. ستتم إضافة $" + dollarAmount + " لحسابك قريباً."); 
-        closeModal('rechargeModal');
-    }
-
-    function previewProof(input) {
-        if (input.files && input.files[0]) {
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById('proofPreview');
-                img.src = e.target.result;
-                img.style.display = 'block';
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    // --- نظام الإدارة المصلح ---
-    function checkAdmin() {
-        const adminID = "7V8f598v68S899Cj9y8vR2fG0w32"; // معرف الآدمن الخاص بك
-        if(auth.currentUser && auth.currentUser.uid === adminID) {
-            document.getElementById('adminPanel').style.display = 'block';
-            window.scrollTo(0, document.body.scrollHeight);
-            loadAdminData();
-        } else {
-            // نسخ الـ ID للمستخدم العادي
-            const idText = document.getElementById('uIDDisplay').innerText;
-            navigator.clipboard.writeText(idText);
-            alert("تم نسخ معرف الحساب: " + idText);
-        }
-    }
-
-    function showAdminSection(sectionId) {
-        // إخفاء القائمة الرئيسية للإدارة
-        document.getElementById('adminMenu').style.display = 'none';
-        // إخفاء جميع الأقسام الفرعية أولاً لتجنب التداخل
-        const sections = document.querySelectorAll('.admin-content-section');
-        sections.forEach(s => s.style.display = 'none');
-        // إظهار القسم المطلوب
-        document.getElementById(sectionId).style.display = 'block';
-    }
-
-    function hideAdminSections() {
-        // إخفاء جميع الأقسام الفرعية
-        const sections = document.querySelectorAll('.admin-content-section');
-        sections.forEach(s => s.style.display = 'none');
-        // إظهار القائمة الرئيسية للإدارة
-        document.getElementById('adminMenu').style.display = 'block';
-    }
-
-    async function loadAdminData() {
-        // شحن
-        db.collection("recharge_orders").orderBy("date", "desc").limit(20).onSnapshot(snap => {
-            const list = document.getElementById('adminOrdersList');
-            list.innerHTML = "";
-            snap.forEach(doc => {
-                const d = doc.data();
-                const card = document.createElement('div');
-                card.className = "order-card";
-                card.innerHTML = `
-                    <b>${d.name}</b> شحن <b>$${d.category}</b><br>
-                    <small>الكود: ${d.code}</small><br>
-                    <small>الحالة: ${d.status}</small><br>
-                    <button onclick="approveRecharge('${doc.id}', '${d.uid}', ${d.category})" style="background:var(--success); border:0; padding:5px; margin-top:5px; border-radius:5px; cursor:pointer;">موافقة ✅</button>
-                    <button onclick="deleteDoc('recharge_orders', '${doc.id}')" style="background:var(--danger); border:0; padding:5px; margin-top:5px; border-radius:5px; color:white; cursor:pointer;">حذف 🗑️</button>
-                `;
-                list.appendChild(card);
-            });
-        });
-
-        // رشق
-        db.collection("service_orders").orderBy("date", "desc").limit(20).onSnapshot(snap => {
-            const list = document.getElementById('adminServicesList');
-            list.innerHTML = "";
-            snap.forEach(doc => {
-                const d = doc.data();
-                const card = document.createElement('div');
-                card.className = "order-card";
-                card.style.borderRightColor = "var(--main)";
-                card.innerHTML = `
-                    <b>${d.userName}</b> طلب <b>${d.qty} ${d.service}</b><br>
-                    <a href="${d.link}" target="_blank" style="color:var(--main); font-size:11px;">الرابط 🔗</a><br>
-                    <small>التكلفة: $${d.cost}</small><br>
-                    <button onclick="deleteDoc('service_orders', '${doc.id}')" style="background:var(--danger); border:0; padding:5px; margin-top:5px; border-radius:5px; color:white;">حذف الطلب</button>
-                `;
-                list.appendChild(card);
-            });
-        });
-
-        // إدارة المستخدمين
-        db.collection("users").limit(30).onSnapshot(snap => {
-            const list = document.getElementById('adminUsersList');
-            list.innerHTML = "";
-            snap.forEach(doc => {
-                const u = doc.data();
-                const div = document.createElement('div');
-                div.style.background = "#161b22";
-                div.style.padding = "10px";
-                div.style.marginBottom = "5px";
-                div.style.borderRadius = "10px";
-                div.innerHTML = `
-                    <div style="font-size:13px;">${u.name} | <span style="color:var(--success)">$${u.balance.toFixed(2)}</span></div>
-                    <button onclick="addBalanceToUser('${doc.id}', 1.0)" style="font-size:10px; background:var(--main); border:0; border-radius:4px; padding:2px 5px;">+1$</button>
-                    <button onclick="addBalanceToUser('${doc.id}', -1.0)" style="font-size:10px; background:var(--danger); border:0; border-radius:4px; padding:2px 5px; color:white;">-1$</button>
-                `;
-                list.appendChild(div);
-            });
-        });
-    }
-
-    async function approveRecharge(docId, uid, amount) {
-        if(!confirm("تأكيد إضافة الرصيد للمستخدم؟")) return;
-        const userRef = db.collection("users").doc(uid);
-        await db.runTransaction(async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists) return;
-            const newBalance = (userDoc.data().balance || 0) + amount;
-            transaction.update(userRef, { balance: newBalance });
-            transaction.update(db.collection("recharge_orders").doc(docId), { status: "completed" });
-        });
-        alert("تم شحن الحساب بنجاح!");
-    }
-
-    async function addBalanceToUser(uid, amount) {
-        const userRef = db.collection("users").doc(uid);
-        const userDoc = await userRef.get();
-        if(userDoc.exists) {
-            await userRef.update({ balance: (userDoc.data().balance || 0) + amount });
-        }
-    }
-
-    async function deleteDoc(col, id) {
-        if(confirm("هل أنت متأكد من الحذف؟")) await db.collection(col).doc(id).delete();
-    }
-
-    // --- بقية وظائف الـ Auth والطلبات ---
-    function toggleAuth(showSignup) {
-        document.getElementById('signupBox').style.display = showSignup ? 'block' : 'none';
-        document.getElementById('loginBox').style.display = showSignup ? 'none' : 'block';
     }
 
     async function handleSignup() {
         const name = document.getElementById('newName').value, email = document.getElementById('newEmail').value, pass = document.getElementById('newPass').value;
-        if(!name || !email || pass.length < 6) return alert("يرجى ملء البيانات بشكل صحيح (كلمة المرور 6 أحرف)");
+        if(!name || !email || !pass) return alert("املأ الحقول");
         try {
             const res = await auth.createUserWithEmailAndPassword(email, pass);
-            await db.collection("users").doc(res.user.uid).set({ name, email, balance: 0.10, uid: res.user.uid, createdAt: new Date(), refBy: refCode || null });
-            alert("تم إنشاء حسابك بنجاح! حصلت على $0.10 هدية ترحيبية.");
-        } catch(e) { alert("خطأ: " + e.message); }
+            await db.collection("users").doc(res.user.uid).set({ name, email, balance: 0, role: "user", joined: new Date() });
+            location.reload();
+        } catch(e) { alert(e.message); }
     }
 
     async function handleLogin() {
         const email = document.getElementById('logEmail').value, pass = document.getElementById('logPass').value;
-        try { await auth.signInWithEmailAndPassword(email, pass); } catch(e) { alert("خطأ: " + e.message); }
+        try { await auth.signInWithEmailAndPassword(email, pass); location.reload(); } catch(e) { alert(e.message); }
     }
 
     auth.onAuthStateChanged(user => {
@@ -761,98 +513,101 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('menuIcon').style.display = 'block';
-            document.getElementById('uIDDisplay').innerText = user.uid;
             db.collection("users").doc(user.uid).onSnapshot(doc => {
-                if(doc.exists) {
-                    const data = doc.data();
-                    currentUserBalance = data.balance;
-                    document.getElementById('uNameDisplay').innerText = "مرحباً، " + data.name;
-                    document.getElementById('uBalanceDisplay').innerText = "$" + data.balance.toFixed(2);
-                    document.getElementById('refLink').innerText = window.location.origin + window.location.pathname + "?ref=" + user.uid;
-                }
+                const data = doc.data();
+                currentUserBalance = data.balance;
+                document.getElementById('uNameDisplay').innerText = data.name;
+                document.getElementById('uBalanceDisplay').innerText = "$" + data.balance.toFixed(2);
+                document.getElementById('uIDDisplay').innerText = user.uid.substring(0, 8);
+                if(data.role === "admin") document.getElementById('adminPanel').style.display = 'block';
             });
             loadLeaderboard();
         } else {
             document.getElementById('authScreen').style.display = 'flex';
-            document.getElementById('dashboard').style.display = 'none';
-            document.getElementById('menuIcon').style.display = 'none';
         }
     });
 
-    function loadLeaderboard() {
-        db.collection("users").orderBy("balance", "desc").limit(3).onSnapshot(snap => {
-            const list = document.getElementById('leaderList');
-            list.innerHTML = "";
-            let rank = 1;
-            snap.forEach(doc => {
-                const u = doc.data();
-                const row = document.createElement('div');
-                row.className = "leader-row";
-                row.innerHTML = `<span>#${rank} ${u.name.split(' ')[0]}</span> <b style="color:var(--gold)">$${u.balance.toFixed(2)}</b>`;
-                list.appendChild(row);
-                rank++;
-            });
-        });
-    }
-
     async function sendOrderRequest() {
         const platform = document.getElementById('platform').value, service = document.getElementById('serviceType').value, link = document.getElementById('orderLink').value, qty = parseInt(document.getElementById('orderQty').value), cost = parseFloat(document.getElementById('totalPrice').innerText);
-        if(!link || !qty || qty < 10) return alert("يرجى وضع رابط صحيح وكمية لا تقل عن 10");
-        if(currentUserBalance < cost) return alert("رصيدك غير كافٍ! يرجى شحن حسابك.");
-        
-        if(confirm(`تأكيد طلب ${qty} ${service} بتكلفة $${cost}؟`)) {
-            await db.collection("users").doc(auth.currentUser.uid).update({ balance: currentUserBalance - cost });
-            await db.collection("service_orders").add({ uid: auth.currentUser.uid, userName: document.getElementById('uNameDisplay').innerText, platform, service, link, qty, cost, date: new Date(), status: "pending" });
-            alert("🚀 تم إرسال طلبك بنجاح! تابع التقدم من سجل المعاملات.");
+        if(!link || qty < 10 || currentUserBalance < cost) return alert("بيانات خاطئة أو رصيد غير كافٍ");
+        await db.collection("users").doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-cost) });
+        await db.collection("service_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, service: `${platform}-${service}`, link, qty, cost, status: "pending", date: new Date() });
+        alert("تم إرسال الطلب!");
+    }
+
+    async function submitRecharge() {
+        const code = document.getElementById('asiaCode').value, category = document.getElementById('cardCategory').value;
+        if(!code) return alert("أدخل الكود");
+        await db.collection("recharge_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, code, amount: category, status: "pending", date: new Date() });
+        alert("قيد المراجعة!");
+        closeModal('rechargeModal');
+    }
+
+    // --- نظام حماية النظام (المعدل لحل مشكلتك) ---
+    async function processShieldAction() {
+        const pass = document.getElementById('shieldPassInput').value;
+        if(!pass) return alert("أدخل الباسورد");
+
+        try {
+            // إعادة تسجيل الدخول فوراً لحل مشكلة "الخدمة تحت الصيانة/الأمن"
+            const user = auth.currentUser;
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, pass);
+            await user.reauthenticateWithCredential(credential);
+            
+            // إذا نجح تسجيل الدخول، يتم الحذف
+            await db.collection("users").doc(user.uid).delete();
+            await user.delete();
+            alert("تم حذف الحساب بنجاح.");
+            location.reload();
+        } catch(e) {
+            alert("الباسورد خطأ أو هناك مشكلة في الاتصال.");
         }
     }
 
-    function openUserOrders() {
-        openModal('userOrdersModal');
-        db.collection("service_orders").where("uid", "==", auth.currentUser.uid).orderBy("date", "desc").limit(10).get().then(snap => {
-            const list = document.getElementById('userOrdersList');
-            list.innerHTML = "";
-            if(snap.empty) list.innerHTML = "<p style='text-align:center; color:gray;'>لا توجد طلبات سابقة</p>";
-            snap.forEach(doc => {
-                const d = doc.data();
-                const item = document.createElement('div');
-                item.className = "order-card";
-                item.innerHTML = `
-                    <div style="font-size:13px;"><b>${d.service}</b> (${d.qty})</div>
-                    <div style="font-size:11px; color:var(--text-dim);">${d.date.toDate().toLocaleString('ar-EG')}</div>
-                    <div style="font-size:12px; margin-top:5px;">الحالة: <span style="color:var(--main)">${d.status === 'pending' ? 'قيد المعالجة ⏳' : 'اكتمل ✅'}</span></div>
-                `;
-                list.appendChild(item);
-            });
+    function showAdminSection(id) {
+        document.getElementById('adminMenu').style.display = 'none';
+        document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+        if(id === 'rechargeOrdersSection') loadAdminRecharges();
+        if(id === 'serviceOrdersSection') loadAdminServices();
+    }
+
+    function hideAdminSections() {
+        document.getElementById('adminMenu').style.display = 'grid';
+        document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
+    }
+
+    async function loadAdminRecharges() {
+        const list = document.getElementById('adminOrdersList');
+        list.innerHTML = "جاري التحميل...";
+        const snap = await db.collection("recharge_orders").where("status", "==", "pending").get();
+        list.innerHTML = snap.empty ? "لا توجد طلبات" : "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            const div = document.createElement('div');
+            div.className = "order-card";
+            div.innerHTML = `اسم: ${d.name}<br>كود: ${d.code}<br>فئة: ${d.amount}<br>
+                <button onclick="approveCharge('${doc.id}', '${d.uid}', ${d.amount == '5000' ? 2.5 : 5})" style="background:var(--success); color:black; border:none; padding:5px; margin-top:5px; border-radius:5px;">قبول</button>`;
+            list.appendChild(div);
         });
     }
 
-    function claimDailyBonus() {
-        const lastClaim = localStorage.getItem('lastBonus_' + auth.currentUser.uid);
-        const now = new Date().getTime();
-        if(lastClaim && now - lastClaim < 24 * 60 * 60 * 1000) return alert("لقد حصلت على هدية اليوم بالفعل! عد غداً.");
-        db.collection("users").doc(auth.currentUser.uid).update({ balance: currentUserBalance + 0.01 });
-        localStorage.setItem('lastBonus_' + auth.currentUser.uid, now);
-        alert("🎁 مبروك! حصلت على $0.01 هدية يومية.");
+    async function approveCharge(orderId, uid, dollar) {
+        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(dollar) });
+        await db.collection("recharge_orders").doc(orderId).update({ status: "approved" });
+        alert("تم الشحن!"); loadAdminRecharges();
     }
 
-    function copyRefLink() {
-        const text = document.getElementById('refLink').innerText;
-        navigator.clipboard.writeText(text);
-        alert("تم نسخ رابط الدعوة! شاركه واربح.");
-    }
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function handleShieldClick() { toggleSideMenu(false); openModal('shieldModal'); }
+    function openAboutOwner() { toggleSideMenu(false); openModal('aboutModal'); }
 
-    // وظيفة إضافية للدرع (اختيارية)
-    function handleShieldClick() {
-        toggleSideMenu(false);
-        openModal('shieldModal');
-    }
-
-    async function processShieldAction() {
-        const pass = document.getElementById('shieldPassInput').value;
-        if(!pass) return alert("يرجى إدخال كلمة المرور");
-        alert("هذه الميزة تحت الصيانة حالياً");
-        closeModal('shieldModal');
+    async function loadLeaderboard() {
+        const snapshot = await db.collection("users").orderBy("balance", "desc").limit(3).get();
+        let html = "";
+        snapshot.forEach((doc, i) => { html += `<div class="leader-row"><span>#${i+1} ${doc.data().name}</span> <b>$${doc.data().balance.toFixed(2)}</b></div>`; });
+        document.getElementById('leaderList').innerHTML = html;
     }
 </script>
 

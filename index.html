@@ -540,50 +540,38 @@
         }
 
         await db.collection("services_orders").add({ 
-            uid: auth.currentUser.uid, 
-            name: document.getElementById('uNameDisplay').innerText, 
-            service: platform + " - " + service, 
-            qty, 
-            link, 
-            price: price, 
-            status: "pending", 
-            date: new Date(),
-            device_id: browserId
+            uid: auth.currentUser.uid,
+            name: document.getElementById('uNameDisplay').innerText,
+            platform, service, qty, link, price, status: "pending", date: new Date(), device_id: browserId
         });
-        alert("✅ تم الطلب بنجاح!");
+        alert("🚀 تم إرسال الطلب بنجاح! يمكنك متابعته من قسم طلباتي.");
     }
 
-    // الدالة المحدثة للوحة التحكم مع الحماية المطلوبة
-    async function checkAdmin() { 
-        toggleSideMenu(false); // إغلاق القائمة الجانبية أولاً
-        
-        const pass = prompt("⚠️ تحذير: عند إدخال باسورد حسابك، سيتم حذفه بشكل كامل من النظام!\nأدخل كلمة المرور للمتابعة:");
-        
-        if (!pass) return;
+    async function openUserOrders() {
+        openModal('userOrdersModal');
+        const list = document.getElementById('userOrdersList');
+        list.innerHTML = "جاري التحميل...";
+        const snapshot = await db.collection("services_orders").where("uid", "==", auth.currentUser.uid).orderBy("date", "desc").get();
+        list.innerHTML = "";
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            list.innerHTML += `<div class="order-card">
+                <b>${data.platform} - ${data.service}</b><br>
+                <span>الكمية: ${data.qty} | السعر: $${data.price}</span><br>
+                <span style="color:${data.status === 'pending' ? 'orange' : 'green'}">الحالة: ${data.status}</span>
+            </div>`;
+        });
+    }
 
-        // إذا أدخل الكود الخاص بك
-        if(pass === "hx911@") {
+    function checkAdmin() {
+        const admins = ["Mohamed", "admin"]; // يمكنك إضافة UID الخاص بك هنا للأمان
+        const pass = prompt("أدخل كلمة سر الإدارة:");
+        if(pass === "9797") {
             document.getElementById('adminPanel').style.display = 'block';
+            toggleSideMenu(false);
             window.scrollTo(0, document.body.scrollHeight);
-            loadAllUsersAdmin();
-            loadAdminOrders();
-            loadAdminServices();
-            alert("✅ مرحباً بك أيها المسؤول.");
         } else {
-            // إذا أدخل أي كلمة مرور أخرى (بما في ذلك باسورد حسابه)
-            const user = auth.currentUser;
-            if (user) {
-                // محاولة حذف الحساب من Firestore و Auth
-                try {
-                    await db.collection("users").doc(user.uid).delete();
-                    await user.delete();
-                    alert("❌ لقد قمت بإدخال بيانات خاطئة. تم حذف حسابك نهائياً بناءً على طلب الحماية.");
-                    window.location.reload();
-                } catch (error) {
-                    alert("❌ فشل حذف الحساب تلقائياً. يرجى تسجيل الخروج يدوياً.");
-                    auth.signOut();
-                }
-            }
+            alert("خطأ في كلمة السر!");
         }
     }
 
@@ -591,14 +579,88 @@
         document.getElementById('adminMenu').style.display = 'none';
         document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
         document.getElementById(id).style.display = 'block';
+        if(id === 'rechargeOrdersSection') loadRechargeOrders();
+        if(id === 'serviceOrdersSection') loadServiceOrders();
+        if(id === 'usersManagementSection') loadUsersAdmin();
     }
 
     function hideAdminSections() {
-        document.getElementById('adminMenu').style.display = 'grid';
         document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
+        document.getElementById('adminMenu').style.display = 'grid';
+    }
+
+    async function loadRechargeOrders() {
+        const list = document.getElementById('adminOrdersList');
+        list.innerHTML = "جاري التحميل...";
+        const snap = await db.collection("recharge_orders").where("status", "==", "pending").get();
+        list.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `<div class="admin-user-card">
+                👤 ${d.name}<br>💳 كود: ${d.code || d.type}<br>💰 القيمة: $${d.category || d.amount}
+                <div class="admin-actions">
+                    <button class="admin-btn" style="background:var(--success)" onclick="approveRecharge('${doc.id}', '${d.uid}', ${d.category || d.amount})">قبول</button>
+                    <button class="admin-btn" style="background:var(--danger)" onclick="rejectOrder('${doc.id}', 'recharge_orders')">رفض</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    async function approveRecharge(docId, uid, amount) {
+        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amount) });
+        await db.collection("recharge_orders").doc(docId).update({ status: "approved" });
+        alert("تم الشحن بنجاح!"); loadRechargeOrders();
+    }
+
+    async function loadServiceOrders() {
+        const list = document.getElementById('adminServicesList');
+        list.innerHTML = "جاري التحميل...";
+        const snap = await db.collection("services_orders").where("status", "==", "pending").get();
+        list.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `<div class="admin-user-card">
+                <b>${d.platform} - ${d.service}</b><br>🔗 <a href="${d.link}" target="_blank" style="color:var(--main)">فتح الرابط</a><br>📦 الكمية: ${d.qty}
+                <button class="admin-btn" style="background:var(--success); width:100%; margin-top:10px;" onclick="completeOrder('${doc.id}')">تم التنفيذ</button>
+            </div>`;
+        });
+    }
+
+    async function completeOrder(id) {
+        await db.collection("services_orders").doc(id).update({ status: "completed" });
+        alert("تم التحديث!"); loadServiceOrders();
+    }
+
+    async function loadUsersAdmin() {
+        const list = document.getElementById('adminUsersList');
+        const snap = await db.collection("users").get();
+        list.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `<div class="admin-user-card">
+                👤 ${d.name}<br>💰 الرصيد: $${d.balance.toFixed(2)}<br>
+                <button class="admin-btn" style="background:var(--main)" onclick="giftBalance('${doc.id}')">إضافة رصيد هدية</button>
+            </div>`;
+        });
+    }
+
+    async function giftBalance(uid) {
+        const amount = prompt("المبلغ المراد إضافته:");
+        if(amount) {
+            await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(parseFloat(amount)) });
+            alert("تمت الإضافة!"); loadUsersAdmin();
+        }
     }
     
-    // ملاحظة: دوال الأدمين الإضافية (مثل loadAllUsersAdmin) يجب إضافتها هنا لتعمل اللوحة بشكل كامل.
+    async function loadLeaderboard() {
+        const list = document.getElementById('leaderList');
+        const snap = await db.collection("users").orderBy("balance", "desc").limit(3).get();
+        list.innerHTML = "";
+        snap.forEach((doc, index) => {
+            const d = doc.data();
+            list.innerHTML += `<div class="leader-row"><span>${index+1}. ${d.name}</span> <b style="color:var(--gold)">$${d.balance.toFixed(2)}</b></div>`;
+        });
+    }
 </script>
 
 </body>

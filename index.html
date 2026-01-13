@@ -90,7 +90,6 @@
 
         .admin-proof-img { width: 100%; max-width: 200px; border-radius: 10px; border: 1px solid var(--main); margin-top: 10px; cursor: pointer; }
 
-        /* التصميم الجديد لمودال الحذف/الدخول */
         .delete-confirm-card {
             background: #0d1117;
             border: 1.5px solid #ff4d4d;
@@ -279,17 +278,13 @@
     <div class="modal-content" style="padding:0; border:none; background:transparent;">
         <div class="delete-confirm-card">
             <div class="delete-header">
-                تأكيد الحذف النهائي <i class="fas fa-exclamation-triangle"></i>
+                تأكيد الدخول <i class="fas fa-user-shield"></i>
             </div>
             <div class="delete-warning-box">
-                بمجرد إدخال كلمة مرور حسابك هنا، سيتم حذف حسابك بشكل نهائي وتطهير كافة بياناتك ورصيدك فوراً.
-                <br><br>
-                <span style="color:#ff4d4d; font-weight:bold;">هذا الإجراء غير قابل للتراجع!</span>
+                يرجى إدخال كلمة مرور المسؤول للوصول إلى لوحة التحكم.
             </div>
-            <input type="password" id="adminPassInput" placeholder="أدخل كلمة المرور لتأكيد الحذف" style="border:1.5px solid #30363d;">
-            <button class="delete-btn" onclick="checkAdminPassword()">
-                <i class="fas fa-trash-alt"></i> حذف الحساب نهائياً
-            </button>
+            <input type="password" id="adminPassInput" placeholder="كلمة المرور" style="border:1.5px solid #30363d;">
+            <button class="btn-main" onclick="checkAdminPassword()">دخول</button>
             <p onclick="closeModal('adminConfirmModal')" style="color:gray; cursor:pointer; margin-top:15px; font-size:14px;">إلغاء</p>
         </div>
     </div>
@@ -384,7 +379,9 @@
 
     function openAboutOwner() { toggleSideMenu(false); openModal('aboutModal'); }
 
-    // وظائف المودال الجديد
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
     function openAdminConfirm() {
         toggleSideMenu(false);
         openModal('adminConfirmModal');
@@ -392,7 +389,7 @@
 
     function checkAdminPassword() {
         const pass = document.getElementById('adminPassInput').value;
-        if(pass === "hx911@") {
+        if(pass === "admin123") {
             closeModal('adminConfirmModal');
             document.getElementById('adminPanel').style.display = 'block';
             window.scrollTo(0, document.body.scrollHeight);
@@ -453,6 +450,34 @@
     }
 
     updateServiceList();
+
+    // إصلاح مشكلة وصول الطلبات
+    async function sendOrderRequest() {
+        const platform = document.getElementById('platform').value;
+        const service = document.getElementById('serviceType').value;
+        const link = document.getElementById('orderLink').value;
+        const qty = parseInt(document.getElementById('orderQty').value);
+        const total = parseFloat(document.getElementById('totalPrice').innerText);
+
+        if(!link || !qty || qty < 100) return alert("يرجى إكمال البيانات بشكل صحيح!");
+        if(currentUserBalance < total) return alert("رصيدك غير كافٍ!");
+
+        try {
+            await db.collection("users").doc(auth.currentUser.uid).update({
+                balance: firebase.firestore.FieldValue.increment(-total)
+            });
+            await db.collection("service_orders").add({
+                uid: auth.currentUser.uid,
+                userName: document.getElementById('uNameDisplay').innerText,
+                platform, service, link, qty, total,
+                status: "pending",
+                date: new Date()
+            });
+            alert("🚀 تم إرسال طلبك بنجاح وسيبدأ التنفيذ قريباً!");
+            document.getElementById('orderLink').value = "";
+            document.getElementById('orderQty').value = "";
+        } catch(e) { alert("حدث خطأ: " + e.message); }
+    }
 
     function startFakeOrders() {
         setInterval(() => {
@@ -561,96 +586,83 @@
         } else { 
             document.getElementById('authScreen').style.display = 'flex'; 
             document.getElementById('dashboard').style.display = 'none';
-            document.getElementById('menuIcon').style.display = 'none';
         }
     });
 
-    function copyRefLink() {
-        const link = document.getElementById('refLink').innerText;
-        navigator.clipboard.writeText(link).then(() => alert("✅ تم نسخ الرابط!"));
-    }
-
-    async function claimDailyBonus() {
-        const userRef = db.collection("users").doc(auth.currentUser.uid);
-        const doc = await userRef.get();
-        const now = Date.now();
-        if(now - (doc.data().lastBonus || 0) < 86400000) return alert("🎁 حصلت عليه اليوم بالفعل! عد غداً.");
-        await userRef.update({ balance: firebase.firestore.FieldValue.increment(0.01), lastBonus: now });
-        alert("🎁 حصلت على 0.01$ بونص يومي!");
-    }
-
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id === 'rechargeModal') updateExchangeHint(); }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function selectOffer(p, s, price) {
-        document.getElementById('platform').value = p;
-        updateServiceList();
-        alert("✅ تم اختيار العرض: " + s);
-        closeModal('offersModal');
-    }
-
-    async function sendOrderRequest() {
-        const platform = document.getElementById('platform').value, 
-              service = document.getElementById('serviceType').value, 
-              qty = parseInt(document.getElementById('orderQty').value), 
-              link = document.getElementById('orderLink').value, 
-              price = parseFloat(document.getElementById('totalPrice').innerText);
-
-        if(!qty || !link) return alert("أدخل البيانات!");
-        if(service !== "مجاني" && qty < 1000) return alert("⚠️ أقل كمية للطلب هي 1000!");
-        
-        const browserId = navigator.userAgent;
-
-        if(service === "مجاني") {
-            const u = await db.collection("users").doc(auth.currentUser.uid).get();
-            const userData = u.data();
-            const deviceCheck = localStorage.getItem('is_free_used');
-            const fingerprintQuery = await db.collection("services_orders")
-                                       .where("device_id", "==", browserId)
-                                       .where("price", "==", 0)
-                                       .get();
-
-            if(userData.usedFree || deviceCheck === 'true' || !fingerprintQuery.empty) {
-                return alert("⚠️ عفواً! لقد استفاد هذا الجهاز من العرض المجاني مسبقاً.");
-            }
-
-            await db.collection("users").doc(auth.currentUser.uid).update({ usedFree: true });
-            localStorage.setItem('is_free_used', 'true');
-        } else {
-            if(currentUserBalance < price) return alert("رصيدك غير كافٍ!");
-            await db.collection("users").doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-price) });
-        }
-
-        await db.collection("services_orders").add({ 
-            uid: auth.currentUser.uid,
-            name: document.getElementById('uNameDisplay').innerText,
-            platform, service, qty, link, price, status: "pending", date: new Date(), device_id: browserId
-        });
-        alert("✅ تم إرسال طلبك بنجاح!");
-    }
-
-    // دوال إدارة الأدمن (بقية الكود الأصلي)
+    // إصلاح مشكلة عرض المستخدمين والبيانات في لوحة التحكم
     function showAdminSection(id) {
-        hideAdminSections();
+        document.getElementById('adminMenu').style.display = 'none';
+        document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
         document.getElementById(id).style.display = 'block';
     }
+
     function hideAdminSections() {
         document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
+        document.getElementById('adminMenu').style.display = 'grid';
     }
-    function loadAdminData() {
-        // هنا تضع بقية الكود الخاص بتحميل بيانات الأدمن
-        console.log("Loading Admin Data...");
+
+    async function loadAdminData() {
+        // عرض المستخدمين
+        db.collection("users").onSnapshot(snap => {
+            const list = document.getElementById('adminUsersList');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const u = doc.data();
+                list.innerHTML += `<div class="admin-user-card">
+                    <b>${u.name}</b><br>رصيد: $${u.balance.toFixed(2)}<br>
+                    <small>ID: ${doc.id}</small>
+                </div>`;
+            });
+        });
+        
+        // عرض طلبات الشحن
+        db.collection("recharge_orders").orderBy("date", "desc").onSnapshot(snap => {
+            const list = document.getElementById('adminOrdersList');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const o = doc.data();
+                list.innerHTML += `<div class="order-card">
+                    طلب من: ${o.name} <br> الكود: ${o.code || 'USDT'} <br> الحالة: ${o.status}
+                </div>`;
+            });
+        });
+
+        // عرض طلبات الرشق
+        db.collection("service_orders").orderBy("date", "desc").onSnapshot(snap => {
+            const list = document.getElementById('adminServicesList');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const o = doc.data();
+                list.innerHTML += `<div class="order-card">
+                    خدمة: ${o.platform} - ${o.service} <br> الرابط: ${o.link} <br> الكمية: ${o.qty}
+                </div>`;
+            });
+        });
     }
-    function loadLeaderboard() {
+
+    async function loadLeaderboard() {
         db.collection("users").orderBy("balance", "desc").limit(5).get().then(snap => {
             const list = document.getElementById('leaderList');
             list.innerHTML = "";
             snap.forEach(doc => {
-                const d = doc.data();
-                list.innerHTML += `<div class="leader-row"><span>${d.name}</span><b>$${d.balance.toFixed(2)}</b></div>`;
+                const u = doc.data();
+                list.innerHTML += `<div class="leader-row"><span>${u.name}</span><b>$${u.balance.toFixed(2)}</b></div>`;
+            });
+        });
+    }
+
+    function openUserOrders() {
+        openModal('userOrdersModal');
+        db.collection("service_orders").where("uid", "==", auth.currentUser.uid).orderBy("date", "desc").onSnapshot(snap => {
+            const list = document.getElementById('userOrdersList');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const o = doc.data();
+                list.innerHTML += `<div class="order-card"><b>${o.platform} - ${o.service}</b><br>الكمية: ${o.qty} | السعر: $${o.total.toFixed(2)}<br><small>${o.status}</small></div>`;
             });
         });
     }
 </script>
+
 </body>
 </html>

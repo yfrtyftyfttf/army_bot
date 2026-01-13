@@ -147,14 +147,12 @@
         <div class="auth-card fade-in">
             <i class="fas fa-user-shield fa-4x" style="color:var(--main-color); margin-bottom:20px;"></i>
             <h1 id="authTitle">DARK FOLLOWERS</h1>
-            
             <div id="loginForm">
                 <div class="input-group"><input type="email" id="email" placeholder="البريد الإلكتروني"></div>
                 <div class="input-group"><input type="password" id="pass" placeholder="كلمة المرور"></div>
                 <button class="submit-btn" onclick="login()">دخول آمن 🔑</button>
                 <p style="margin-top:20px; font-size:13px; color:#8b949e">ليس لديك حساب؟ <span onclick="switchAuth(true)" style="color:var(--main-color); cursor:pointer">سجل الآن</span></p>
             </div>
-
             <div id="registerForm" style="display:none;">
                 <div class="input-group"><input type="text" id="regName" placeholder="الاسم الكامل"></div>
                 <div class="input-group"><input type="email" id="regEmail" placeholder="البريد الإلكتروني"></div>
@@ -196,7 +194,6 @@
 
         <div class="order-section fade-in">
             <div class="section-title"><i class="fas fa-shopping-cart"></i> إنشاء طلب جديد</div>
-            
             <div class="input-group">
                 <label>المنصة</label>
                 <select id="platformSelect" onchange="updateServicesList()">
@@ -206,27 +203,22 @@
                     <option value="youtube">يوتيوب</option>
                 </select>
             </div>
-
             <div class="input-group">
                 <label>نوع الخدمة</label>
                 <select id="serviceSelect" onchange="updatePrice()"></select>
             </div>
-
             <div class="input-group">
                 <label>رابط الحساب أو المنشور</label>
                 <input type="url" id="orderLink" placeholder="https://...">
             </div>
-
             <div class="input-group">
                 <label>الكمية المطلوبة</label>
                 <input type="number" id="orderQty" placeholder="مثلاً: 1000" oninput="updatePrice()">
             </div>
-
             <div class="price-display">
                 <div style="font-size:12px; color:#8b949e; margin-bottom:5px;">التكلفة الإجمالية</div>
                 <span>$</span><span id="totalPrice">0.00</span>
             </div>
-
             <button class="submit-btn" onclick="sendOrder()">تأكيد الطلب الآن 🚀</button>
         </div>
 
@@ -236,11 +228,10 @@
         </div>
 
         <div id="adminPanel" class="order-section admin-panel" style="display:none;">
-            <div class="section-title" style="color:var(--danger)"><i class="fas fa-user-gear"></i> لوحة الإدارة (وصول آمن)</div>
+            <div class="section-title" style="color:var(--danger)"><i class="fas fa-user-gear"></i> لوحة الإدارة (وصول آمن 🛡️)</div>
             <button class="admin-btn" onclick="showAdminSection('adminUsersList')">قائمة المستخدمين</button>
             <button class="admin-btn" onclick="showAdminSection('adminRechargesList')">طلبات الشحن المعلقة</button>
             <button class="admin-btn" onclick="showAdminSection('adminOrdersList')">كافة الطلبات</button>
-
             <div id="adminUsersList" style="display:none; margin-top:20px;"></div>
             <div id="adminRechargesList" style="display:none; margin-top:20px;"></div>
             <div id="adminOrdersList" style="display:none; margin-top:20px;"></div>
@@ -278,7 +269,7 @@
     </div>
 
     <script>
-        // --- 1. الإعدادات والبيانات ---
+        // --- 1. الإعدادات ---
         const firebaseConfig = {
             apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
             authDomain: "army-smm.firebaseapp.com",
@@ -290,9 +281,16 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
-        // --- نظام الحماية الثلاثي الإضافي ---
+        // --- نظام الحماية الذكي ---
         const MASTER_KEY = "DARK_BOSS_2026_PRO"; 
         const URL_SECRET = "boss77";
+
+        // تفعيل بصمة الجهاز تلقائياً عبر الرابط (للموبايل والكمبيوتر)
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('activate') === MASTER_KEY) {
+            localStorage.setItem('admin_secret_token', MASTER_KEY);
+            alert("تم تفعيل بصمة هذا الجهاز بنجاح! ✅");
+        }
 
         const services = {
             tiktok: { "متابعين عرب": 0.40, "لايكات": 0.12, "مشاهدات": 0.01 },
@@ -302,15 +300,6 @@
         };
 
         let userProfile = null;
-
-        // وظيفة تفعيل بصمة الجهاز (تنفذها أنت مرة واحدة)
-        function authorizeThisDevice(key) {
-            if(key === MASTER_KEY) {
-                localStorage.setItem('admin_secret_token', MASTER_KEY);
-                alert("تم ربط جهازك بنجاح! ✅");
-                location.reload();
-            }
-        }
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -351,8 +340,7 @@
                 document.getElementById('sideUserID').innerText = "ID: " + uid;
                 document.getElementById('refLink').innerText = window.location.origin + window.location.pathname + "?ref=" + uid;
                 
-                // --- فحص الحماية الثلاثي للأدمن ---
-                const urlParams = new URLSearchParams(window.location.search);
+                // --- فحص الحماية الثلاثي ---
                 const hasUrlKey = urlParams.get('key') === URL_SECRET;
                 const hasDeviceKey = localStorage.getItem('admin_secret_token') === MASTER_KEY;
                 const isBossID = (uid === "Wf187vT9u8M3Q6R9h2Y7v5X1");
@@ -363,12 +351,6 @@
                     document.getElementById('adminPanel').style.display = 'none';
                 }
             });
-        }
-
-        function switchAuth(isReg) {
-            document.getElementById('loginForm').style.display = isReg ? 'none' : 'block';
-            document.getElementById('registerForm').style.display = isReg ? 'block' : 'none';
-            document.getElementById('authTitle').innerText = isReg ? 'إنشاء حساب جديد' : 'DARK FOLLOWERS';
         }
 
         function updateServicesList() {
@@ -413,47 +395,18 @@
                 method: document.getElementById('rechargeMethod').value,
                 value: code, status: 'pending', date: new Date()
             });
-            showToast("جاري مراجعة طلبك من قبل الإدارة");
+            showToast("جاري مراجعة طلبك");
             closeModal('rechargeModal');
         }
 
         async function claimDailyBonus() {
             const now = Date.now();
-            if(now - (userProfile.lastBonus || 0) < 86400000) return showToast("لقد أخذت البونص اليوم، عد غداً!");
+            if(now - (userProfile.lastBonus || 0) < 86400000) return showToast("عد غداً للحصول على البونص!");
             await db.collection("users").doc(auth.currentUser.uid).update({
                 balance: firebase.firestore.FieldValue.increment(0.05),
                 lastBonus: now
             });
-            showToast("مبروك! حصلت على 0.05$ بونص مجاني 🎁");
-        }
-
-        async function showAdminSection(id) {
-            const sections = ['adminUsersList', 'adminRechargesList', 'adminOrdersList'];
-            sections.forEach(s => document.getElementById(s).style.display = 'none');
-            const target = document.getElementById(id);
-            target.style.display = 'block';
-            target.innerHTML = "جاري جلب البيانات...";
-
-            if(id === 'adminRechargesList') {
-                const snap = await db.collection("recharge_requests").where("status", "==", "pending").get();
-                target.innerHTML = "<h4>طلبات شحن معلقة:</h4>";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    target.innerHTML += `<div class="leader-row" style="font-size:11px;">
-                        ${d.name} (${d.method}): ${d.value}
-                        <button onclick="approveCharge('${doc.id}', '${d.uid}')" style="color:var(--accent); background:none; border:1px solid; padding:2px 5px;">قبول</button>
-                    </div>`;
-                });
-            }
-        }
-
-        async function approveCharge(docId, uid) {
-            const val = parseFloat(prompt("أدخل المبلغ المراد إضافته للمستخدم ($):"));
-            if(isNaN(val)) return;
-            await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(val) });
-            await db.collection("recharge_requests").doc(docId).update({ status: 'approved' });
-            showToast("تم شحن الحساب بنجاح");
-            showAdminSection('adminRechargesList');
+            showToast("حصلت على 0.05$ بونص! 🎁");
         }
 
         function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); }
@@ -464,10 +417,6 @@
             t.innerText = msg; t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3000);
         }
-        function copyRef() {
-            navigator.clipboard.writeText(document.getElementById('refLink').innerText);
-            showToast("تم نسخ رابط الإحالة");
-        }
         function loadLeaderboard() {
             db.collection("users").orderBy("balance", "desc").limit(5).get().then(snap => {
                 const list = document.getElementById('leaderList');
@@ -476,6 +425,10 @@
                     list.innerHTML += `<div class="leader-row"><span>${doc.data().name}</span><span style="color:var(--gold)">$${doc.data().balance.toFixed(2)}</span></div>`;
                 });
             });
+        }
+        function switchAuth(isReg) {
+            document.getElementById('loginForm').style.display = isReg ? 'none' : 'block';
+            document.getElementById('registerForm').style.display = isReg ? 'block' : 'none';
         }
 
         updateServicesList();

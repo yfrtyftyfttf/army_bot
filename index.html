@@ -3,273 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DARK FOLLOWERS VIP - OFFICIAL</title>
+    <title>DARK FOLLOWERS VIP</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 
     <style>
         :root { 
             --main-color: #00f2fe; 
-            --second-color: #4facfe; 
             --bg-dark: #05070a; 
             --card-bg: #0d1117; 
             --text-color: #e6edf3; 
             --accent: #00ff88; 
-            --gold: #ffd700;
             --danger: #ff4d4d;
             --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-color); overflow-x: hidden; }
 
-        body { 
-            background: var(--bg-dark); 
-            color: var(--text-color); 
-            direction: rtl; 
-            overflow-x: hidden;
-            background-image: radial-gradient(circle at 50% -20%, #0a192f, transparent);
-        }
+        /* الشاشات الرئيسية */
+        .auth-container { position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .auth-card { background: var(--card-bg); padding: 40px; border-radius: 30px; border: 1px solid var(--glass-border); width: 100%; max-width: 400px; text-align: center; }
 
-        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        header { background: linear-gradient(145deg, #161b22, #0d1117); margin: 20px; padding: 30px; border-radius: 25px; border: 1px solid var(--glass-border); text-align: center; }
+        .balance-amount { font-family: 'Orbitron'; font-size: 45px; color: var(--main-color); text-shadow: 0 0 15px rgba(0,242,254,0.3); }
 
-        .auth-container { 
-            position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; 
-            display: flex; justify-content: center; align-items: center; padding: 20px;
+        /* قسم الطلبات والأيقونات */
+        .order-section { background: var(--card-bg); margin: 20px; padding: 25px; border-radius: 25px; border: 1px solid var(--glass-border); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-size: 13px; color: #8b949e; }
+        
+        select, input { 
+            width: 100%; padding: 15px; background: #05070a; border: 1px solid var(--glass-border); 
+            border-radius: 15px; color: #fff; outline: none; transition: 0.3s;
         }
-        .auth-card { 
-            background: rgba(13, 17, 23, 0.8); backdrop-filter: blur(20px); 
-            padding: 40px; border-radius: 40px; border: 1px solid var(--glass-border); 
-            width: 100%; max-width: 420px; text-align: center;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-        }
-        .auth-card h1 { font-family: 'Orbitron'; font-size: 28px; color: var(--main-color); margin-bottom: 30px; }
+        select:focus, input:focus { border-color: var(--main-color); }
 
-        header { 
-            background: linear-gradient(145deg, #161b22, #0d1117); 
-            margin: 20px; padding: 30px; border-radius: 35px; border: 1px solid var(--glass-border);
-            text-align: center; position: relative; box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-        }
-        .balance-title { font-size: 14px; color: #8b949e; margin-bottom: 5px; font-weight: bold; }
-        .balance-amount { font-family: 'Orbitron'; font-size: 50px; color: var(--main-color); text-shadow: 0 0 20px rgba(0,242,254,0.4); }
-
-        .main-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 0 20px; margin-bottom: 30px; }
-        .action-item { 
-            background: var(--card-bg); padding: 20px 10px; border-radius: 25px; 
-            border: 1px solid var(--glass-border); text-align: center; cursor: pointer; 
-            transition: 0.4s;
-        }
-        .action-item:hover { border-color: var(--main-color); transform: translateY(-5px); background: rgba(0,242,254,0.05); }
-        .action-item i { font-size: 28px; color: var(--main-color); margin-bottom: 10px; display: block; }
-        .action-item span { font-size: 12px; font-weight: bold; }
-
-        .order-section { 
-            background: var(--card-bg); margin: 20px; padding: 30px; border-radius: 35px;
-            border: 1px solid var(--glass-border);
-        }
-        .section-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .section-title i { color: var(--main-color); }
-
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-size: 13px; color: #8b949e; padding-right: 10px; }
-        input, select { 
-            width: 100%; padding: 18px; background: #05070a; border: 1px solid var(--glass-border); 
-            border-radius: 18px; color: #fff; font-size: 15px; outline: none; transition: 0.3s;
-        }
-        input:focus { border-color: var(--main-color); box-shadow: 0 0 15px rgba(0,242,254,0.1); }
-
-        .price-display { 
-            background: rgba(0, 255, 136, 0.05); border: 1px dashed var(--accent); 
-            padding: 20px; border-radius: 20px; text-align: center; margin: 20px 0;
-        }
-        .price-display span { font-family: 'Orbitron'; font-size: 28px; color: var(--accent); font-weight: 900; }
+        .platform-icon-preview { width: 40px; height: 40px; margin-bottom: 10px; display: none; }
 
         .submit-btn { 
-            width: 100%; padding: 20px; background: linear-gradient(90deg, var(--second-color), var(--main-color));
-            border: none; border-radius: 20px; color: #000; font-weight: 900; font-size: 18px;
-            cursor: pointer; box-shadow: 0 10px 25px rgba(0,242,254,0.3);
+            width: 100%; padding: 18px; background: linear-gradient(90deg, #4facfe, #00f2fe);
+            border: none; border-radius: 15px; color: #000; font-weight: 900; cursor: pointer;
         }
 
-        .leaderboard { background: var(--card-bg); margin: 20px; padding: 25px; border-radius: 30px; border: 1px solid var(--gold); }
-        .leader-row { 
-            display: flex; justify-content: space-between; padding: 12px 15px; 
-            background: rgba(255,255,255,0.03); border-radius: 15px; margin-bottom: 10px; 
-        }
+        /* نظام التذاكر (مثل الصورة 1) */
+        .ticket-style { background: #161b22; border-radius: 15px; padding: 15px; margin-bottom: 10px; border-right: 4px solid var(--main-color); }
+        .ticket-header { font-size: 12px; color: #8b949e; margin-bottom: 5px; display: flex; justify-content: space-between; }
 
-        .modal-overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9000; 
-            display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(10px);
-        }
-        .modal-content { 
-            background: var(--card-bg); width: 100%; max-width: 450px; border-radius: 35px;
-            padding: 30px; border: 1px solid var(--main-color); position: relative;
-        }
+        /* المودال */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 450px; border-radius: 25px; padding: 25px; border: 1px solid var(--main-color); }
 
-        .side-menu { 
-            position: fixed; top: 0; right: -300px; width: 300px; height: 100%; 
-            background: #0d1117; z-index: 9500; transition: 0.5s cubic-bezier(0.7, 0, 0.3, 1);
-            border-left: 1px solid var(--main-color); box-shadow: -10px 0 50px rgba(0,0,0,0.5);
-        }
-        .side-menu.active { right: 0; }
-
-        .menu-item { 
-            padding: 20px 30px; border-bottom: 1px solid rgba(255,255,255,0.05); 
-            display: flex; align-items: center; gap: 15px; cursor: pointer;
-        }
-        .menu-item:hover { background: rgba(0,242,254,0.05); color: var(--main-color); }
-
-        .admin-panel { border: 2px solid var(--danger); }
-        .admin-btn { background: #1a1f26; color: #fff; padding: 15px; margin-bottom: 10px; border-radius: 15px; width: 100%; border: 1px solid #333; }
-
-        #toast { 
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); 
-            background: var(--main-color); color: #000; padding: 15px 30px; border-radius: 50px; 
-            font-weight: bold; transition: 0.5s; z-index: 10001; 
-        }
+        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--main-color); color: #000; padding: 12px 25px; border-radius: 50px; font-weight: bold; transition: 0.4s; z-index: 10001; }
         #toast.show { transform: translateX(-50%) translateY(0); }
-
-        .floating-menu-btn { position: fixed; top: 20px; left: 20px; z-index: 9000; cursor: pointer; color: var(--main-color); font-size: 25px; }
     </style>
 </head>
 <body>
 
     <div id="toast">تمت العملية بنجاح ✅</div>
 
-    <div class="floating-menu-btn" onclick="toggleMenu()"><i class="fas fa-bars-staggered"></i></div>
-
     <div id="authScreen" class="auth-container">
-        <div class="auth-card fade-in">
-            <i class="fas fa-user-shield fa-4x" style="color:var(--main-color); margin-bottom:20px;"></i>
-            <h1 id="authTitle">DARK FOLLOWERS</h1>
+        <div class="auth-card">
+            <h1 style="color:var(--main-color); font-family:'Orbitron'; margin-bottom:20px;">DARK SMM</h1>
             <div id="loginForm">
-                <div class="input-group"><input type="email" id="email" placeholder="البريد الإلكتروني"></div>
-                <div class="input-group"><input type="password" id="pass" placeholder="كلمة المرور"></div>
-                <button class="submit-btn" onclick="login()">دخول آمن 🔑</button>
-                <p style="margin-top:20px; font-size:13px; color:#8b949e">ليس لديك حساب؟ <span onclick="switchAuth(true)" style="color:var(--main-color); cursor:pointer">سجل الآن</span></p>
+                <input type="email" id="email" placeholder="البريد الإلكتروني" style="margin-bottom:10px;">
+                <input type="password" id="pass" placeholder="كلمة المرور" style="margin-bottom:20px;">
+                <button class="submit-btn" onclick="login()">دخول</button>
+                <p style="margin-top:15px; font-size:12px;">ليس لديك حساب؟ <span onclick="toggleAuth(true)" style="color:var(--main-color); cursor:pointer;">سجل الآن</span></p>
             </div>
             <div id="registerForm" style="display:none;">
-                <div class="input-group"><input type="text" id="regName" placeholder="الاسم الكامل"></div>
-                <div class="input-group"><input type="email" id="regEmail" placeholder="البريد الإلكتروني"></div>
-                <div class="input-group"><input type="password" id="regPass" placeholder="كلمة المرور"></div>
-                <button class="submit-btn" onclick="register()">إنشاء الحساب 🚀</button>
-                <p style="margin-top:20px; font-size:13px; color:#8b949e">لديك حساب بالفعل؟ <span onclick="switchAuth(false)" style="color:var(--main-color); cursor:pointer">تسجيل دخول</span></p>
+                <input type="text" id="regName" placeholder="الاسم الكامل" style="margin-bottom:10px;">
+                <input type="email" id="regEmail" placeholder="البريد الإلكتروني" style="margin-bottom:10px;">
+                <input type="password" id="regPass" placeholder="كلمة المرور" style="margin-bottom:20px;">
+                <button class="submit-btn" onclick="register()">إنشاء حساب</button>
+                <p style="margin-top:15px; font-size:12px;">لديك حساب؟ <span onclick="toggleAuth(false)" style="color:var(--main-color); cursor:pointer;">دخول</span></p>
             </div>
         </div>
     </div>
 
-    <div id="sideMenu" class="side-menu">
-        <div style="padding: 40px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
-            <i class="fas fa-crown fa-3x" style="color:var(--gold); margin-bottom:15px;"></i>
-            <h3 id="sideUserName">جاري التحميل...</h3>
-            <p id="sideUserID" style="font-size:11px; color:#8b949e; margin-top:5px;"></p>
-        </div>
-        <div class="menu-item" onclick="openModal('rechargeModal')"><i class="fas fa-wallet"></i> شحن الرصيد</div>
-        <div class="menu-item" onclick="openModal('ordersModal')"><i class="fas fa-list-ul"></i> سجل طلباتي</div>
-        <div class="menu-item" onclick="openModal('transferModal')"><i class="fas fa-exchange-alt"></i> تحويل رصيد</div>
-        <div class="menu-item" onclick="window.location.href='https://t.me/lRAQ97'"><i class="fab fa-telegram-plane"></i> الدعم الفني</div>
-        <div class="menu-item" onclick="logout()" style="color:var(--danger); margin-top:50px;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</div>
-    </div>
-
-    <div id="mainContent" style="display:none; padding-bottom: 50px;">
-        <header class="fade-in">
-            <div class="balance-title">رصيدك الحالي</div>
+    <div id="mainContent" style="display:none;">
+        <header>
+            <div style="font-size:12px; color:#8b949e;">رصيدك المتوفر</div>
             <div class="balance-amount" id="balanceText">$0.00</div>
-            <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
-                <button onclick="claimDailyBonus()" id="bonusBtn" style="background:var(--gold); color:#000; border:none; padding:10px 25px; border-radius:15px; font-weight:bold; cursor:pointer;">🎁 بونص يومي</button>
+            <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
+                <button onclick="openModal('rechargeModal')" style="background:var(--accent); border:none; padding:8px 15px; border-radius:10px; font-weight:bold; cursor:pointer;">+ شحن رصيد</button>
+                <button onclick="openModal('ordersModal')" style="background:#fff; border:none; padding:8px 15px; border-radius:10px; font-weight:bold; cursor:pointer;">سجل الطلبات</button>
             </div>
         </header>
 
-        <div class="main-actions fade-in">
-            <div class="action-item" onclick="openModal('rechargeModal')"><i class="fas fa-plus-circle"></i><span>شحن</span></div>
-            <div class="action-item" onclick="openModal('ordersModal')"><i class="fas fa-clock-rotate-left"></i><span>سجل</span></div>
-            <div class="action-item" onclick="window.location.href='https://t.me/lRAQ97'"><i class="fab fa-telegram"></i><span>قناتنا</span></div>
-            <div class="action-item" onclick="openModal('referralModal')"><i class="fas fa-users-viewfinder"></i><span>إحالة</span></div>
-        </div>
+        <div class="order-section">
+            <div style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+                <i id="headerIcon" class="fas fa-shopping-cart" style="color:var(--main-color); font-size:20px;"></i>
+                <h3 id="sectionTitle">إنشاء طلب جديد</h3>
+            </div>
 
-        <div class="order-section fade-in">
-            <div class="section-title"><i class="fas fa-shopping-cart"></i> إنشاء طلب جديد</div>
             <div class="input-group">
                 <label>المنصة</label>
-                <select id="platformSelect" onchange="updateServicesList()">
-                    <option value="tiktok">تيك توك</option>
-                    <option value="instagram">انستقرام</option>
-                    <option value="telegram">تليجرام</option>
-                    <option value="youtube">يوتيوب</option>
+                <select id="platformSelect" onchange="updateServices()">
+                    <option value="tiktok">تيك توك (TikTok)</option>
+                    <option value="instagram">انستقرام (Instagram)</option>
+                    <option value="telegram">تليجرام (Telegram)</option>
+                    <option value="youtube">يوتيوب (YouTube)</option>
                 </select>
             </div>
+
             <div class="input-group">
                 <label>نوع الخدمة</label>
                 <select id="serviceSelect" onchange="updatePrice()"></select>
             </div>
+
             <div class="input-group">
-                <label>رابط الحساب أو المنشور</label>
-                <input type="url" id="orderLink" placeholder="https://...">
+                <label>الرابط</label>
+                <input type="url" id="orderLink" placeholder="https://www.example.com/...">
             </div>
+
             <div class="input-group">
-                <label>الكمية المطلوبة</label>
-                <input type="number" id="orderQty" placeholder="مثلاً: 1000" oninput="updatePrice()">
+                <label>الكمية</label>
+                <input type="number" id="orderQty" placeholder="أقل كمية 100" oninput="updatePrice()">
             </div>
-            <div class="price-display">
-                <div style="font-size:12px; color:#8b949e; margin-bottom:5px;">التكلفة الإجمالية</div>
-                <span>$</span><span id="totalPrice">0.00</span>
+
+            <div style="background:rgba(0,242,254,0.05); padding:15px; border-radius:15px; text-align:center; margin-bottom:20px;">
+                <span style="font-size:12px; color:#8b949e;">التكلفة: </span>
+                <span id="totalPrice" style="color:var(--main-color); font-weight:900; font-size:20px;">$0.00</span>
             </div>
-            <button class="submit-btn" onclick="sendOrder()">تأكيد الطلب الآن 🚀</button>
+
+            <button class="submit-btn" onclick="sendOrder()">تأكيد الطلب 🚀</button>
         </div>
 
-        <div class="leaderboard fade-in">
-            <div class="section-title"><i class="fas fa-crown" style="color:var(--gold)"></i> كبار المستخدمين</div>
-            <div id="leaderList"></div>
-        </div>
-
-        <div id="adminPanel" class="order-section admin-panel" style="display:none;">
-            <div class="section-title" style="color:var(--danger)"><i class="fas fa-user-gear"></i> لوحة الإدارة (وصول آمن 🛡️)</div>
-            <button class="admin-btn" onclick="showAdminSection('adminUsersList')">قائمة المستخدمين</button>
-            <button class="admin-btn" onclick="showAdminSection('adminRechargesList')">طلبات الشحن المعلقة</button>
-            <button class="admin-btn" onclick="showAdminSection('adminOrdersList')">كافة الطلبات</button>
-            <div id="adminUsersList" style="display:none; margin-top:20px;"></div>
-            <div id="adminRechargesList" style="display:none; margin-top:20px;"></div>
-            <div id="adminOrdersList" style="display:none; margin-top:20px;"></div>
+        <div id="adminPanel" class="order-section" style="display:none; border:1px solid var(--danger);">
+            <h3 style="color:var(--danger); margin-bottom:15px;">لوحة المدير (وصول آمن)</h3>
+            <button onclick="showAdmin('adminUsers')" style="width:100%; padding:10px; margin-bottom:5px; background:#1c2128; color:#fff; border:1px solid #333; border-radius:10px; cursor:pointer;">المستخدمين</button>
+            <div id="adminUsers" style="display:none; margin-top:10px;"></div>
         </div>
     </div>
 
     <div id="rechargeModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="margin-bottom:20px;">شحن الرصيد</h3>
-            <select id="rechargeMethod" style="margin-bottom:15px;">
-                <option value="asia">كارت آسيا سيل</option>
-                <option value="usdt">USDT - TRC20</option>
+            <h3 style="margin-bottom:15px;">شحن الرصيد</h3>
+            <select id="payMethod" style="margin-bottom:10px;">
+                <option value="paypal">باي بال</option>
+                <option value="skrill">سكريل</option>
+                <option value="payoneer">بايونير</option>
+                <option value="perfect_money">بيرفكت موني</option>
+                <option value="western">ويسترن يونيون</option>
+                <option value="crypto">العملات المشفرة</option>
+                <option value="asia">آسيا سيل</option>
+                <option value="other">آخر</option>
             </select>
-            <input type="text" id="rechargeCode" placeholder="كود الكارت أو رقم العملية">
-            <button class="submit-btn" style="margin-top:20px;" onclick="submitRecharge()">إرسال الطلب</button>
-            <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:var(--danger); margin-top:15px; width:100%; cursor:pointer;">إلغاء</button>
+            <input type="text" id="payDetails" placeholder="رقم العملية أو كود الكارت" style="margin-bottom:15px;">
+            <button class="submit-btn" onclick="submitPay()">إرسال الطلب</button>
+            <button onclick="closeModal('rechargeModal')" style="width:100%; background:none; border:none; color:var(--danger); margin-top:10px; cursor:pointer;">إلغاء</button>
         </div>
     </div>
 
     <div id="ordersModal" class="modal-overlay">
         <div class="modal-content" style="max-height:80vh; overflow-y:auto;">
-            <h3>سجل طلباتي</h3>
-            <div id="myOrders" style="margin-top:20px;"></div>
-            <button onclick="closeModal('ordersModal')" class="submit-btn" style="margin-top:20px;">إغلاق</button>
-        </div>
-    </div>
-
-    <div id="referralModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>برنامج الإحالة</h3>
-            <p style="font-size:12px; color:#8b949e; margin:15px 0;">اربح 0.50$ عن كل شخص يشحن من خلال رابطك!</p>
-            <div id="refLink" onclick="copyRef()" style="background:#000; padding:15px; border-radius:15px; font-size:11px; color:var(--main-color); border:1px solid var(--glass-border); cursor:pointer;"></div>
-            <button onclick="closeModal('referralModal')" class="submit-btn" style="margin-top:20px;">إغلاق</button>
+            <h3 style="margin-bottom:15px;">سجل طلباتي</h3>
+            <div id="ordersList"></div>
+            <button onclick="closeModal('ordersModal')" class="submit-btn" style="margin-top:15px;">إغلاق</button>
         </div>
     </div>
 
     <script>
-        // --- 1. الإعدادات ---
+        // --- الإعدادات ---
         const firebaseConfig = {
             apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
             authDomain: "army-smm.firebaseapp.com",
@@ -281,82 +182,61 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
-        // --- نظام الحماية الذكي ---
-        const MASTER_KEY = "DARK_BOSS_2026_PRO"; 
-        const URL_SECRET = "boss77";
-
-        // تفعيل بصمة الجهاز تلقائياً عبر الرابط (للموبايل والكمبيوتر)
+        // حماية الموبايل والكمبيوتر
+        const MASTER_KEY = "DARK_BOSS_2026_PRO";
+        const URL_KEY = "boss77";
         const urlParams = new URLSearchParams(window.location.search);
+        
         if(urlParams.get('activate') === MASTER_KEY) {
-            localStorage.setItem('admin_secret_token', MASTER_KEY);
-            alert("تم تفعيل بصمة هذا الجهاز بنجاح! ✅");
+            localStorage.setItem('admin_token', MASTER_KEY);
+            alert("تم تفعيل الجهاز بنجاح! ✅");
         }
 
         const services = {
-            tiktok: { "متابعين عرب": 0.40, "لايكات": 0.12, "مشاهدات": 0.01 },
-            instagram: { "متابعين ضمان": 0.65, "لايكات حقيقية": 0.20 },
-            telegram: { "أعضاء قنوات": 0.45, "مشاهدات منشور": 0.05 },
-            youtube: { "مشتركين": 6.00, "ساعات مشاهدة": 14.00 }
+            tiktok: { "متابعين": 0.50, "لايكات": 0.10, "مشاهدات": 0.02 },
+            instagram: { "متابعين": 0.70, "لايكات": 0.15 },
+            telegram: { "أعضاء": 0.40, "مشاهدات": 0.05 },
+            youtube: { "مشتركين": 7.00, "ساعات": 12.00 }
         };
 
         let userProfile = null;
 
         auth.onAuthStateChanged(user => {
-            if (user) {
+            if(user) {
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
-                loadUserProfile(user.uid);
-                loadLeaderboard();
+                loadUser(user.uid);
             } else {
                 document.getElementById('authScreen').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'none';
             }
         });
 
-        async function register() {
-            const n = document.getElementById('regName').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPass').value;
-            if(!n || !e || p.length < 6) return showToast("بيانات غير كافية");
-            try {
-                const res = await auth.createUserWithEmailAndPassword(e, p);
-                const ref = new URLSearchParams(window.location.search).get('ref');
-                await db.collection("users").doc(res.user.uid).set({
-                    name: n, balance: 0.0, role: 'user', joined: new Date(), lastBonus: 0, referredBy: ref || null
-                });
-            } catch(err) { alert(err.message); }
-        }
-
-        async function login() {
-            const e = document.getElementById('email').value, p = document.getElementById('pass').value;
-            try { await auth.signInWithEmailAndPassword(e, p); } catch(err) { alert(err.message); }
-        }
-
-        function logout() { auth.signOut(); }
-
-        function loadUserProfile(uid) {
+        function loadUser(uid) {
             db.collection("users").doc(uid).onSnapshot(doc => {
                 userProfile = doc.data();
                 document.getElementById('balanceText').innerText = "$" + userProfile.balance.toFixed(2);
-                document.getElementById('sideUserName').innerText = userProfile.name;
-                document.getElementById('sideUserID').innerText = "ID: " + uid;
-                document.getElementById('refLink').innerText = window.location.origin + window.location.pathname + "?ref=" + uid;
                 
-                // --- فحص الحماية الثلاثي ---
-                const hasUrlKey = urlParams.get('key') === URL_SECRET;
-                const hasDeviceKey = localStorage.getItem('admin_secret_token') === MASTER_KEY;
-                const isBossID = (uid === "Wf187vT9u8M3Q6R9h2Y7v5X1");
-
-                if(isBossID && hasUrlKey && hasDeviceKey) {
-                    document.getElementById('adminPanel').style.display = 'block';
-                } else {
-                    document.getElementById('adminPanel').style.display = 'none';
-                }
+                // فحص الإدارة الثلاثي
+                const isBoss = (uid === "Wf187vT9u8M3Q6R9h2Y7v5X1");
+                const hasUrl = urlParams.get('key') === URL_KEY;
+                const hasDev = localStorage.getItem('admin_token') === MASTER_KEY;
+                
+                if(isBoss && hasUrl && hasDev) document.getElementById('adminPanel').style.display = 'block';
             });
+            loadOrders(uid);
         }
 
-        function updateServicesList() {
+        function updateServices() {
             const p = document.getElementById('platformSelect').value;
             const s = document.getElementById('serviceSelect');
+            const icon = document.getElementById('headerIcon');
             s.innerHTML = "";
+            
+            // تغيير الأيقونة حسب المنصة
+            const icons = { tiktok: "fab fa-tiktok", instagram: "fab fa-instagram", telegram: "fab fa-telegram", youtube: "fab fa-youtube" };
+            icon.className = icons[p];
+
             for (let name in services[p]) {
                 s.innerHTML += `<option value="${services[p][name]}">${name} ($${services[p][name]})</option>`;
             }
@@ -366,72 +246,69 @@
         function updatePrice() {
             const rate = parseFloat(document.getElementById('serviceSelect').value);
             const qty = parseInt(document.getElementById('orderQty').value) || 0;
-            document.getElementById('totalPrice').innerText = ((qty / 1000) * rate).toFixed(2);
+            document.getElementById('totalPrice').innerText = "$" + ((qty / 1000) * rate).toFixed(2);
         }
 
         async function sendOrder() {
-            const price = parseFloat(document.getElementById('totalPrice').innerText);
-            const link = document.getElementById('orderLink').value;
-            const qty = document.getElementById('orderQty').value;
-            if(!link || qty < 10) return showToast("أدخل الرابط والكمية!");
-            if(userProfile.balance < price) return showToast("رصيدك غير كافٍ!");
-
+            const cost = parseFloat(document.getElementById('totalPrice').innerText.replace("$",""));
+            if(userProfile.balance < cost) return showToast("رصيدك غير كافٍ!");
+            
             await db.collection("orders").add({
-                uid: auth.currentUser.uid, name: userProfile.name,
+                uid: auth.currentUser.uid,
                 service: document.getElementById('serviceSelect').selectedOptions[0].text,
-                qty, link, price, status: 'pending', date: new Date()
+                qty: document.getElementById('orderQty').value,
+                link: document.getElementById('orderLink').value,
+                cost, status: "قيد التنفيذ", date: new Date()
             });
-            await db.collection("users").doc(auth.currentUser.uid).update({
-                balance: firebase.firestore.FieldValue.increment(-price)
-            });
+            await db.collection("users").doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-cost) });
             showToast("تم إرسال الطلب بنجاح ✅");
         }
 
-        async function submitRecharge() {
-            const code = document.getElementById('rechargeCode').value;
-            if(!code) return showToast("أدخل الكود أولاً!");
-            await db.collection("recharge_requests").add({
-                uid: auth.currentUser.uid, name: userProfile.name,
-                method: document.getElementById('rechargeMethod').value,
-                value: code, status: 'pending', date: new Date()
-            });
-            showToast("جاري مراجعة طلبك");
-            closeModal('rechargeModal');
-        }
-
-        async function claimDailyBonus() {
-            const now = Date.now();
-            if(now - (userProfile.lastBonus || 0) < 86400000) return showToast("عد غداً للحصول على البونص!");
-            await db.collection("users").doc(auth.currentUser.uid).update({
-                balance: firebase.firestore.FieldValue.increment(0.05),
-                lastBonus: now
-            });
-            showToast("حصلت على 0.05$ بونص! 🎁");
-        }
-
-        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); }
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; toggleMenu(); }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg; t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
-        function loadLeaderboard() {
-            db.collection("users").orderBy("balance", "desc").limit(5).get().then(snap => {
-                const list = document.getElementById('leaderList');
+        function loadOrders(uid) {
+            db.collection("orders").where("uid", "==", uid).orderBy("date", "desc").onSnapshot(snap => {
+                const list = document.getElementById('ordersList');
                 list.innerHTML = "";
                 snap.forEach(doc => {
-                    list.innerHTML += `<div class="leader-row"><span>${doc.data().name}</span><span style="color:var(--gold)">$${doc.data().balance.toFixed(2)}</span></div>`;
+                    const data = doc.data();
+                    list.innerHTML += `
+                        <div class="ticket-style">
+                            <div class="ticket-header"><span>ID: ${doc.id.substring(0,8)}</span> <span>${data.date.toDate().toLocaleDateString()}</span></div>
+                            <div style="font-weight:bold; font-size:14px;">${data.service}</div>
+                            <div style="font-size:12px; color:var(--main-color); margin-top:5px;">الحالة: ${data.status}</div>
+                        </div>`;
                 });
             });
         }
-        function switchAuth(isReg) {
+
+        async function submitPay() {
+            const code = document.getElementById('payDetails').value;
+            if(!code) return showToast("أدخل بيانات الدفع!");
+            await db.collection("recharge_requests").add({
+                uid: auth.currentUser.uid, name: userProfile.name,
+                method: document.getElementById('payMethod').value,
+                details: code, date: new Date()
+            });
+            showToast("تم إرسال طلب الشحن للمراجعة");
+            closeModal('rechargeModal');
+        }
+
+        // وظائف الواجهة
+        function toggleAuth(isReg) {
             document.getElementById('loginForm').style.display = isReg ? 'none' : 'block';
             document.getElementById('registerForm').style.display = isReg ? 'block' : 'none';
         }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
+        async function login() { try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); } catch(e){ alert(e.message); } }
+        async function register() {
+            try {
+                const r = await auth.createUserWithEmailAndPassword(document.getElementById('regEmail').value, document.getElementById('regPass').value);
+                await db.collection("users").doc(r.user.uid).set({ name: document.getElementById('regName').value, balance: 0.0 });
+            } catch(e){ alert(e.message); }
+        }
 
-        updateServicesList();
+        updateServices();
     </script>
 </body>
 </html>

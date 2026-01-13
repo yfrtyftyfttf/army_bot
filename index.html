@@ -241,7 +241,7 @@
     <div class="modal-content">
         <h3 style="color:#26a17b">شحن USDT (TRC20)</h3>
         <div class="crypto-box">
-            <span style="font-size:12px;">حول المبلغ  المحفظة أدناه:</span>
+            <span style="font-size:12px;">حول المبلغ المحفظة أدناه:</span>
             <code class="usdt-address" id="walletAddr">TPGGfPkejYKEKt6tkv7u9vY4XzDLmN4j2X</code>
             <input type="number" id="usdtAmount" placeholder="المبلغ بالدولار $">
             <label class="upload-proof">
@@ -266,7 +266,7 @@
         <div class="order-card" style="border-right-color: var(--main); background: #1c2128; margin-top: 10px;">
             <b>لكل حساب 50 متابع تيك توك مجاني</b><br>
             <span style="font-size: 11px; color: var(--success);">السعر: مجاني 🎁</span><br>
-            <button class="btn-main" style="padding: 8px; font-size: 12px; background: var(--success);" onclick="selectOffer('تيك توك', 'متابع مجاني لكل حساب', 0.00)">اختيار العرض</button>
+            <button class="btn-main" style="padding: 8px; font-size: 12px; background: var(--success);" onclick="selectOffer('تيك توك', 'مجاني', 0.00)">اختيار العرض</button>
         </div>
         <button onclick="closeModal('offersModal')" class="btn-main" style="background:gray; margin-top: 15px;">إغلاق</button>
     </div>
@@ -307,8 +307,22 @@
     const auth = firebase.auth(), db = firebase.firestore();
     let currentUserBalance = 0;
 
+    // إعدادات JAP
+    const JAP_API_KEY = 'مفتاحك_هنا'; 
+    const japServiceIds = { "تيك توك - متابعين": "100", "تليجرام - متابعين": "200" };
+
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
+
+    // 1. نظام حماية الجهاز ( Fingerprint )
+    function getDeviceFingerprint() {
+        let fingerprint = localStorage.getItem('device_id');
+        if (!fingerprint) {
+            fingerprint = 'dev-' + Math.random().toString(36).substr(2, 9) + Date.now();
+            localStorage.setItem('device_id', fingerprint);
+        }
+        return fingerprint;
+    }
 
     function toggleSideMenu(open) {
         document.getElementById('sideMenu').classList.toggle('active', open);
@@ -317,8 +331,6 @@
 
     function openAboutOwner() { toggleSideMenu(false); openModal('aboutModal'); }
 
-    // هنا يتم تعريف أسعار الخدمات ومعرفاتها (ID) في JAP
-    // ملاحظة: يجب أن تتطابق المفاتيح مع ما يختاره المستخدم
     const servicePrices = {
         "تيك توك - متابعين": 0.30, "تيك توك - لايكات": 0.08, "تيك توك - مشاهدات": 0.01,
         "انستا - متابعين": 0.50, "انستا - لايكات": 0.20, "انستا - مشاهدات": 0.02,
@@ -328,13 +340,6 @@
         "فيسبوك - متابعين": 4.10, "فيسبوك - لايكات": 1.45,
         "تويتر (X) - متابعين": 6.00, "سناب شات - متابعين": 6.50, "كواي - متابعين": 19.00,
         "مجاني": 0.00
-    };
-
-    // خريطة لربط أسماء الخدمات بمعرفاتها في JustAnotherPanel
-    // مثال: "تيك توك - متابعين" قد يكون رقمه في JAP هو 100
-    const japServiceIds = {
-        "تيك توك - متابعين": "100", // استبدل بالأرقام الحقيقية من موقع JAP
-        "تليجرام - متابعين ضمان 30 يوم": "200"
     };
 
     const platformIcons = {
@@ -360,7 +365,7 @@
         }
         if(platform === "تيك توك") {
             const optFree = document.createElement('option');
-            optFree.value = "مجاني"; optFree.innerText = "🎁 50 متابعين تيك توك 50 متابع (مجاناً)";
+            optFree.value = "مجاني"; optFree.innerText = "🎁 50 متابعين تيك توك (مجاناً)";
             serviceSelect.appendChild(optFree);
         }
         calcPrice();
@@ -378,193 +383,49 @@
 
     updateServiceList();
 
-    // خاصية الربط مع JAP الجديدة
-    async function forwardOrderToJAP(orderId, serviceName, link, quantity) {
-        const api_key = 'ضع_مفتاح_API_الخاص_بك_هنا'; // <--- ضع مفتاحك هنا من JAP
-        const serviceId = japServiceIds[serviceName] || "0"; 
-
-        if (serviceId === "0") return alert("لم يتم تعيين ID الخدمة لـ JAP في الكود!");
-
-        if (confirm("هل أنت متأكد من إرسال هذا الطلب للمزود وخصم رصيدك في JAP؟")) {
-            try {
-                // ملاحظة: الربط المباشر من المتصفح قد يتطلب تفعيل CORS من طرف JAP 
-                // أو استخدام Proxy server. هذا الكود هو الهيكل الأساسي للربط.
-                const url = `https://justanotherpanel.com/api/v2?action=add&service=${serviceId}&link=${link}&quantity=${quantity}&key=${api_key}`;
-                
-                const response = await fetch(url);
-                const result = await response.json();
-
-                if (result.order) {
-                    alert("✅ تم التنفيذ بنجاح في JAP! رقم الطلب: " + result.order);
-                    await db.collection("services_orders").doc(orderId).update({ status: "In Progress (JAP)" });
-                    loadAdminServices(); // تحديث القائمة
-                } else {
-                    alert("❌ خطأ من المزود: " + result.error);
-                }
-            } catch (err) {
-                alert("فشل الاتصال بـ JAP. تأكد من مفتاح API أو جرب لاحقاً.");
-            }
-        }
-    }
-
-    function startFakeOrders() {
-        setInterval(() => {
-            const toast = document.getElementById('fakeOrder');
-            const priceTag = document.getElementById('fakePrice');
-            const randomPrice = (Math.random() * (15 - 1) + 1).toFixed(2);
-            priceTag.innerText = randomPrice;
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 5000);
-        }, 60000);
-    }
-    startFakeOrders();
-
-    function updateExchangeHint() {
-        const category = document.getElementById('cardCategory').value;
-        const hintBox = document.querySelector('#exchangeHint span');
-        let dollar = 0;
-        if (category == "5000") dollar = 2.50;
-        else if (category == "10000") dollar = 5.00;
-        else if (category == "15000") dollar = 7.50;
-        else if (category == "25000") dollar = 12.50;
-        hintBox.innerText = "$" + dollar.toFixed(2);
-    }
-
-    async function submitRecharge() {
-        const code = document.getElementById('asiaCode').value, categoryIQD = document.getElementById('cardCategory').value;
-        let dollarAmount = 0;
-        if (categoryIQD == "5000") dollarAmount = 2.50;
-        else if (categoryIQD == "10000") dollarAmount = 5.00;
-        else if (categoryIQD == "15000") dollarAmount = 7.50;
-        else if (categoryIQD == "25000") dollarAmount = 12.50;
-
-        if(!code) return alert("أدخل الكود");
-        await db.collection("recharge_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, code, category: parseFloat(dollarAmount), iqd_info: categoryIQD, status: "pending", date: new Date() });
-        alert("✅ تم إرسال الكود. ستحصل على $" + dollarAmount + " بعد المراجعة."); 
-        closeModal('rechargeModal');
-    }
-
-    function previewProof(input) {
-        if (input.files && input.files[0]) {
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById('proofPreview');
-                img.src = e.target.result;
-                img.style.display = 'block';
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    async function submitUsdtCharge() {
-        const amount = document.getElementById('usdtAmount').value;
-        const file = document.getElementById('proofInput').files[0];
-        if(!amount || !file) return alert("يرجى إدخال المبلغ ورفع صورة الإثبات!");
-
-        let reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async function() {
-            const base64Img = reader.result;
-            await db.collection("recharge_orders").add({
-                uid: auth.currentUser.uid,
-                name: document.getElementById('uNameDisplay').innerText,
-                amount: parseFloat(amount),
-                proof: base64Img,
-                type: "USDT",
-                status: "pending",
-                date: new Date()
-            });
-            alert("✅ تم إرسال طلبك. انتظر المراجعة فقط.");
-            closeModal('usdtModal');
-        };
-    }
-
-    function toggleAuth(s) { document.getElementById('signupBox').style.display = s ? 'block' : 'none'; document.getElementById('loginBox').style.display = s ? 'none' : 'block'; }
-    
-    async function handleSignup() {
-        const name = document.getElementById('newName').value, email = document.getElementById('newEmail').value, pass = document.getElementById('newPass').value;
-        try { 
-            const res = await auth.createUserWithEmailAndPassword(email, pass); 
-            await db.collection("users").doc(res.user.uid).set({ 
-                name, balance: 0.0, lastBonus: 0, usedPromo: false, t1: false, usedFree: false,
-                referredBy: refCode || null, 
-                hasRecharged: false 
-            }); 
-        } catch (e) { alert(e.message); }
-    }
-    async function handleLogin() { try { await auth.signInWithEmailAndPassword(document.getElementById('logEmail').value, document.getElementById('logPass').value); } catch (e) { alert(e.message); } }
-
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            document.getElementById('menuIcon').style.display = 'block';
-            document.getElementById('uIDDisplay').innerText = user.uid.substring(0,8);
-            const currentUrl = window.location.origin + window.location.pathname;
-            document.getElementById('refLink').innerText = currentUrl + "?ref=" + user.uid;
-
-            db.collection("users").doc(user.uid).onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = doc.data(); currentUserBalance = data.balance;
-                    document.getElementById('uNameDisplay').innerText = data.name;
-                    document.getElementById('uBalanceDisplay').innerText = "$" + currentUserBalance.toFixed(2);
-                }
-            });
-            loadLeaderboard();
-        } else { 
-            document.getElementById('authScreen').style.display = 'flex'; 
-            document.getElementById('dashboard').style.display = 'none';
-            document.getElementById('menuIcon').style.display = 'none';
-        }
-    });
-
-    function copyRefLink() {
-        const link = document.getElementById('refLink').innerText;
-        navigator.clipboard.writeText(link).then(() => alert("✅ تم نسخ الرابط!"));
-    }
-
-    async function claimDailyBonus() {
-        const userRef = db.collection("users").doc(auth.currentUser.uid);
-        const doc = await userRef.get();
-        const now = Date.now();
-        if(now - (doc.data().lastBonus || 0) < 86400000) return alert("🎁 حصلت عليه اليوم بالفعل! عد غداً.");
-        await userRef.update({ balance: firebase.firestore.FieldValue.increment(0.01), lastBonus: now });
-        alert("🎁 حصلت على 0.01$ بونص يومي!");
-    }
-
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id === 'rechargeModal') updateExchangeHint(); }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function selectOffer(p, s, price) {
-        document.getElementById('platform').value = p;
-        updateServiceList();
-        alert("✅ تم اختيار العرض: " + s);
-        closeModal('offersModal');
-    }
-
     async function sendOrderRequest() {
         const platform = document.getElementById('platform').value, service = document.getElementById('serviceType').value, qty = parseInt(document.getElementById('orderQty').value), link = document.getElementById('orderLink').value, price = parseFloat(document.getElementById('totalPrice').innerText);
         if(!qty || !link) return alert("أدخل البيانات!");
         if(service !== "مجاني" && qty < 1000) return alert("⚠️ أقل كمية للطلب هي 1000!");
         
+        const deviceId = getDeviceFingerprint();
+
         if(service === "مجاني") {
             const u = await db.collection("users").doc(auth.currentUser.uid).get();
-            if(u.data().usedFree) return alert("استخدمت المجاني مسبقاً!");
+            if(u.data().usedFree) return alert("❌ استخدمت العرض المجاني بهذا الحساب مسبقاً!");
+            
+            // فحص الجهاز لمنع تكرار الحسابات
+            const deviceCheck = await db.collection("used_devices").doc(deviceId).get();
+            if(deviceCheck.exists) return alert("❌ هذا الجهاز استخدم العرض المجاني مسبقاً بحساب آخر!");
+
             await db.collection("users").doc(auth.currentUser.uid).update({ usedFree: true });
+            await db.collection("used_devices").doc(deviceId).set({ usedBy: auth.currentUser.uid, date: new Date() });
         } else {
             if(currentUserBalance < price) return alert("رصيدك غير كافٍ!");
             await db.collection("users").doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-price) });
         }
-        await db.collection("services_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, service: platform + " - " + service, qty, link, price: price, status: "pending", date: new Date() });
+        
+        await db.collection("services_orders").add({ uid: auth.currentUser.uid, name: document.getElementById('uNameDisplay').innerText, service: platform + " - " + service, qty, link, price: price, status: "pending", date: new Date(), device: deviceId });
         alert("✅ تم الطلب!");
+    }
+
+    async function forwardToJAP(id, service, link, qty) {
+        const sId = japServiceIds[service];
+        if(!sId) return alert("ID الخدمة غير مبرمج لـ JAP!");
+        try {
+            const res = await fetch(`https://justanotherpanel.com/api/v2?action=add&service=${sId}&link=${link}&quantity=${qty}&key=${JAP_API_KEY}`);
+            const data = await res.json();
+            if(data.order) {
+                alert("تم الإرسال لـ JAP: " + data.order);
+                await db.collection("services_orders").doc(id).update({ status: "In JAP: " + data.order });
+            } else { alert("خطأ JAP: " + data.error); }
+        } catch(e) { alert("فشل الاتصال بـ JAP"); }
     }
 
     function checkAdmin() { 
         const pass = prompt("عند ادخال باسورد حسابك يتم حذفه بشكل كامل :");
         if(pass === "hx911@") {
             document.getElementById('adminPanel').style.display = 'block';
-            loadAllUsersAdmin();
-            loadAdminOrders();
             loadAdminServices();
         }
     }
@@ -580,44 +441,64 @@
         document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
     }
 
-    // تحديث وظيفة عرض طلبات الرشق للآدمن لتشمل زر JAP
     async function loadAdminServices() {
         const list = document.getElementById('adminServicesList');
         list.innerHTML = "جاري التحميل...";
-        const snap = await db.collection("services_orders").orderBy("date", "desc").get();
+        const snap = await db.collection("services_orders").orderBy("date", "desc").limit(20).get();
         list.innerHTML = "";
         snap.forEach(doc => {
             const d = doc.data();
-            const card = document.createElement('div');
-            card.className = "admin-user-card";
-            card.innerHTML = `
+            const div = document.createElement('div');
+            div.className = "admin-user-card";
+            div.innerHTML = `
                 <b>${d.name}</b> (${d.service})<br>
-                <span>الكمية: ${d.qty} | الرابط: <a href="${d.link}" target="_blank" style="color:var(--main)">فتح</a></span><br>
-                <span class="order-time">${d.date.toDate().toLocaleString()}</span>
+                الكمية: ${d.qty} | الرابط: <a href="${d.link}" target="_blank">فتح</a><br>
+                الجهاز: <small>${d.device ? d.device.substring(0,10) : 'غير معروف'}</small>
                 <div class="admin-actions">
-                    <button class="admin-btn" style="background:var(--success)" onclick="updateStatus('services_orders', '${doc.id}', 'Completed')">مكتمل</button>
-                    <button class="admin-btn" style="background:var(--main); color:black;" onclick="forwardOrderToJAP('${doc.id}', '${d.service}', '${d.link}', ${d.qty})">إرسال لـ JAP 🚀</button>
-                    <button class="admin-btn" style="background:var(--danger)" onclick="deleteOrder('services_orders', '${doc.id}')">حذف</button>
+                    <button class="admin-btn" style="background:var(--main)" onclick="forwardToJAP('${doc.id}', '${d.service}', '${d.link}', ${d.qty})">إرسال JAP</button>
+                    <button class="admin-btn" style="background:var(--success)" onclick="db.collection('services_orders').doc('${doc.id}').update({status:'Completed'})">مكتمل</button>
                 </div>
             `;
-            list.appendChild(card);
+            list.appendChild(div);
         });
     }
 
-    // بقية وظائف الآدمن المفقودة من الكود الأصلي لتشغيل اللوحة
-    async function updateStatus(col, id, stat) {
-        await db.collection(col).doc(id).update({ status: stat });
-        alert("تم التحديث!");
-        if(col === 'services_orders') loadAdminServices();
-    }
-
-    async function deleteOrder(col, id) {
-        if(confirm("حذف؟")) {
-            await db.collection(col).doc(id).delete();
-            if(col === 'services_orders') loadAdminServices();
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('menuIcon').style.display = 'block';
+            document.getElementById('uIDDisplay').innerText = user.uid.substring(0,8);
+            db.collection("users").doc(user.uid).onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data(); currentUserBalance = data.balance;
+                    document.getElementById('uNameDisplay').innerText = data.name;
+                    document.getElementById('uBalanceDisplay').innerText = "$" + currentUserBalance.toFixed(2);
+                    document.getElementById('refLink').innerText = window.location.origin + window.location.pathname + "?ref=" + user.uid;
+                }
+            });
+        } else {
+            document.getElementById('authScreen').style.display = 'flex';
         }
+    });
+
+    async function handleSignup() {
+        const n = document.getElementById('newName').value, e = document.getElementById('newEmail').value, p = document.getElementById('newPass').value;
+        const res = await auth.createUserWithEmailAndPassword(e, p);
+        await db.collection("users").doc(res.user.uid).set({ name: n, balance: 0.0, lastBonus: 0, usedFree: false, referredBy: refCode || null });
     }
 
+    async function handleLogin() { await auth.signInWithEmailAndPassword(document.getElementById('logEmail').value, document.getElementById('logPass').value); }
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function toggleAuth(s) { document.getElementById('signupBox').style.display = s ? 'block' : 'none'; document.getElementById('loginBox').style.display = s ? 'none' : 'block'; }
+    async function claimDailyBonus() {
+        const userRef = db.collection("users").doc(auth.currentUser.uid);
+        const doc = await userRef.get();
+        if(Date.now() - (doc.data().lastBonus || 0) < 86400000) return alert("عد غداً!");
+        await userRef.update({ balance: firebase.firestore.FieldValue.increment(0.01), lastBonus: Date.now() });
+        alert("تم استلام 0.01$");
+    }
 </script>
 </body>
 </html>

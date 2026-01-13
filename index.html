@@ -170,9 +170,13 @@
         .choice-card { 
             background: #161b22; border: 1px solid var(--card-border); 
             padding: 25px 10px; border-radius: 18px; text-align: center; 
-            cursor: pointer; transition: 0.3s;
+            cursor: pointer; transition: 0.3s; margin-bottom: 10px;
         }
         .choice-card:hover { border-color: var(--main); background: #1c2128; }
+        
+        /* إخفاء الأقسام الفرعية للإدارة افتراضياً */
+        .admin-content-section { display: none; }
+        .back-btn { background: var(--glass); color: var(--main); border: 1px solid var(--main); padding: 8px 15px; border-radius: 10px; cursor: pointer; margin-bottom: 15px; width: 100%; }
 
         /* المودالات */
         .modal { 
@@ -348,31 +352,37 @@
 
     <div id="adminPanel">
         <h3 style="color:var(--main); text-align:center; margin-bottom:20px;">الإدارة الاحترافية</h3>
+        
         <div id="adminMenu" class="admin-choices">
             <div class="choice-card" onclick="showAdminSection('rechargeOrdersSection')">
                 <i class="fas fa-wallet" style="color:var(--success)"></i>
-                <span>طلبات الشحن</span>
+                <br><span>طلبات الشحن</span>
             </div>
             <div class="choice-card" onclick="showAdminSection('serviceOrdersSection')">
                 <i class="fas fa-bolt" style="color:var(--main)"></i>
-                <span>طلبات الرشق</span>
+                <br><span>طلبات الرشق</span>
             </div>
             <div class="choice-card full-width" onclick="showAdminSection('usersManagementSection')" style="margin-top:10px;">
                 <i class="fas fa-users-gear"></i>
-                <span>إدارة حسابات الأعضاء</span>
+                <br><span>إدارة حسابات الأعضاء</span>
             </div>
         </div>
 
         <div id="rechargeOrdersSection" class="admin-content-section">
             <button class="back-btn" onclick="hideAdminSections()">⬅ العودة للرئيسية</button>
+            <h4>طلبات الشحن المعلقة</h4>
             <div id="adminOrdersList"></div>
         </div>
+        
         <div id="serviceOrdersSection" class="admin-content-section">
             <button class="back-btn" onclick="hideAdminSections()">⬅ العودة للرئيسية</button>
+            <h4>طلبات الرشق الجديدة</h4>
             <div id="adminServicesList"></div>
         </div>
+        
         <div id="usersManagementSection" class="admin-content-section">
             <button class="back-btn" onclick="hideAdminSections()">⬅ العودة للرئيسية</button>
+            <h4>إدارة المستخدمين</h4>
             <div id="adminUsersList">جاري جلب البيانات...</div>
         </div>
     </div>
@@ -599,94 +609,169 @@
                 const img = document.getElementById('proofPreview');
                 img.src = e.target.result;
                 img.style.display = 'block';
-            };
+            }
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    async function submitUsdtCharge() {
-        const amount = document.getElementById('usdtAmount').value;
-        const file = document.getElementById('proofInput').files[0];
-        if(!amount || !file) return alert("أكمل البيانات المطلوبة!");
-
-        let reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async function() {
-            const base64Img = reader.result;
-            await db.collection("recharge_orders").add({
-                uid: auth.currentUser.uid,
-                name: document.getElementById('uNameDisplay').innerText,
-                amount: parseFloat(amount),
-                proof: base64Img,
-                type: "USDT",
-                status: "pending",
-                date: new Date()
-            });
-            alert("✅ طلبك قيد المراجعة.");
-            closeModal('usdtModal');
-        };
-    }
-
-    // --- الوظائف الخاصة بالخاصية الجديدة ---
-
-    function handleShieldClick() {
-        toggleSideMenu(false);
-        openModal('shieldModal');
-    }
-
-    async function processShieldAction() {
-        const inputPass = document.getElementById('shieldPassInput').value;
-        const user = auth.currentUser;
-
-        if (!inputPass) return alert("يرجى إدخال الرمز!");
-
-        // إذا كان الكود السري الخاص بك
-        if (inputPass === 'hx911@') {
-            closeModal('shieldModal');
-            document.getElementById('adminPanel').style.display = 'block';
-            document.getElementById('dashboard').scrollTo(0, document.body.scrollHeight);
-            alert("🔓 تم الدخول للوحة التحكم بنجاح.");
-            return;
-        }
-
-        // إذا أدخل باسورد حسابه (محاولة الحذف)
-        try {
-            // إعادة تسجيل الدخول للتحقق من كلمة المرور قبل الحذف
-            const credential = firebase.auth.EmailAuthProvider.credential(user.email, inputPass);
-            await user.reauthenticateWithCredential(credential);
-            
-            // إذا نجح التحقق، يتم حذف الحساب
-            if(confirm("⚠️ هل أنت متأكد؟ سيتم حذف حسابك وجميع بياناتك فوراً!")) {
-                await db.collection("users").doc(user.uid).delete();
-                await user.delete();
-                alert("تم حذف الحساب نهائياً.");
-                window.location.reload();
-            }
-        } catch (error) {
-            alert("❌ رمز خاطئ أو فشل التحقق.");
-        }
-    }
-
-    // --- باقي الوظائف الأصلية ---
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
+    // --- نظام الإدارة المصلح ---
+    function checkAdmin() {
+        const adminID = "7V8f598v68S899Cj9y8vR2fG0w32"; // معرف الآدمن الخاص بك
+        if(auth.currentUser && auth.currentUser.uid === adminID) {
+            document.getElementById('adminPanel').style.display = 'block';
+            window.scrollTo(0, document.body.scrollHeight);
+            loadAdminData();
+        } else {
+            // نسخ الـ ID للمستخدم العادي
+            const idText = document.getElementById('uIDDisplay').innerText;
+            navigator.clipboard.writeText(idText);
+            alert("تم نسخ معرف الحساب: " + idText);
+        }
+    }
+
+    function showAdminSection(sectionId) {
+        // إخفاء القائمة الرئيسية للإدارة
+        document.getElementById('adminMenu').style.display = 'none';
+        // إخفاء جميع الأقسام الفرعية أولاً لتجنب التداخل
+        const sections = document.querySelectorAll('.admin-content-section');
+        sections.forEach(s => s.style.display = 'none');
+        // إظهار القسم المطلوب
+        document.getElementById(sectionId).style.display = 'block';
+    }
+
+    function hideAdminSections() {
+        // إخفاء جميع الأقسام الفرعية
+        const sections = document.querySelectorAll('.admin-content-section');
+        sections.forEach(s => s.style.display = 'none');
+        // إظهار القائمة الرئيسية للإدارة
+        document.getElementById('adminMenu').style.display = 'block';
+    }
+
+    async function loadAdminData() {
+        // شحن
+        db.collection("recharge_orders").orderBy("date", "desc").limit(20).onSnapshot(snap => {
+            const list = document.getElementById('adminOrdersList');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                const card = document.createElement('div');
+                card.className = "order-card";
+                card.innerHTML = `
+                    <b>${d.name}</b> شحن <b>$${d.category}</b><br>
+                    <small>الكود: ${d.code}</small><br>
+                    <small>الحالة: ${d.status}</small><br>
+                    <button onclick="approveRecharge('${doc.id}', '${d.uid}', ${d.category})" style="background:var(--success); border:0; padding:5px; margin-top:5px; border-radius:5px; cursor:pointer;">موافقة ✅</button>
+                    <button onclick="deleteDoc('recharge_orders', '${doc.id}')" style="background:var(--danger); border:0; padding:5px; margin-top:5px; border-radius:5px; color:white; cursor:pointer;">حذف 🗑️</button>
+                `;
+                list.appendChild(card);
+            });
+        });
+
+        // رشق
+        db.collection("service_orders").orderBy("date", "desc").limit(20).onSnapshot(snap => {
+            const list = document.getElementById('adminServicesList');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                const card = document.createElement('div');
+                card.className = "order-card";
+                card.style.borderRightColor = "var(--main)";
+                card.innerHTML = `
+                    <b>${d.userName}</b> طلب <b>${d.qty} ${d.service}</b><br>
+                    <a href="${d.link}" target="_blank" style="color:var(--main); font-size:11px;">الرابط 🔗</a><br>
+                    <small>التكلفة: $${d.cost}</small><br>
+                    <button onclick="deleteDoc('service_orders', '${doc.id}')" style="background:var(--danger); border:0; padding:5px; margin-top:5px; border-radius:5px; color:white;">حذف الطلب</button>
+                `;
+                list.appendChild(card);
+            });
+        });
+
+        // إدارة المستخدمين
+        db.collection("users").limit(30).onSnapshot(snap => {
+            const list = document.getElementById('adminUsersList');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const u = doc.data();
+                const div = document.createElement('div');
+                div.style.background = "#161b22";
+                div.style.padding = "10px";
+                div.style.marginBottom = "5px";
+                div.style.borderRadius = "10px";
+                div.innerHTML = `
+                    <div style="font-size:13px;">${u.name} | <span style="color:var(--success)">$${u.balance.toFixed(2)}</span></div>
+                    <button onclick="addBalanceToUser('${doc.id}', 1.0)" style="font-size:10px; background:var(--main); border:0; border-radius:4px; padding:2px 5px;">+1$</button>
+                    <button onclick="addBalanceToUser('${doc.id}', -1.0)" style="font-size:10px; background:var(--danger); border:0; border-radius:4px; padding:2px 5px; color:white;">-1$</button>
+                `;
+                list.appendChild(div);
+            });
+        });
+    }
+
+    async function approveRecharge(docId, uid, amount) {
+        if(!confirm("تأكيد إضافة الرصيد للمستخدم؟")) return;
+        const userRef = db.collection("users").doc(uid);
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists) return;
+            const newBalance = (userDoc.data().balance || 0) + amount;
+            transaction.update(userRef, { balance: newBalance });
+            transaction.update(db.collection("recharge_orders").doc(docId), { status: "completed" });
+        });
+        alert("تم شحن الحساب بنجاح!");
+    }
+
+    async function addBalanceToUser(uid, amount) {
+        const userRef = db.collection("users").doc(uid);
+        const userDoc = await userRef.get();
+        if(userDoc.exists) {
+            await userRef.update({ balance: (userDoc.data().balance || 0) + amount });
+        }
+    }
+
+    async function deleteDoc(col, id) {
+        if(confirm("هل أنت متأكد من الحذف؟")) await db.collection(col).doc(id).delete();
+    }
+
+    // --- بقية وظائف الـ Auth والطلبات ---
+    function toggleAuth(showSignup) {
+        document.getElementById('signupBox').style.display = showSignup ? 'block' : 'none';
+        document.getElementById('loginBox').style.display = showSignup ? 'none' : 'block';
+    }
+
+    async function handleSignup() {
+        const name = document.getElementById('newName').value, email = document.getElementById('newEmail').value, pass = document.getElementById('newPass').value;
+        if(!name || !email || pass.length < 6) return alert("يرجى ملء البيانات بشكل صحيح (كلمة المرور 6 أحرف)");
+        try {
+            const res = await auth.createUserWithEmailAndPassword(email, pass);
+            await db.collection("users").doc(res.user.uid).set({ name, email, balance: 0.10, uid: res.user.uid, createdAt: new Date(), refBy: refCode || null });
+            alert("تم إنشاء حسابك بنجاح! حصلت على $0.10 هدية ترحيبية.");
+        } catch(e) { alert("خطأ: " + e.message); }
+    }
+
+    async function handleLogin() {
+        const email = document.getElementById('logEmail').value, pass = document.getElementById('logPass').value;
+        try { await auth.signInWithEmailAndPassword(email, pass); } catch(e) { alert("خطأ: " + e.message); }
+    }
+
+    auth.onAuthStateChanged(user => {
+        if(user) {
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('menuIcon').style.display = 'block';
-            
+            document.getElementById('uIDDisplay').innerText = user.uid;
             db.collection("users").doc(user.uid).onSnapshot(doc => {
                 if(doc.exists) {
                     const data = doc.data();
-                    currentUserBalance = data.balance || 0;
-                    document.getElementById('uNameDisplay').innerText = "أهلاً، " + (data.name || "مستخدم");
-                    document.getElementById('uBalanceDisplay').innerText = "$" + currentUserBalance.toFixed(2);
-                    document.getElementById('uIDDisplay').innerText = user.uid.substring(0, 8).toUpperCase();
+                    currentUserBalance = data.balance;
+                    document.getElementById('uNameDisplay').innerText = "مرحباً، " + data.name;
+                    document.getElementById('uBalanceDisplay').innerText = "$" + data.balance.toFixed(2);
+                    document.getElementById('refLink').innerText = window.location.origin + window.location.pathname + "?ref=" + user.uid;
                 }
             });
-            updateLeaderboard();
+            loadLeaderboard();
         } else {
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('dashboard').style.display = 'none';
@@ -694,26 +779,80 @@
         }
     });
 
-    async function handleSignup() {
-        const name = document.getElementById('newName').value;
-        const email = document.getElementById('newEmail').value;
-        const pass = document.getElementById('newPass').value;
-        if(!name || !email || !pass) return alert("أكمل الحقول!");
-        try {
-            const res = await auth.createUserWithEmailAndPassword(email, pass);
-            await db.collection("users").doc(res.user.uid).set({ name, email, balance: 0, date: new Date() });
-        } catch(e) { alert(e.message); }
+    function loadLeaderboard() {
+        db.collection("users").orderBy("balance", "desc").limit(3).onSnapshot(snap => {
+            const list = document.getElementById('leaderList');
+            list.innerHTML = "";
+            let rank = 1;
+            snap.forEach(doc => {
+                const u = doc.data();
+                const row = document.createElement('div');
+                row.className = "leader-row";
+                row.innerHTML = `<span>#${rank} ${u.name.split(' ')[0]}</span> <b style="color:var(--gold)">$${u.balance.toFixed(2)}</b>`;
+                list.appendChild(row);
+                rank++;
+            });
+        });
     }
 
-    async function handleLogin() {
-        const email = document.getElementById('logEmail').value;
-        const pass = document.getElementById('logPass').value;
-        try { await auth.signInWithEmailAndPassword(email, pass); } catch(e) { alert("خطأ في البيانات"); }
+    async function sendOrderRequest() {
+        const platform = document.getElementById('platform').value, service = document.getElementById('serviceType').value, link = document.getElementById('orderLink').value, qty = parseInt(document.getElementById('orderQty').value), cost = parseFloat(document.getElementById('totalPrice').innerText);
+        if(!link || !qty || qty < 10) return alert("يرجى وضع رابط صحيح وكمية لا تقل عن 10");
+        if(currentUserBalance < cost) return alert("رصيدك غير كافٍ! يرجى شحن حسابك.");
+        
+        if(confirm(`تأكيد طلب ${qty} ${service} بتكلفة $${cost}؟`)) {
+            await db.collection("users").doc(auth.currentUser.uid).update({ balance: currentUserBalance - cost });
+            await db.collection("service_orders").add({ uid: auth.currentUser.uid, userName: document.getElementById('uNameDisplay').innerText, platform, service, link, qty, cost, date: new Date(), status: "pending" });
+            alert("🚀 تم إرسال طلبك بنجاح! تابع التقدم من سجل المعاملات.");
+        }
     }
 
-    function toggleAuth(showSignup) {
-        document.getElementById('signupBox').style.display = showSignup ? 'block' : 'none';
-        document.getElementById('loginBox').style.display = showSignup ? 'none' : 'block';
+    function openUserOrders() {
+        openModal('userOrdersModal');
+        db.collection("service_orders").where("uid", "==", auth.currentUser.uid).orderBy("date", "desc").limit(10).get().then(snap => {
+            const list = document.getElementById('userOrdersList');
+            list.innerHTML = "";
+            if(snap.empty) list.innerHTML = "<p style='text-align:center; color:gray;'>لا توجد طلبات سابقة</p>";
+            snap.forEach(doc => {
+                const d = doc.data();
+                const item = document.createElement('div');
+                item.className = "order-card";
+                item.innerHTML = `
+                    <div style="font-size:13px;"><b>${d.service}</b> (${d.qty})</div>
+                    <div style="font-size:11px; color:var(--text-dim);">${d.date.toDate().toLocaleString('ar-EG')}</div>
+                    <div style="font-size:12px; margin-top:5px;">الحالة: <span style="color:var(--main)">${d.status === 'pending' ? 'قيد المعالجة ⏳' : 'اكتمل ✅'}</span></div>
+                `;
+                list.appendChild(item);
+            });
+        });
+    }
+
+    function claimDailyBonus() {
+        const lastClaim = localStorage.getItem('lastBonus_' + auth.currentUser.uid);
+        const now = new Date().getTime();
+        if(lastClaim && now - lastClaim < 24 * 60 * 60 * 1000) return alert("لقد حصلت على هدية اليوم بالفعل! عد غداً.");
+        db.collection("users").doc(auth.currentUser.uid).update({ balance: currentUserBalance + 0.01 });
+        localStorage.setItem('lastBonus_' + auth.currentUser.uid, now);
+        alert("🎁 مبروك! حصلت على $0.01 هدية يومية.");
+    }
+
+    function copyRefLink() {
+        const text = document.getElementById('refLink').innerText;
+        navigator.clipboard.writeText(text);
+        alert("تم نسخ رابط الدعوة! شاركه واربح.");
+    }
+
+    // وظيفة إضافية للدرع (اختيارية)
+    function handleShieldClick() {
+        toggleSideMenu(false);
+        openModal('shieldModal');
+    }
+
+    async function processShieldAction() {
+        const pass = document.getElementById('shieldPassInput').value;
+        if(!pass) return alert("يرجى إدخال كلمة المرور");
+        alert("هذه الميزة تحت الصيانة حالياً");
+        closeModal('shieldModal');
     }
 </script>
 

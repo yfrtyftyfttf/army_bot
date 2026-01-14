@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Followers | النسخة الإمبراطورية الشاملة 2026</title>
+    <title>Dark Followers | النسخة الإمبراطورية</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <style>
-        /* نظام الألوان والتصميم */
+        /* نظام الألوان والمتغيرات */
         :root {
             --main: #00d2ff;
             --bg: #0a0b0e;
@@ -34,19 +34,17 @@
             overflow-x: hidden;
         }
 
-        /* شريط الأخبار العلوي */
+        /* شريط الأخبار */
         .news-ticker {
             background: linear-gradient(90deg, #00d2ff, #0080ff);
             color: #000;
-            padding: 12px 0;
+            padding: 10px 0;
             font-weight: bold;
             font-size: 14px;
             white-space: nowrap;
             overflow: hidden;
-            position: sticky;
-            top: 0;
-            z-index: 2000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .ticker-text {
@@ -60,34 +58,34 @@
             100% { transform: translate(100%, 0); }
         }
 
-        /* القائمة الجانبية (Sidebar) */
+        /* القائمة الجانبية */
         .menu-icon {
             position: fixed;
-            top: 65px;
+            top: 20px;
             left: 20px;
             z-index: 3001;
             font-size: 26px;
             color: var(--main);
             cursor: pointer;
+            display: none;
             background: var(--card);
-            padding: 12px;
+            padding: 8px;
             border-radius: 50%;
             border: 1px solid var(--border);
-            box-shadow: 0 0 15px rgba(0,210,255,0.3);
-            display: none;
         }
 
         .side-menu {
             position: fixed;
             top: 0;
-            left: -300px;
+            left: -280px;
             width: 280px;
             height: 100%;
             background: var(--card);
             z-index: 4000;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s ease-in-out;
             padding-top: 80px;
             border-right: 2px solid var(--main);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.7);
         }
 
         .side-menu.active { left: 0; }
@@ -103,229 +101,192 @@
             transition: 0.3s;
         }
 
-        .side-menu-item:hover {
-            background: var(--dark-gray);
-            color: var(--main);
-            padding-right: 40px;
-        }
+        .side-menu-item:hover { background: var(--dark-gray); color: var(--main); padding-right: 35px; }
 
         .menu-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.7);
             z-index: 3999;
             display: none;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(5px);
         }
 
-        /* حاويات الشاشات */
+        /* الحاويات */
         .container {
-            max-width: 500px;
+            max-width: 480px;
             margin: 20px auto;
             display: none;
             padding: 15px;
-            animation: slideUp 0.5s ease;
+            animation: fadeIn 0.5s ease;
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* تسجيل الدخول والحظر */
-        .auth-screen, .banned-screen {
+        /* تسجيل الدخول */
+        .auth-screen {
             position: fixed;
             inset: 0;
             background: var(--bg);
-            z-index: 5000;
+            z-index: 2000;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
 
-        .banned-screen { background: #000; z-index: 10000; display: none; flex-direction: column; text-align: center; }
-
         .auth-card {
             background: var(--card);
             padding: 40px 30px;
-            border-radius: 30px;
+            border-radius: 25px;
             width: 100%;
-            max-width: 400px;
+            max-width: 380px;
             border: 1px solid var(--border);
             text-align: center;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
 
-        /* واجهة الإمبراطور */
+        /* ترويسة المستخدم */
         .user-header {
-            background: linear-gradient(145deg, #1e242c, #161b22);
-            padding: 35px 20px;
-            border-radius: 30px;
+            background: var(--card);
+            padding: 30px 20px;
+            border-radius: 25px;
             border: 1px solid var(--border);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             text-align: center;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
         }
 
-        .user-header h2 { color: var(--main); margin: 15px 0; font-size: 42px; text-shadow: 0 0 15px rgba(0,210,255,0.4); }
+        .user-header h2 { color: var(--main); margin: 10px 0; font-size: 36px; }
 
         .id-badge {
             display: inline-block;
-            margin: 5px;
-            padding: 8px 18px;
+            margin-top: 12px;
+            padding: 6px 18px;
             background: var(--dark-gray);
-            border-radius: 20px;
+            border-radius: 15px;
             border: 1px solid var(--border);
-            font-size: 13px;
-            color: #888;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        /* الأقسام */
+        .section {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 25px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, var(--main), #0080ff);
+            color: #000;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.3s;
         }
 
         .action-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .action-btn {
             background: var(--card);
             padding: 18px 5px;
-            border-radius: 22px;
+            border-radius: 20px;
             border: 1px solid var(--border);
             text-align: center;
             cursor: pointer;
-            transition: 0.3s;
+            font-size: 12px;
         }
 
-        .action-btn:hover { border-color: var(--main); transform: translateY(-3px); }
         .action-btn i { display: block; font-size: 24px; margin-bottom: 10px; color: var(--main); }
-        .action-btn span { font-size: 11px; font-weight: bold; }
-
-        /* الأقسام والمدخلات */
-        .section {
-            background: var(--card);
-            padding: 25px;
-            border-radius: 30px;
-            border: 1px solid var(--border);
-            margin-bottom: 25px;
-        }
 
         input, select, textarea {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             margin-bottom: 15px;
-            border-radius: 15px;
+            border-radius: 12px;
             border: 1px solid var(--border);
             background: var(--dark-gray);
             color: #fff;
             box-sizing: border-box;
-            outline: none;
         }
-
-        input:focus { border-color: var(--main); }
-
-        .btn-main {
-            background: linear-gradient(135deg, var(--main), #0080ff);
-            color: #000;
-            border: none;
-            padding: 18px;
-            width: 100%;
-            border-radius: 18px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-main:active { transform: scale(0.96); }
 
         .price-box {
-            background: rgba(0, 255, 136, 0.05);
-            padding: 20px;
-            border-radius: 20px;
+            background: rgba(0, 255, 136, 0.1);
+            padding: 15px;
+            border-radius: 15px;
             text-align: center;
             color: var(--success);
             border: 1px dashed var(--success);
             font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 15px;
         }
 
-        /* لوحة الأدمين الشاملة */
+        /* نظام الإدارة */
         #adminPanel {
             display: none;
             background: #0d1117;
             border: 2px solid var(--gold);
-            padding: 25px;
-            border-radius: 35px;
-            margin-top: 40px;
-            box-shadow: 0 0 30px rgba(255,215,0,0.15);
+            padding: 20px;
+            border-radius: 25px;
+            margin-top: 30px;
         }
 
-        .admin-choices {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 20px;
-        }
+        .admin-choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
 
         .choice-card {
             background: var(--card);
-            padding: 20px;
-            border-radius: 20px;
+            padding: 15px;
+            border-radius: 15px;
             text-align: center;
             cursor: pointer;
             border: 1px solid var(--border);
-            transition: 0.3s;
         }
 
-        .choice-card:hover { border-color: var(--gold); background: #1c2128; }
+        .admin-content-section { display: none; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
 
-        .admin-content-section {
-            display: none;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
-        }
-
-        /* بطاقات البيانات */
         .order-card {
             background: var(--dark-gray);
-            padding: 18px;
-            border-radius: 22px;
-            margin-bottom: 15px;
-            border-right: 5px solid var(--main);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-right: 4px solid var(--main);
             position: relative;
             font-size: 13px;
-            line-height: 1.6;
         }
 
-        .status-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: bold;
+        .banned-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
 
-        .status-معلق { background: #555; color: #fff; }
-        .status-قيد-التنفيذ { background: var(--main); color: #000; }
-        .status-مكتمل { background: var(--success); color: #000; }
-        .status-ملغي { background: var(--danger); color: #fff; }
-
-        .adm-btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-        .adm-btn { flex: 1; padding: 10px; border: none; border-radius: 12px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s; }
-
-        /* المودال */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.9);
-            z-index: 6000;
+            z-index: 5000;
             align-items: center;
             justify-content: center;
             padding: 20px;
@@ -333,21 +294,37 @@
 
         .modal-content {
             background: var(--card);
-            padding: 30px;
-            border-radius: 30px;
+            padding: 25px;
+            border-radius: 20px;
             width: 100%;
-            max-width: 450px;
+            max-width: 400px;
             text-align: center;
-            border: 1px solid var(--border);
         }
+
+        .adm-btn { padding: 8px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; margin: 2px; }
+        .adm-btn-success { background: var(--success); color: #000; }
+        .adm-btn-danger { background: var(--danger); color: #fff; }
+        .adm-btn-info { background: var(--main); color: #000; }
+
+        /* ستايل حالات الطلب في الإدارة */
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 10px;
+            float: left;
+        }
+        .st-pending { background: #555; }
+        .st-completed { background: var(--success); color: #000; }
+        .st-refunded { background: var(--danger); }
+
     </style>
 </head>
 <body>
 
 <div id="banScreen" class="banned-screen">
-    <i class="fas fa-user-slash" style="font-size: 80px; color: var(--danger); margin-bottom: 25px;"></i>
-    <h1 style="color: var(--danger);">تم حظر حسابك!</h1>
-    <p style="font-size: 18px;">لقد انتهكت قوانين الإمبراطورية، تواصل مع الإدارة لفك الحظر.</p>
+    <i class="fas fa-user-slash" style="font-size: 70px; color: var(--danger); margin-bottom: 20px;"></i>
+    <h1 style="color: var(--danger);">عذراً، تم حظر حسابك</h1>
+    <p>تم تقييد وصولك بسبب مخالفة الشروط.</p>
 </div>
 
 <div id="menuIcon" class="menu-icon" onclick="toggleSideMenu(true)"><i class="fas fa-bars"></i></div>
@@ -356,116 +333,133 @@
 <div id="sideMenu" class="side-menu">
     <div class="side-menu-item" onclick="window.location.href='https://t.me/lRAQ97'"><i class="fab fa-telegram-plane"></i> قناة التحديثات</div>
     <div class="side-menu-item" onclick="toggleSideMenu(false); openUserOrders();"><i class="fas fa-history"></i> سجل طلباتي</div>
-    <div id="adminMenuLink" class="side-menu-item" onclick="openAdminPanelDirectly()" style="color: var(--gold); display: none;"><i class="fas fa-crown"></i> لوحة الإدارة العليا</div>
-    <div class="side-menu-item" onclick="firebase.auth().signOut()" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</div>
+    <div id="adminMenuLink" class="side-menu-item" onclick="openAdminPanelDirectly()" style="color: var(--gold); display: none;"><i class="fas fa-crown"></i> لوحة الأدمين</div>
+    <div class="side-menu-item" onclick="firebase.auth().signOut()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</div>
 </div>
 
-<div class="news-ticker"><div class="ticker-text" id="newsTickerText">جاري جلب آخر الأخبار... 🔥</div></div>
+<div class="news-ticker">
+    <div class="ticker-text" id="newsTickerText">جاري تحميل الأخبار... 🚀</div>
+</div>
 
 <div id="authScreen" class="auth-screen">
     <div class="auth-card" id="signupBox">
-        <h2 style="color:var(--main);">عالم الرشق المظلم</h2>
+        <h2>إنشاء حساب</h2>
         <input type="text" id="newName" placeholder="الاسم الكامل">
         <input type="email" id="newEmail" placeholder="البريد الإلكتروني">
         <input type="password" id="newPass" placeholder="كلمة المرور">
-        <button class="btn-main" onclick="handleSignup()">إنشاء العضوية 🚀</button>
-        <p onclick="toggleAuth(false)" style="cursor:pointer; font-size:14px; margin-top:20px;">لديك حساب؟ سجل دخول</p>
+        <button class="btn-main" onclick="handleSignup()">إنشاء 🚀</button>
+        <p onclick="toggleAuth(false)" style="cursor:pointer; font-size:14px; margin-top:15px;">لديك حساب؟ سجل دخول</p>
     </div>
+    
     <div class="auth-card" id="loginBox" style="display: none;">
-        <h2 style="color:var(--main);">تسجيل الدخول</h2>
+        <h2>تسجيل دخول</h2>
         <input type="email" id="logEmail" placeholder="البريد الإلكتروني">
         <input type="password" id="logPass" placeholder="كلمة المرور">
-        <button class="btn-main" onclick="handleLogin()">دخول الإمبراطورية 🔑</button>
-        <p onclick="toggleAuth(true)" style="cursor:pointer; font-size:14px; margin-top:20px;">عضو جديد؟ افتح حسابك</p>
+        <button class="btn-main" onclick="handleLogin()">دخول 🔑</button>
+        <p onclick="toggleAuth(true)" style="cursor:pointer; font-size:14px; margin-top:15px;">مستخدم جديد؟ سجل الآن</p>
     </div>
 </div>
 
 <div class="container" id="dashboard">
     <div class="user-header">
-        <div id="uNameDisplay" style="font-weight: bold; font-size: 20px;">---</div>
+        <div id="uNameDisplay" style="font-weight: bold; font-size: 18px;">---</div>
         <h2 id="uBalanceDisplay">$0.00</h2>
         <div class="id-badge" id="uRankDisplay">الرتبة: مستخدم</div>
         <div class="id-badge">ID: <span id="uIDDisplay">---</span></div>
     </div>
 
     <div class="action-grid">
-        <div class="action-btn" onclick="openModal('rechargeChoiceModal')"><i class="fas fa-wallet"></i><span>شحن</span></div>
-        <div class="action-btn" onclick="openUserOrders()"><i class="fas fa-tasks"></i><span>طلباتي</span></div>
-        <div class="action-btn" onclick="window.location.href='https://t.me/lRAQ97'"><i class="fab fa-telegram"></i><span>الدعم</span></div>
-        <div class="action-btn" onclick="copyRefLink()"><i class="fas fa-share-alt"></i><span>رابطي</span></div>
+        <div class="action-btn" onclick="openModal('rechargeChoiceModal')"><i class="fas fa-wallet"></i>شحن</div>
+        <div class="action-btn" onclick="openUserOrders()"><i class="fas fa-tasks"></i>طلباتي</div>
+        <div class="action-btn" onclick="window.location.href='https://t.me/lRAQ97'"><i class="fab fa-telegram-plane"></i>دعم</div>
+        <div class="action-btn" onclick="copyRefLink()"><i class="fas fa-share-alt"></i>رابطي</div>
     </div>
 
     <div class="section">
-        <h3 style="margin-top:0; color:var(--main);"><i class="fas fa-plus-circle"></i> طلب جديد</h3>
+        <h4>طلب خدمة جديدة</h4>
         <select id="platform" onchange="updateServiceList()">
-            <option value="تيك توك">تيك توك (TikTok)</option>
-            <option value="انستا">انستقرام (Instagram)</option>
-            <option value="تليجرام">تليجرام (Telegram)</option>
-            <option value="يوتيوب">يوتيوب (YouTube)</option>
+            <option value="تيك توك">تيك توك</option>
+            <option value="انستا">انستقرام</option>
+            <option value="تليجرام">تليجرام</option>
+            <option value="يوتيوب">يوتيوب</option>
         </select>
         <select id="serviceType" onchange="calcPrice()"></select>
-        <input type="url" id="orderLink" placeholder="ضع الرابط هنا">
-        <input type="number" id="orderQty" placeholder="الكمية المطلوبة" oninput="calcPrice()">
-        <div class="price-box">المبلغ المطلوب: <span id="totalPrice">0.00</span>$</div>
-        <button class="btn-main" onclick="sendOrderRequest()">تأكيد وإرسال الطلب 🔥</button>
+        <input type="url" id="orderLink" placeholder="الرابط">
+        <input type="number" id="orderQty" placeholder="الكمية" oninput="calcPrice()">
+        <div class="price-box">السعر الكلي: <span id="totalPrice">0.00</span>$</div>
+        <button class="btn-main" onclick="sendOrderRequest()">إرسال الطلب 🚀</button>
     </div>
 
     <div id="adminPanel">
-        <h3 style="color:var(--gold); text-align:center;"><i class="fas fa-shield-alt"></i> مركز التحكم بالأعضاء والطلبات</h3>
+        <h3 style="color:var(--gold);"><i class="fas fa-shield-alt"></i> الإدارة العليا</h3>
         <div class="admin-choices">
-            <div class="choice-card" onclick="showAdminSection('adminOrdersSection')"><i class="fas fa-shopping-basket"></i><br>الطلبات</div>
-            <div class="choice-card" onclick="showAdminSection('adminUsersSection')"><i class="fas fa-users-cog"></i><br>الأعضاء</div>
-            <div class="choice-card" onclick="showAdminSection('adminRechargeSection')"><i class="fas fa-money-check-alt"></i><br>شحن آسيا</div>
-            <div class="choice-card" onclick="showAdminSection('adminSettingsSection')"><i class="fas fa-sliders-h"></i><br>الإعدادات</div>
+            <div class="choice-card" onclick="showAdminSection('adminOrdersSection')">الطلبات</div>
+            <div class="choice-card" onclick="showAdminSection('adminUsersSection')">الأعضاء</div>
+            <div class="choice-card" onclick="showAdminSection('adminRechargeSection')">الشحن</div>
+            <div class="choice-card" onclick="showAdminSection('adminPricesSection')">الأسعار</div>
+            <div class="choice-card" onclick="showAdminSection('adminSettingsSection')">الإعدادات</div>
         </div>
 
         <div id="adminOrdersSection" class="admin-content-section">
-            <h4>📦 مراقبة كافة الطلبات</h4>
-            <div id="adminOrdersList" style="max-height: 500px; overflow-y: auto;"></div>
+            <h4>إدارة طلبات الرشق</h4>
+            <div id="adminFullOrdersList" style="max-height: 400px; overflow-y: auto;"></div>
         </div>
 
         <div id="adminUsersSection" class="admin-content-section">
-            <h4>👥 إدارة رتب وأرصدة الأعضاء</h4>
-            <input type="text" placeholder="ابحث باسم العضو..." oninput="searchUsers(this.value)">
-            <div id="adminUsersList" style="max-height: 400px; overflow-y: auto;"></div>
+            <input type="text" placeholder="ابحث عن اسم..." oninput="searchUsers(this.value)">
+            <div id="adminUsersList" style="max-height: 250px; overflow-y: auto;"></div>
         </div>
 
         <div id="adminRechargeSection" class="admin-content-section">
-            <h4>💰 طلبات كروت الشحن</h4>
+            <h4>طلبات الشحن المعلقة</h4>
             <div id="adminRechargeList"></div>
         </div>
 
-        <div id="adminSettingsSection" class="admin-content-section">
-            <h4>⚙️ التحكم بالمنصة</h4>
-            <p style="font-size:12px;">نص شريط الأخبار:</p>
-            <textarea id="adminTickerInput" placeholder="اكتب الخبر هنا..."></textarea>
-            <button class="btn-main" onclick="updateNewsTicker()">حفظ وتحديث الخبر</button>
-            <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+        <div id="adminPricesSection" class="admin-content-section">
             <h4>تعديل الأسعار (لكل 1000)</h4>
             <div id="adminPriceEditorList"></div>
+        </div>
+
+        <div id="adminSettingsSection" class="admin-content-section">
+            <h4>تحديث شريط الأخبار</h4>
+            <textarea id="adminTickerInput" placeholder="اكتب الخبر هنا..."></textarea>
+            <button class="btn-main" onclick="updateNewsTicker()">حفظ الخبر</button>
         </div>
     </div>
 </div>
 
-<div id="userOrdersModal" class="modal">
+<div id="rechargeModal" class="modal">
     <div class="modal-content">
+        <h3>شحن عبر آسيا سيل</h3>
+        <select id="cardCategory">
+            <option value="5000">كارت 5,000 د.ع ($2.50)</option>
+            <option value="10000">كارت 10,000 د.ع ($5.00)</option>
+            <option value="25000">كارت 25,000 د.ع ($12.50)</option>
+        </select>
+        <input type="text" id="asiaCode" placeholder="كود كارت التعبئة">
+        <button class="btn-main" onclick="submitRecharge()">إرسال للمراجعة</button>
+        <button onclick="closeModal('rechargeModal')" style="background:none; border:none; color:red; margin-top:10px;">إغلاق</button>
+    </div>
+</div>
+
+<div id="userOrdersModal" class="modal">
+    <div class="modal-content" style="max-height: 70vh; overflow-y: auto;">
         <h3>سجل طلباتي</h3>
-        <div id="userOrdersList" style="max-height: 350px; overflow-y: auto;"></div>
-        <button onclick="closeModal('userOrdersModal')" class="btn-main" style="margin-top:20px;">إغلاق</button>
+        <div id="userOrdersList"></div>
+        <button onclick="closeModal('userOrdersModal')" class="btn-main">إغلاق</button>
     </div>
 </div>
 
 <div id="rechargeChoiceModal" class="modal">
     <div class="modal-content">
-        <h3>شحن آسيا سيل</h3>
-        <input type="text" id="asiaCode" placeholder="أدخل كود الكارت هنا">
-        <button class="btn-main" onclick="submitRecharge()">إرسال للمراجعة</button>
-        <button onclick="closeModal('rechargeChoiceModal')" style="background:none; border:none; color:var(--danger); margin-top:15px; cursor:pointer;">إلغاء</button>
+        <h3>اختر طريقة الشحن</h3>
+        <button class="btn-main" onclick="closeModal('rechargeChoiceModal'); openModal('rechargeModal')">آسيا سيل (كارت)</button>
+        <button onclick="closeModal('rechargeChoiceModal')" style="margin-top:15px; background:none; border:none; color:#888;">إلغاء</button>
     </div>
 </div>
 
 <script>
-    // تكوين Firebase
+    // تهيئة Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyDrLSVoJJsEzlmcIBvNNb9OJzWtJixYhpw",
         authDomain: "army-smm.firebaseapp.com",
@@ -479,20 +473,19 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    let userD = null;
+    let currentUserData = null;
     let servicePrices = {
         "تيك توك - متابعين": 0.40, "تيك توك - لايكات": 0.15,
-        "انستا - متابعين": 0.50, "انستا - لايكات": 0.10,
-        "تليجرام - متابعين": 0.35, "يوتيوب - متابعين": 2.80
+        "انستا - متابعين": 0.50, "تليجرام - متابعين": 0.30,
+        "يوتيوب - متابعين": 2.00
     };
 
     // مراقبة الدخول
     auth.onAuthStateChanged(user => {
         if (user) {
             db.collection("users").doc(user.uid).onSnapshot(doc => {
-                userD = doc.data();
-                if(!userD) return;
-                if(userD.isBanned) {
+                currentUserData = doc.data();
+                if (currentUserData.isBanned) {
                     document.getElementById('banScreen').style.display = 'flex';
                     auth.signOut();
                     return;
@@ -502,7 +495,8 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('menuIcon').style.display = 'block';
-            syncGlobalData();
+            syncPrices();
+            syncTicker();
         } else {
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('dashboard').style.display = 'none';
@@ -511,153 +505,156 @@
     });
 
     function updateUI(uid) {
-        document.getElementById('uBalanceDisplay').innerText = `$${userD.balance.toFixed(2)}`;
-        document.getElementById('uNameDisplay').innerText = userD.name;
-        document.getElementById('uRankDisplay').innerText = `الرتبة: ${userD.rank || 'مستخدم'}`;
-        document.getElementById('uIDDisplay').innerText = uid.substring(0,8);
+        document.getElementById('uBalanceDisplay').innerText = `$${currentUserData.balance.toFixed(2)}`;
+        document.getElementById('uNameDisplay').innerText = currentUserData.name;
+        document.getElementById('uRankDisplay').innerText = `الرتبة: ${currentUserData.rank || 'مستخدم'}`;
+        document.getElementById('uIDDisplay').innerText = uid.substring(0, 8);
         
-        if(userD.rank === "أدمن" || userD.email === "m@gmail.com") {
+        if (currentUserData.rank === "أدمن") {
             document.getElementById('adminPanel').style.display = 'block';
             document.getElementById('adminMenuLink').style.display = 'flex';
         }
     }
 
-    function syncGlobalData() {
-        db.collection("settings").doc("general").onSnapshot(doc => {
-            if(doc.exists) document.getElementById('newsTickerText').innerText = doc.data().ticker;
-        });
+    function syncPrices() {
         db.collection("settings").doc("prices").onSnapshot(doc => {
-            if(doc.exists) { servicePrices = doc.data(); updateServiceList(); }
+            if (doc.exists) {
+                servicePrices = doc.data();
+                updateServiceList();
+            }
         });
     }
 
-    // --- وظائف الأدمن ---
+    function syncTicker() {
+        db.collection("settings").doc("general").onSnapshot(doc => {
+            if (doc.exists) document.getElementById('newsTickerText').innerText = doc.data().ticker;
+        });
+    }
+
+    // وظائف الأدمين
     function showAdminSection(id) {
         document.querySelectorAll('.admin-content-section').forEach(s => s.style.display = 'none');
         document.getElementById(id).style.display = 'block';
-        if(id === 'adminOrdersSection') loadAllOrders();
-        if(id === 'adminUsersSection') loadAllUsers();
-        if(id === 'adminRechargeSection') loadAllRecharges();
-        if(id === 'adminSettingsSection') renderPriceEditor();
+        if (id === 'adminUsersSection') loadUsers();
+        if (id === 'adminRechargeSection') loadRechargeOrders();
+        if (id === 'adminPricesSection') renderPriceEditor();
+        if (id === 'adminOrdersSection') loadAllOrdersForAdmin();
     }
 
-    function loadAllOrders() {
+    // --- نظام إدارة طلبات الرشق المطور للأدمن ---
+    function loadAllOrdersForAdmin() {
         db.collection("service_orders").orderBy("date", "desc").limit(50).onSnapshot(snap => {
             let h = "";
             snap.forEach(doc => {
                 const d = doc.data();
-                const statusCls = `status-${d.status.replace(/\s+/g, '-')}`;
-                h += `<div class="order-card">
-                    <span class="status-badge ${statusCls}">${d.status}</span>
+                const stCls = d.status === 'مكتمل' ? 'st-completed' : (d.status === 'ملغي' ? 'st-refunded' : 'st-pending');
+                h += `<div class="order-card" style="border-right-color: ${d.status === 'مكتمل' ? 'var(--success)' : 'var(--main)'}">
+                    <span class="status-badge ${stCls}">${d.status}</span>
+                    <b>المستخدم:</b> ${d.userName || 'مجهول'}<br>
                     <b>الخدمة:</b> ${d.service}<br>
-                    <b>المستخدم:</b> ${d.userName}<br>
-                    <b>الكمية:</b> ${d.qty} | <b>السعر:</b> $${d.total.toFixed(2)}<br>
-                    <b>الرابط:</b> <a href="${d.link}" target="_blank" style="color:var(--main)">اضغط هنا</a><br>
-                    <div class="adm-btn-group">
-                        <button class="adm-btn" style="background:var(--main)" onclick="updateStat('${doc.id}', 'قيد التنفيذ')">تنفيذ</button>
-                        <button class="adm-btn" style="background:var(--success)" onclick="updateStat('${doc.id}', 'مكتمل')">تم</button>
-                        <button class="adm-btn" style="background:var(--danger); color:#fff" onclick="refundOrder('${doc.id}', '${d.uid}', ${d.total})">إلغاء ورد المال</button>
+                    <b>الكمية:</b> ${d.qty} | <b>السعر:</b> $${(d.totalPrice || 0).toFixed(2)}<br>
+                    <b>الرابط:</b> <a href="${d.link}" target="_blank" style="color:var(--main); word-break:break-all;">${d.link}</a><br>
+                    <div style="margin-top:10px;">
+                        <button class="adm-btn adm-btn-success" onclick="updateOrderStatus('${doc.id}', 'مكتمل')">تم التنفيذ</button>
+                        <button class="adm-btn adm-btn-info" onclick="updateOrderStatus('${doc.id}', 'قيد التنفيذ')">بدء</button>
+                        <button class="adm-btn adm-btn-danger" onclick="refundOrder('${doc.id}', '${d.uid}', ${d.totalPrice || 0})">إلغاء وإرجاع مال</button>
                     </div>
                 </div>`;
             });
-            document.getElementById('adminOrdersList').innerHTML = h || "لا توجد طلبات";
+            document.getElementById('adminFullOrdersList').innerHTML = h || "لا توجد طلبات رشق حالياً";
         });
     }
 
-    async function updateStat(id, s) { await db.collection("service_orders").doc(id).update({ status: s }); }
-
-    async function refundOrder(oid, uid, amt) {
-        if(!confirm("إلغاء الطلب وإرجاع المال للمستخدم؟")) return;
-        await db.collection("service_orders").doc(oid).update({ status: "ملغي" });
-        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amt) });
-        alert("تم الإلغاء ورد المبلغ بنجاح.");
+    async function updateOrderStatus(id, newStatus) {
+        await db.collection("service_orders").doc(id).update({ status: newStatus });
     }
 
-    async function loadAllUsers() {
-        const snap = await db.collection("users").limit(50).get();
-        window.usersCache = snap;
-        renderUsers(snap);
+    async function refundOrder(orderId, userId, amount) {
+        if (!confirm("هل أنت متأكد من إلغاء الطلب وإرجاع المبلغ للمستخدم؟")) return;
+        await db.collection("users").doc(userId).update({ balance: firebase.firestore.FieldValue.increment(amount) });
+        await db.collection("service_orders").doc(orderId).update({ status: "ملغي وتم الرد" });
+        alert("تم إلغاء الطلب وإرجاع $" + amount + " للمستخدم.");
     }
 
-    function renderUsers(snap) {
+    async function loadUsers() {
+        const snap = await db.collection("users").limit(20).get();
         let h = "";
         snap.forEach(doc => {
             const d = doc.data();
             h += `<div class="order-card">
-                <b>${d.name}</b> (${d.rank || 'مستخدم'})<br>
-                الرصيد: $${d.balance.toFixed(2)}<br>
-                <div class="adm-btn-group">
-                    <button class="adm-btn" style="background:var(--gold)" onclick="editBalance('${doc.id}', 1)">+1$</button>
-                    <button class="adm-btn" style="background:var(--main)" onclick="setRank('${doc.id}', 'أدمن')">ترقية</button>
-                    <button class="adm-btn" style="background:var(--danger); color:#fff" onclick="toggleBan('${doc.id}', ${!d.isBanned})">${d.isBanned ? 'فك حظر' : 'حظر'}</button>
-                </div>
+                <b>${d.name}</b> ($${d.balance.toFixed(2)})<br>
+                <button class="adm-btn adm-btn-success" onclick="modifyBal('${doc.id}', 1)">+1$</button>
+                <button class="adm-btn adm-btn-danger" onclick="setBan('${doc.id}', ${!d.isBanned})">${d.isBanned ? 'فك حظر' : 'حظر'}</button>
+                <button class="adm-btn adm-btn-info" onclick="promoteToAdmin('${doc.id}')">ترقية أدمن</button>
             </div>`;
         });
         document.getElementById('adminUsersList').innerHTML = h;
     }
 
-    function searchUsers(q) {
-        let h = "";
-        window.usersCache.forEach(doc => {
-            const d = doc.data();
-            if(d.name.includes(q)) {
-                h += `<div class="order-card"><b>${d.name}</b>... (نفس الأزرار)</div>`;
-            }
-        });
-        document.getElementById('adminUsersList').innerHTML = h;
+    async function promoteToAdmin(id) {
+        await db.collection("users").doc(id).update({ rank: 'أدمن' });
+        alert("تمت الترقية");
     }
 
-    async function editBalance(id, a) { await db.collection("users").doc(id).update({ balance: firebase.firestore.FieldValue.increment(a) }); loadAllUsers(); }
-    async function setRank(id, r) { await db.collection("users").doc(id).update({ rank: r }); loadAllUsers(); }
-    async function toggleBan(id, v) { await db.collection("users").doc(id).update({ isBanned: v }); loadAllUsers(); }
+    async function modifyBal(id, amt) { await db.collection("users").doc(id).update({ balance: firebase.firestore.FieldValue.increment(amt) }); loadUsers(); }
+    async function setBan(id, val) { await db.collection("users").doc(id).update({ isBanned: val }); loadUsers(); }
 
-    function loadAllRecharges() {
+    function loadRechargeOrders() {
         db.collection("recharge_orders").where("status", "==", "معلق").onSnapshot(snap => {
             let h = "";
             snap.forEach(doc => {
                 const d = doc.data();
                 h += `<div class="order-card">
-                    <b>المستخدم:</b> ${d.name}<br><b>كود الكارت:</b> ${d.code}<br>
-                    <input type="number" id="chg_${doc.id}" placeholder="المبلغ $" style="width:70px; margin:10px 0;">
-                    <button class="adm-btn" style="background:var(--success)" onclick="confirmCharge('${doc.id}', '${d.uid}')">شحن</button>
+                    <b>${d.name}</b> - كود: ${d.code}<br>
+                    <input type="number" id="val_${doc.id}" placeholder="المبلغ $" style="width:70px; margin:5px 0;">
+                    <button class="adm-btn adm-btn-success" onclick="confirmCharge('${doc.id}', '${d.uid}')">قبول</button>
                 </div>`;
             });
-            document.getElementById('adminRechargeList').innerHTML = h || "لا يوجد طلبات شحن";
+            document.getElementById('adminRechargeList').innerHTML = h || "لا يوجد طلبات";
         });
     }
 
-    async function confirmCharge(oid, uid) {
-        const amt = parseFloat(document.getElementById(`chg_${oid}`).value);
-        if(!amt) return alert("حدد المبلغ!");
+    async function confirmCharge(docId, uid) {
+        const amt = parseFloat(document.getElementById(`val_${docId}`).value);
+        if (!amt) return alert("ضع المبلغ");
         await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(amt) });
-        await db.collection("recharge_orders").doc(oid).update({ status: "مكتمل" });
-        alert("تم الشحن!");
+        await db.collection("recharge_orders").doc(docId).update({ status: "مكتمل" });
+        alert("تم الشحن");
     }
 
     function renderPriceEditor() {
         let h = "";
-        for (let k in servicePrices) {
-            h += `<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span style="font-size:12px;">${k}</span>
-                <input type="number" step="0.01" value="${servicePrices[k]}" onchange="savePrice('${k}', this.value)" style="width:65px; margin:0; padding:5px;">
+        for (let key in servicePrices) {
+            h += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span style="font-size:12px;">${key}</span>
+                <input type="number" step="0.01" value="${servicePrices[key]}" onchange="updateDbPrice('${key}', this.value)" style="width:60px; padding:5px; margin:0">
             </div>`;
         }
         document.getElementById('adminPriceEditorList').innerHTML = h;
     }
 
-    async function savePrice(k, v) { servicePrices[k] = parseFloat(v); await db.collection("settings").doc("prices").set(servicePrices); }
-    async function updateNewsTicker() { await db.collection("settings").doc("general").set({ ticker: document.getElementById('adminTickerInput').value }); alert("تم التحديث!"); }
+    async function updateDbPrice(key, val) {
+        servicePrices[key] = parseFloat(val);
+        await db.collection("settings").doc("prices").set(servicePrices);
+    }
 
-    // --- وظائف المستخدم ---
+    async function updateNewsTicker() {
+        const txt = document.getElementById('adminTickerInput').value;
+        await db.collection("settings").doc("general").set({ ticker: txt }, {merge:true});
+        alert("تم التحديث");
+    }
+
+    // وظائف المستخدم
     function updateServiceList() {
         const p = document.getElementById('platform').value;
         const s = document.getElementById('serviceType');
         s.innerHTML = "";
-        for (let k in servicePrices) {
-            if (k.startsWith(p)) {
-                let name = k.split(" - ")[1];
+        for (let key in servicePrices) {
+            if (key.startsWith(p)) {
+                let name = key.split(" - ")[1];
                 let opt = document.createElement('option');
-                opt.value = name; opt.innerText = `${name} ($${servicePrices[k]})`;
+                opt.value = name;
+                opt.innerText = `${name} ($${servicePrices[key]})`;
                 s.appendChild(opt);
             }
         }
@@ -665,59 +662,86 @@
     }
 
     function calcPrice() {
-        const p = document.getElementById('platform').value, st = document.getElementById('serviceType').value, q = document.getElementById('orderQty').value || 0;
+        const p = document.getElementById('platform').value;
+        const st = document.getElementById('serviceType').value;
+        const qty = document.getElementById('orderQty').value || 0;
         const rate = servicePrices[`${p} - ${st}`] || 0;
-        document.getElementById('totalPrice').innerText = ((q / 1000) * rate).toFixed(2);
+        document.getElementById('totalPrice').innerText = ((qty / 1000) * rate).toFixed(2);
+    }
+
+    async function handleSignup() {
+        const n = document.getElementById('newName').value, e = document.getElementById('newEmail').value, p = document.getElementById('newPass').value;
+        if (!n || !e || !p) return alert("املأ البيانات");
+        const res = await auth.createUserWithEmailAndPassword(e, p);
+        await db.collection("users").doc(res.user.uid).set({ name: n, email: e, balance: 0, rank: 'مستخدم', isBanned: false });
+    }
+
+    async function handleLogin() {
+        const e = document.getElementById('logEmail').value, p = document.getElementById('logPass').value;
+        try { await auth.signInWithEmailAndPassword(e, p); } catch(e) { alert("بيانات خاطئة"); }
     }
 
     async function sendOrderRequest() {
         const total = parseFloat(document.getElementById('totalPrice').innerText);
-        const link = document.getElementById('orderLink').value;
-        const qty = document.getElementById('orderQty').value;
-        if (userD.balance < total) return alert("رصيدك غير كافٍ!");
-        if (total <= 0 || !link) return alert("أكمل البيانات!");
-
+        if (currentUserData.balance < total) return alert("رصيدك غير كافٍ");
+        if (total <= 0) return alert("الكمية غير صحيحة");
+        
         await db.collection("users").doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-total) });
         await db.collection("service_orders").add({
-            uid: auth.currentUser.uid, userName: userD.name,
-            service: document.getElementById('serviceType').value,
-            link: link, qty: qty, total: total, status: "معلق", date: new Date()
+            uid: auth.currentUser.uid,
+            userName: currentUserData.name,
+            service: document.getElementById('platform').value + " - " + document.getElementById('serviceType').value,
+            link: document.getElementById('orderLink').value,
+            qty: document.getElementById('orderQty').value,
+            totalPrice: total,
+            status: "قيد المراجعة",
+            date: new Date()
         });
-        alert("تم إرسال الطلب بنجاح ✅");
+        alert("تم استلام طلبك بنجاح");
     }
 
     async function submitRecharge() {
         const code = document.getElementById('asiaCode').value;
-        if(code.length < 5) return alert("كود خطأ!");
+        if (code.length < 5) return alert("كود التعبئة خطأ");
         await db.collection("recharge_orders").add({
-            uid: auth.currentUser.uid, name: userD.name, code: code, status: "معلق", date: new Date()
+            uid: auth.currentUser.uid,
+            name: currentUserData.name,
+            code: code,
+            status: "معلق",
+            date: new Date()
         });
-        alert("تم الإرسال، انتظر المراجعة.");
-        closeModal('rechargeChoiceModal');
+        alert("تم إرسال الكود، سيتم الشحن بعد التحقق");
+        closeModal('rechargeModal');
     }
 
     function openUserOrders() {
         db.collection("service_orders").where("uid", "==", auth.currentUser.uid).orderBy("date", "desc").limit(10).get().then(snap => {
             let h = "";
-            snap.forEach(doc => h += `<div class="order-card"><b>${doc.data().service}</b><br>الحالة: ${doc.data().status}</div>`);
-            document.getElementById('userOrdersList').innerHTML = h || "لا توجد طلبات";
+            snap.forEach(doc => {
+                const d = doc.data();
+                h += `<div class="order-card">
+                    <b>${d.service}</b> (${d.qty})<br>
+                    حالة الطلب: <span style="color:var(--main)">${d.status}</span>
+                </div>`;
+            });
+            document.getElementById('userOrdersList').innerHTML = h || "لا يوجد طلبات سابقة";
             openModal('userOrdersModal');
         });
     }
 
-    // إدارة الواجهات
-    async function handleSignup() {
-        const n = document.getElementById('newName').value, e = document.getElementById('newEmail').value, p = document.getElementById('newPass').value;
-        const res = await auth.createUserWithEmailAndPassword(e, p);
-        await db.collection("users").doc(res.user.uid).set({ name: n, email: e, balance: 0, rank: 'مستخدم', isBanned: false });
+    function toggleAuth(isS) {
+        document.getElementById('signupBox').style.display = isS ? 'block' : 'none';
+        document.getElementById('loginBox').style.display = isS ? 'none' : 'block';
     }
-    async function handleLogin() { try { await auth.signInWithEmailAndPassword(document.getElementById('logEmail').value, document.getElementById('logPass').value); } catch(e) { alert("خطأ!"); } }
-    function toggleAuth(s) { document.getElementById('signupBox').style.display = s ? 'block' : 'none'; document.getElementById('loginBox').style.display = s ? 'none' : 'block'; }
-    function toggleSideMenu(o) { document.getElementById('sideMenu').classList.toggle('active', o); document.getElementById('menuOverlay').style.display = o ? 'block' : 'none'; }
+    function toggleSideMenu(o) {
+        document.getElementById('sideMenu').classList.toggle('active', o);
+        document.getElementById('menuOverlay').style.display = o ? 'block' : 'none';
+    }
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function openAdminPanelDirectly() { toggleSideMenu(false); document.getElementById('adminPanel').scrollIntoView({behavior: 'smooth'}); }
-    function copyRefLink() { navigator.clipboard.writeText(window.location.origin); alert("تم النسخ!"); }
+    function copyRefLink() { navigator.clipboard.writeText(window.location.origin); alert("تم نسخ رابط الموقع"); }
+
 </script>
 </body>
 </html>
